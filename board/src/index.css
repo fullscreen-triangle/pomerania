@@ -1,0 +1,90 @@
+:root {
+  --bg: #0a0f16;
+  --panel: #131d28;
+  --panel-2: #17222e;
+  --line: #26374a;
+  --line-soft: #1b2733;
+
+  --ink: #e8eef4;
+  --ink-2: #a9bccd;
+  --ink-3: #7f95a6;
+
+  --k1: #5fa8d3; /* depth / Sk */
+  --k2: #e08b90; /* articulation / St */
+  --k3: #5cbf95; /* orientation / Se */
+  --k4: #e0b464; /* parity */
+  --accent: #5fa8d3;
+  --good: #5cbf95;
+  --danger: #e08b90;
+
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(95, 168, 211, 0.32);
+}
+
+.m {
+  font-family: var(--mono);
+  font-size: 0.94em;
+  color: var(--accent);
+}
+
+.k1 {
+  color: var(--k1);
+}
+.k2 {
+  color: var(--k2);
+}
+.k3 {
+  color: var(--k3);
+}
+.k4 {
+  color: var(--k4);
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-3);
+}

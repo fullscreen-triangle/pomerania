@@ -1,0 +1,25 @@
+# Fetched corpora — never committed. See DATA.md for how to re-fetch.
+data/
+
+# Run artefacts — commit the write-up, not the outputs.
+results/
+*.log
+
+# Models and checkpoints
+models/
+*.safetensors
+*.ckpt
+*.pt
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
