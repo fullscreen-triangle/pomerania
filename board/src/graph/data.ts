@@ -30,6 +30,17 @@ export const nodes: GraphNode[] = [
     route: "/theory/s-entropy",
     accent: "k1",
   },
+  {
+    id: "bibliothek",
+    label: "Bibliothek",
+    kind: "application",
+    summary:
+      "Closure by negation as a coordination primitive: routing to sufficiency instead of storing answers, and orchestrator-free occupation propagation.",
+    route: "/application/bibliothek",
+    accent: "k3",
+  },
 ];
 
-export const edges: GraphEdge[] = [];
+export const edges: GraphEdge[] = [
+  { source: "s-entropy", target: "bibliothek", label: "applies to" },
+];

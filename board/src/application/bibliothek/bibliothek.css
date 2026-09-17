@@ -1,0 +1,102 @@
+.bib-root {
+  min-height: 100%;
+  background: var(--bg);
+  padding: 40px 48px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.bib-home-btn {
+  background: var(--panel-2);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--mono);
+  margin-bottom: 32px;
+}
+.bib-home-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+
+.bib-header h1 {
+  margin: 0 0 10px;
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.bib-sub {
+  margin: 0 0 40px;
+  color: var(--ink-2);
+  font-size: 16px;
+  max-width: 68ch;
+  line-height: 1.6;
+}
+
+.bib-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.bib-card {
+  display: block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 24px 26px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+.bib-card[data-accent="k1"] {
+  border-left-color: var(--k1);
+}
+.bib-card[data-accent="k3"] {
+  border-left-color: var(--k3);
+}
+.bib-card:hover {
+  background: var(--panel-2);
+  transform: translateY(-2px);
+}
+
+.bib-card h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bib-card-subtitle {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.bib-card-summary {
+  margin: 0 0 18px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+.bib-card-link {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .bib-root {
+    padding: 28px 20px 60px;
+  }
+  .bib-header h1 {
+    font-size: 28px;
+  }
+}
