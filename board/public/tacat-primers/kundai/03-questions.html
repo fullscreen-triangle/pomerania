@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 · Asking questions — tacat primer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="3">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li class="extra"><a href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a href="01-data.html">Facts as data</a></li>
+    <li><a href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a class="here" href="03-questions.html">Asking questions</a></li>
+    <li><a href="04-checking.html">Checking the data</a></li>
+    <li><a href="05-serving.html">Serving it</a></li>
+    <li><a href="06-shipping.html">Shipping it</a></li>
+    <li><a href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+  </ol>
+  <div class="nav-label">Readiness</div>
+  <div class="progress" data-progress></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 3</p>
+<h1>Asking questions</h1>
+<p class="standfirst">
+  SPARQL has far fewer moving parts than it looks like it does. The goal for one sitting: read your
+  own queries aloud and explain each line.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ must know</span>
+  <span class="chip">15 min</span>
+  <span class="chip">SPARQL · federation</span>
+  <span class="chip ask">you will demo this live</span>
+</div>
+
+<div class="resume" data-resume></div>
+
+<h2 id="idea">1. The whole idea</h2>
+
+<p>
+  A SPARQL query is a <strong>pattern with holes in it</strong>. Write triples as you would write
+  data, but put a variable — a word starting with <code>?</code> — wherever you do not know the
+  value. The engine finds every set of values that makes the pattern true.
+</p>
+
+<div class="widget" data-widget="sparql-match"></div>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    It is a motif search. You describe a shape — <code>[ST]-x(2)-[DE]</code> — and the tool returns
+    every position that matches. You are not writing instructions for <em>how</em> to search; you
+    are describing what a hit looks like. SPARQL is that, over facts instead of residues.
+  </p>
+</div>
+
+<h2 id="anatomy">2. Anatomy of a query</h2>
+
+<figure class="code">
+  <figcaption>competency.py — CQ01, quoted from NFDI4Cat's own question set</figcaption>
+  <pre><code data-lang="sparql">PREFIX tacat: &lt;https://w3id.org/bitspark/tacat/&gt;
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+SELECT ?enzyme ?ec
+WHERE {
+    ?e a tacat:Enzyme ; rdfs:label ?enzyme ; a ?ec .
+    FILTER(REGEX(STR(?ec), "^http://purl\\.uniprot\\.org/enzyme/[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$"))
+}
+ORDER BY ?enzyme</code></pre>
+</figure>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Line</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><code>PREFIX</code></td><td>The same abbreviations as in the data file. Purely shorthand.</td></tr>
+    <tr><td><code>SELECT ?enzyme ?ec</code></td><td>Which variables come back — the columns of the answer table.</td></tr>
+    <tr><td><code>WHERE { … }</code></td><td>The pattern. Everything inside is triples with holes.</td></tr>
+    <tr><td><code>?e a tacat:Enzyme</code></td><td>"find anything that is an Enzyme, call it <code>?e</code>". Note <code>?e</code> is not in the SELECT — it is a working variable that connects the lines.</td></tr>
+    <tr><td><code>;</code> &nbsp;<code>.</code></td><td>Exactly as in Turtle: same subject again; end of statement.</td></tr>
+    <tr><td><code>a ?ec</code> + <code>FILTER</code></td><td>The enzyme's <em>other</em> types, kept only when the IRI is a <code>purl.uniprot.org/enzyme/</code> one. This is the point of the question: the classification comes back as a <strong>node in someone else's graph</strong>, not a string we invented.</td></tr>
+    <tr><td><code>ORDER BY</code></td><td>Sort. Matters more than it looks — see §5.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box bridge">
+  <span class="box-title">If you have met SQL</span>
+  <p>
+    <code>SELECT … WHERE</code> is borrowed deliberately. The difference: SQL's <code>WHERE</code>
+    filters rows of a named table; SPARQL's is a <em>shape to match</em>, and there are no tables at
+    all. The engine works out the joins from the variables you reuse — <strong>reusing
+    <code>?e</code> on three lines <em>is</em> the join.</strong>
+  </p>
+</div>
+
+<h2 id="payoff">3. The pair that justifies the whole model</h2>
+
+<p>These two differ by <strong>one line</strong>. Press the button.</p>
+
+<div class="widget" data-widget="cq-dropout"></div>
+
+<div class="box key">
+  <span class="box-title">Why this is the payoff</span>
+  <p>
+    That extra line is only writable <em>because participation is a node with a role on it</em>. With
+    the naive <code>hasSubstrate</code>/<code>hasProduct</code> model, the role is baked into the
+    property name — you could ask one question or the other, but never filter, combine or count by
+    role.
+  </p>
+  <p>
+    The n-ary bridge earns its complexity here, in one line of difference between two answers.
+  </p>
+</div>
+
+<button class="checkline" data-check="3:cq" aria-pressed="false">
+  <span class="ct">I can demo CQ05 vs CQ06 and explain why the answers differ
+  <small>4 vs 3; the role filter; why it needs the bridge node</small></span>
+</button>
+
+<h2 id="forms">4. The other query forms</h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Form</th><th>Returns</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><code>SELECT</code></td><td>a table</td><td>almost everything</td></tr>
+    <tr><td><code>ASK</code></td><td>true / false</td><td>"is there any reaction that…?" — used in tests</td></tr>
+    <tr><td><code>CONSTRUCT</code></td><td>a new graph</td><td>extract a subset as RDF to hand to someone else</td></tr>
+    <tr><td><code>DESCRIBE</code></td><td>a graph about one node</td><td>"tell me everything about this thing"</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The service supports all four. It does <strong>not</strong> support <code>INSERT</code>,
+  <code>DELETE</code> or <code>DROP</code> — the update half of the language. <a href="05-serving.html">Chapter 5</a>
+  has a caveat about <em>how</em> read-only that really is.
+</p>
+
+<h2 id="federation">5. Federation: one question, two databases</h2>
+
+<p>
+  Here is where reusing identifiers stops being a principle and starts paying rent.
+</p>
+<p>
+  The local graph knows three reactions. It knows nothing about which organisms express enzymes
+  catalysing them — that is UniProt. A <strong>federated query</strong> asks both at once, using
+  <code>SERVICE</code> to delegate part of the pattern to a remote endpoint and joining the results.
+</p>
+
+<figure class="code">
+  <figcaption>queries/federated.py — shape of the live query</figcaption>
+  <pre><code data-lang="sparql">SELECT ?rhea ?equation (COUNT(DISTINCT ?protein) AS ?proteinCount)
+WHERE {
+  # ── this part runs at Rhea ──────────────────────────────────
+  ?rhea rdfs:subClassOf rh:Reaction ;
+        rh:equation  ?equation .
+
+  # ── this part is sent to UniProt, and the results joined ────
+  SERVICE &lt;https://sparql.uniprot.org/sparql&gt; {
+      ?protein up:annotation/up:catalyticActivity/up:catalyzedReaction ?rhea ;
+               up:reviewed true .
+  }
+}</code></pre>
+</figure>
+
+<p>Verified live on 27 July 2026:</p>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">15</span><span class="l">reviewed proteins · RHEA 17441</span></div>
+  <div class="bignum"><span class="v">27</span><span class="l">reviewed proteins · RHEA 19453</span></div>
+  <div class="bignum"><span class="v">91</span><span class="l">reviewed proteins · RHEA 21824</span></div>
+</div>
+
+<div class="box key">
+  <span class="box-title">The FAIR argument, demonstrated rather than asserted</span>
+  <p>
+    This query works <strong>only</strong> because the local graph uses the same Rhea IRIs UniProt
+    uses. Had the project invented its own reaction identifiers — or stored the real ones as text
+    rather than as links — there would be nothing to join on, and it would return an empty table.
+  </p>
+  <p>
+    Every README in the world claims to follow FAIR principles. This is a two-second demonstration
+    that the "I" is real.
+  </p>
+</div>
+
+<h3>Two traps that cost real time</h3>
+
+<div class="box trap">
+  <span class="box-title">Trap 1 — Rhea models reactions as classes, not individuals</span>
+  <p>
+    The natural thing to write is <code>?rhea a rh:Reaction</code>. It returns <strong>nothing</strong>.
+    Rhea models each reaction as an OWL <em>class</em>, so the correct pattern is
+    <code>?rhea rdfs:subClassOf rh:Reaction</code>. Getting it wrong produces an empty result rather
+    than an error.
+  </p>
+</div>
+
+<div class="box trap">
+  <span class="box-title">Trap 2 — a LIMIT on an ordered join is a correctness bug</span>
+  <p>
+    An earlier version capped the detailed query at <code>LIMIT 25</code> for speed. Results were
+    <code>ORDER BY ?rhea</code> and reaction 21824 sorts last — so the cap cut it off entirely. A
+    demo whose whole point is "all three reactions federate" would have shown two, with nothing to
+    indicate anything was missing.
+  </p>
+  <p>A truncating limit on an ordered join is not a performance knob.</p>
+</div>
+
+<h3>And one engineering decision</h3>
+<p>
+  The summary query returns in about a second; the per-protein detail query takes ~43 seconds because
+  the join fans out. More importantly, both depend on someone else's server being up.
+</p>
+<p>
+  The module therefore <strong>caches its result and degrades loudly</strong> — if SIB is down it
+  says so and serves the cached answer rather than hanging or silently returning nothing. A live demo
+  depending on a third-party endpoint is a demo that fails in front of an audience.
+</p>
+
+<div class="box ask">
+  <span class="box-title">They might ask: isn't a live external dependency bad for reproducibility?</span>
+  <p>
+    Yes, and it is handled. The federated tests are marked <code>network</code> and deselected by
+    default, so the build never depends on the internet; the cache makes the demo deterministic.
+  </p>
+  <p>
+    Dropping the federation entirely would remove the only working demonstration that identifier
+    reuse buys anything — so the right answer is to isolate it, not delete it.
+  </p>
+</div>
+
+<button class="checkline" data-check="3:fed" aria-pressed="false">
+  <span class="ct">I can explain what the federated query proves, and both traps
+  <small>shared Rhea IRIs; subClassOf not rdf:type; why LIMIT was a correctness bug</small></span>
+</button>
+
+<h2 id="say">6. What to be able to say</h2>
+
+<div class="box key">
+  <span class="box-title">The 30-second version</span>
+  <p>
+    <em>"The competency questions are SPARQL, and they run as tests. The pair worth looking at is
+    CQ05 and CQ06: 'which reactions have L-glutamate as a participant' returns four, 'which produce
+    it' returns three, and they differ by one line — a filter on the participant's role. That
+    difference is only expressible because participation is a node rather than a property. And the
+    federated query joins the local graph to live UniProt on shared Rhea identifiers, which is the
+    FAIR interoperability claim demonstrated rather than asserted."</em>
+  </p>
+</div>
+
+<div class="pager">
+  <a class="prev" href="02-meaning.html"><span class="dir">Previous</span><span class="t">← 2 · Meaning &amp; inference</span></a>
+  <a class="next" href="04-checking.html"><span class="dir">Next</span><span class="t">4 · Checking the data →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

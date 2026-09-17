@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tacat architecture · 03 · Build and delivery</title>
+<style>
+  :root {
+      --bg:#141413; --panel:#1c1b1a; --ink:#ecebe9; --ink-soft:#b0aca6; --ink-faint:#7d7973; --rule:#322f2c;
+      --authored:#16305c; --authored-line:#6ba3f5; --authored-ink:#cfe0fb;
+      --generated:#4a3208; --generated-line:#e8a838; --generated-ink:#f7e2b4;
+      --seam:#33215e; --seam-line:#a78bfa; --seam-ink:#e2d8fb;
+      --external:#12401f; --external-line:#4ade80; --external-ink:#c9f2d5;
+      --tool:#2a2825; --tool-line:#9c9791; --tool-ink:#d6d2cc;
+      --bad:#4a1717; --bad-line:#f87171; --bad-ink:#fbd0d0;
+      --band-build:#1d1a2b; --band-run:#16241f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#141413; --panel:#1c1b1a; --ink:#ecebe9; --ink-soft:#b0aca6; --ink-faint:#7d7973; --rule:#322f2c;
+      --authored:#16305c; --authored-line:#6ba3f5; --authored-ink:#cfe0fb;
+      --generated:#4a3208; --generated-line:#e8a838; --generated-ink:#f7e2b4;
+      --seam:#33215e; --seam-line:#a78bfa; --seam-ink:#e2d8fb;
+      --external:#12401f; --external-line:#4ade80; --external-ink:#c9f2d5;
+      --tool:#2a2825; --tool-line:#9c9791; --tool-ink:#d6d2cc;
+      --bad:#4a1717; --bad-line:#f87171; --bad-ink:#fbd0d0;
+      --band-build:#1d1a2b; --band-run:#16241f;
+    }
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:2rem 1.5rem 6rem; background:var(--bg); color:var(--ink);
+    font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  main { max-width:1240px; margin:0 auto; }
+
+  nav.sheets { display:flex; flex-wrap:wrap; gap:.35rem; margin:0 0 2.25rem; padding-bottom:.9rem; border-bottom:1px solid var(--rule); font-size:.82rem; }
+  nav.sheets a, nav.sheets span { padding:.34rem .7rem; border-radius:6px; text-decoration:none; color:var(--ink-soft); border:1px solid transparent; }
+  nav.sheets a:hover { background:var(--panel); border-color:var(--rule); color:var(--ink); }
+  nav.sheets a[aria-current="page"] { background:var(--seam); border-color:var(--seam-line); color:var(--seam-ink); font-weight:620; }
+  nav.sheets span.planned { color:var(--ink-faint); opacity:.65; }
+  nav.sheets span.planned::after { content:" · planned"; font-size:.9em; }
+
+  .eyebrow { font-size:.78rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin:0 0 .5rem; }
+  h1 { font-size:clamp(1.6rem,3.4vw,2.3rem); line-height:1.15; margin:0 0 .75rem; letter-spacing:-.02em; }
+  h2 { font-size:1.18rem; margin:3rem 0 .9rem; letter-spacing:-.01em; padding-bottom:.45rem; border-bottom:1px solid var(--rule); }
+  h3 { font-size:.97rem; margin:1.8rem 0 .5rem; letter-spacing:-.005em; }
+  p { margin:0 0 1rem; max-width:74ch; color:var(--ink-soft); }
+  p.lede { font-size:1.06rem; color:var(--ink); max-width:72ch; }
+  strong { color:var(--ink); font-weight:650; }
+  a { color:var(--seam-line); }
+  code { font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace; font-size:.875em; background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:.1em .38em; }
+  pre { background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:1rem 1.1rem; overflow-x:auto; font-size:.83rem; line-height:1.6; margin:1rem 0 1.5rem; }
+  pre code { background:none; border:none; padding:0; font-size:1em; }
+
+  .figure { background:var(--panel); border:1px solid var(--rule); border-radius:12px; padding:1.25rem; margin:1.75rem 0; overflow-x:auto; }
+  .figure svg { display:block; width:100%; height:auto; min-width:920px; }
+  .caption { font-size:.83rem; color:var(--ink-faint); margin:.9rem 0 0; padding-top:.85rem; border-top:1px solid var(--rule); max-width:none; }
+
+  table { border-collapse:collapse; width:100%; margin:1rem 0 1.5rem; font-size:.88rem; }
+  th,td { text-align:left; padding:.55rem .7rem; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th { font-weight:620; color:var(--ink); font-size:.8rem; letter-spacing:.03em; text-transform:uppercase; }
+  td code { background:none; border:none; padding:0; }
+
+  .note { border-left:3px solid var(--seam-line); background:var(--panel); padding:.85rem 1.1rem; margin:1.25rem 0; border-radius:0 8px 8px 0; }
+  .note.warn { border-left-color:var(--generated-line); }
+  .note.bad { border-left-color:var(--bad-line); }
+  .note p:last-child { margin-bottom:0; }
+
+  footer { margin-top:4rem; padding-top:1.25rem; border-top:1px solid var(--rule); font-size:.85rem; color:var(--ink-faint); }
+  .pager { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; font-size:.9rem; }
+  .pager a { text-decoration:none; font-weight:560; }
+  .pager a:hover { text-decoration:underline; }
+
+  .n-title { font:600 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-sm    { font:600 11.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-mono  { font:400 10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-role  { font:400 11px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+  .g-label { font:600 11.5px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; letter-spacing:.07em; }
+  .b-label { font:700 12px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; letter-spacing:.11em; }
+  .e-label { font:400 10.5px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+</style>
+</head>
+<body>
+<main>
+
+  <nav class="sheets">
+    <a href="01-system.html">01 · System</a>
+    <a href="02-ontology.html">02 · Ontology</a>
+    <a href="03-delivery.html" aria-current="page">03 · Build &amp; delivery</a>
+    <a href="04-identity.html">04 · Identity &amp; federation</a>
+    <a href="05-request.html">05 · The request path</a>
+  </nav>
+
+  <p class="eyebrow">tacat architecture · 03 of a series</p>
+  <h1>Build and delivery</h1>
+
+  <p class="lede">
+    Two stages in the Dockerfile, four in the pipeline, nine jobs. The organising claim is narrow and
+    testable: <strong>a container image can build perfectly while the graph inside it is wrong</strong>
+    — so three of the gates check data rather than code, and the last one runs the image that was
+    actually pushed.
+  </p>
+
+  <p>
+    Every gate here exists because a specific defect got past the ones before it. That history is the
+    most useful thing on this sheet, and it is tabulated at the bottom.
+  </p>
+
+  <h2>The Dockerfile: reasoning happens once, on the other side of a wall</h2>
+
+  <p>
+    The builder stage installs a JVM because Owlready2 shells out to HermiT. The runtime stage
+    installs <strong>no Java at all</strong> and copies only the finished artefact. This is the same
+    seam <a href="01-system.html">sheet 01</a> is organised around, expressed as image layers.
+  </p>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 660" role="img" aria-labelledby="t1 d1">
+    <title id="t1">The two-stage Dockerfile</title>
+    <desc id="d1">
+      A builder stage installs a JRE, syncs dependencies without the dev group, receives the commit SHA
+      as a build argument and runs the reasoner to produce the graph. A runtime stage copies only the
+      virtual environment, source and data, runs as an unprivileged user, and contains no JVM.
+    </desc>
+    <defs>
+      <marker id="b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+      </marker>
+      <marker id="b2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--generated-line)"/>
+      </marker>
+    </defs>
+
+    <!-- builder band -->
+    <rect x="16" y="52" width="1168" height="256" rx="12" fill="var(--band-build)"/>
+    <text x="36" y="80" class="b-label" fill="var(--seam-line)">STAGE 1 — builder</text>
+    <text x="230" y="80" class="e-label" fill="var(--ink-soft)">FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder</text>
+
+    <rect x="30" y="110" width="188" height="86" rx="8" fill="var(--tool)" stroke="var(--tool-line)" stroke-width="1.6" stroke-dasharray="5 3"/>
+    <text x="124" y="140" class="n-sm" fill="var(--tool-ink)" text-anchor="middle">default-jre-headless</text>
+    <text x="124" y="162" class="e-label" fill="var(--tool-ink)" text-anchor="middle">a JVM, for HermiT</text>
+    <text x="124" y="180" class="e-label" fill="var(--tool-ink)" text-anchor="middle">needed here only</text>
+
+    <rect x="248" y="110" width="200" height="86" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.6"/>
+    <text x="348" y="138" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">uv sync --frozen</text>
+    <text x="348" y="158" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">--no-dev</text>
+    <text x="348" y="180" class="e-label" fill="var(--authored-ink)" text-anchor="middle">deps before source, for caching</text>
+
+    <rect x="478" y="110" width="196" height="86" rx="8" fill="var(--generated)" stroke="var(--generated-line)" stroke-width="1.8"/>
+    <text x="576" y="138" class="n-sm" fill="var(--generated-ink)" text-anchor="middle">ARG CI_COMMIT_SHA</text>
+    <text x="576" y="160" class="e-label" fill="var(--generated-ink)" text-anchor="middle">passed in explicitly —</text>
+    <text x="576" y="178" class="e-label" fill="var(--generated-ink)" text-anchor="middle">a build inherits no CI env</text>
+
+    <rect x="704" y="110" width="196" height="86" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2.2"/>
+    <text x="802" y="138" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">uv run --no-dev</text>
+    <text x="802" y="158" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">tacat build</text>
+    <text x="802" y="180" class="e-label" fill="var(--authored-ink)" text-anchor="middle">HermiT runs here</text>
+
+    <rect x="930" y="110" width="238" height="86" rx="8" fill="var(--generated)" stroke="var(--generated-line)" stroke-width="2.4"/>
+    <text x="1049" y="140" class="n-sm" fill="var(--generated-ink)" text-anchor="middle">/app/data/reactions.ttl</text>
+    <text x="1049" y="162" class="e-label" fill="var(--generated-ink)" text-anchor="middle">test -s — the build fails</text>
+    <text x="1049" y="180" class="e-label" fill="var(--generated-ink)" text-anchor="middle">if it is empty or missing</text>
+
+    <path d="M218,153 L242,153" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#b1)"/>
+    <path d="M448,153 L472,153" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#b1)"/>
+    <path d="M674,153 L698,153" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#b1)"/>
+    <path d="M900,153 L924,153" stroke="var(--generated-line)" stroke-width="2.2" fill="none" marker-end="url(#b2)"/>
+
+    <rect x="30" y="222" width="1138" height="66" rx="8" fill="var(--panel)" stroke="var(--bad-line)" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <text x="52" y="248" class="g-label" fill="var(--bad-line)">--no-dev IS LOAD-BEARING TWICE</text>
+    <text x="52" y="272" class="n-role" fill="var(--ink-soft)">A bare <tspan font-family="ui-monospace, Menlo, monospace">uv run</tspan> re-syncs with the default groups, reinstating the dev group and silently undoing the earlier <tspan font-family="ui-monospace, Menlo, monospace">--no-dev</tspan> — pytest, ruff, mypy and bandit would then be copied into the runtime image.</text>
+
+    <!-- crossing -->
+    <path d="M300,308 L300,372" stroke="var(--ink-faint)" stroke-width="2" fill="none" marker-end="url(#b1)"/>
+    <path d="M600,308 L600,372" stroke="var(--ink-faint)" stroke-width="2" fill="none" marker-end="url(#b1)"/>
+    <path d="M900,308 L900,372" stroke="var(--generated-line)" stroke-width="2.4" fill="none" marker-end="url(#b2)"/>
+    <text x="600" y="336" class="n-sm" fill="var(--ink-faint)" text-anchor="middle">COPY --from=builder --chown=tacat:tacat</text>
+
+    <!-- runtime band -->
+    <rect x="16" y="382" width="1168" height="256" rx="12" fill="var(--band-run)"/>
+    <text x="36" y="410" class="b-label" fill="var(--external-line)">STAGE 2 — runtime · NO JVM · NO BUILD TOOLING</text>
+
+    <rect x="180" y="432" width="240" height="72" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.6"/>
+    <text x="300" y="462" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">/app/.venv</text>
+    <text x="300" y="484" class="e-label" fill="var(--authored-ink)" text-anchor="middle">runtime dependencies only</text>
+
+    <rect x="480" y="432" width="240" height="72" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.6"/>
+    <text x="600" y="462" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">/app/src</text>
+    <text x="600" y="484" class="e-label" fill="var(--authored-ink)" text-anchor="middle">the package</text>
+
+    <rect x="780" y="432" width="240" height="72" rx="8" fill="var(--generated)" stroke="var(--generated-line)" stroke-width="2.2"/>
+    <text x="900" y="462" class="n-sm" fill="var(--generated-ink)" text-anchor="middle">/app/data</text>
+    <text x="900" y="484" class="e-label" fill="var(--generated-ink)" text-anchor="middle">the reasoned graph + shapes</text>
+
+    <rect x="180" y="530" width="356" height="86" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.8"/>
+    <text x="358" y="558" class="n-sm" fill="var(--external-ink)" text-anchor="middle">USER tacat · uid 1001</text>
+    <text x="358" y="580" class="e-label" fill="var(--external-ink)" text-anchor="middle">unprivileged; owns nothing it need not write</text>
+    <text x="358" y="602" class="e-label" fill="var(--external-ink)" text-anchor="middle">HEALTHCHECK fails if the graph is empty</text>
+
+    <rect x="580" y="530" width="440" height="86" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.8"/>
+    <text x="800" y="562" class="n-sm" fill="var(--external-ink)" text-anchor="middle">CMD uvicorn tacat.api:app --host 0.0.0.0 --port 8000</text>
+    <text x="800" y="592" class="e-label" fill="var(--external-ink)" text-anchor="middle">starts with the graph already loaded · needs no network</text>
+
+    <rect x="1044" y="222" width="124" height="66" rx="8" fill="none" stroke="none"/>
+  </svg>
+
+  <p class="caption">
+    What deliberately does not cross the wall: the JVM, the dev group, and the build cache. The image
+    starts with the graph already materialised, so it answers an <em>inferred</em> type from plain
+    SPARQL with no reasoner in the request path.
+  </p>
+  </div>
+
+  <h2>The pipeline: three of the gates check data, not code</h2>
+
+  <p>
+    Nine jobs across four stages, and the image is built only if everything before it passes. The
+    middle stage is the point — <code>ruff</code>, <code>mypy</code> and <code>bandit</code> tell you
+    the code is well-formed, and say nothing whatever about whether the graph is right.
+  </p>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 680" role="img" aria-labelledby="t2 d2">
+    <title id="t2">The four CI stages and their nine jobs</title>
+    <desc id="d2">
+      Quality runs lint, typecheck and security. Verify runs tests plus three data gates: ontology
+      consistency with an inference assertion, a byte-for-byte reproducibility check, and SHACL
+      validation with metashacl. Build pushes an image with Kaniko. Smoke pulls that pushed image and
+      asserts five properties of it.
+    </desc>
+    <defs>
+      <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+      </marker>
+    </defs>
+
+    <!-- quality -->
+    <rect x="16" y="46" width="262" height="330" rx="11" fill="var(--panel)" stroke="var(--authored-line)" stroke-width="1.8"/>
+    <text x="147" y="76" class="b-label" fill="var(--authored-line)" text-anchor="middle">1 · QUALITY</text>
+    <text x="147" y="96" class="e-label" fill="var(--ink-faint)" text-anchor="middle">code gates</text>
+
+    <rect x="38" y="112" width="218" height="66" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.4"/>
+    <text x="147" y="138" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">lint</text>
+    <text x="147" y="160" class="e-label" fill="var(--authored-ink)" text-anchor="middle">ruff check · format --check</text>
+
+    <rect x="38" y="192" width="218" height="66" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.4"/>
+    <text x="147" y="218" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">typecheck</text>
+    <text x="147" y="240" class="e-label" fill="var(--authored-ink)" text-anchor="middle">mypy, strict</text>
+
+    <rect x="38" y="272" width="218" height="66" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.4"/>
+    <text x="147" y="298" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">security</text>
+    <text x="147" y="320" class="e-label" fill="var(--authored-ink)" text-anchor="middle">bandit</text>
+
+    <!-- verify -->
+    <rect x="306" y="46" width="330" height="470" rx="11" fill="var(--band-build)" stroke="var(--seam-line)" stroke-width="2.2"/>
+    <text x="471" y="76" class="b-label" fill="var(--seam-line)" text-anchor="middle">2 · VERIFY</text>
+    <text x="471" y="96" class="e-label" fill="var(--seam-line)" text-anchor="middle">one code gate, three DATA gates</text>
+
+    <rect x="328" y="112" width="286" height="62" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.4"/>
+    <text x="471" y="138" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">test</text>
+    <text x="471" y="158" class="e-label" fill="var(--authored-ink)" text-anchor="middle">pytest · branch coverage · junit</text>
+
+    <rect x="328" y="188" width="286" height="96" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+    <text x="471" y="214" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">ontology-consistency</text>
+    <text x="471" y="236" class="e-label" fill="var(--seam-ink)" text-anchor="middle">asserts nothing is asserted,</text>
+    <text x="471" y="254" class="e-label" fill="var(--seam-ink)" text-anchor="middle">exactly 3 are inferred, and the</text>
+    <text x="471" y="272" class="e-label" fill="var(--seam-ink)" text-anchor="middle">negative control is not derived</text>
+
+    <rect x="328" y="298" width="286" height="96" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+    <text x="471" y="324" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">reproducible-build</text>
+    <text x="471" y="346" class="e-label" fill="var(--seam-ink)" text-anchor="middle">builds the graph twice and</text>
+    <text x="471" y="364" class="e-label" fill="var(--seam-ink)" text-anchor="middle">compares BYTES, not isomorphism —</text>
+    <text x="471" y="382" class="e-label" fill="var(--seam-ink)" text-anchor="middle">that is what a tag depends on</text>
+
+    <rect x="328" y="408" width="286" height="90" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+    <text x="471" y="434" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">shacl-validation</text>
+    <text x="471" y="456" class="e-label" fill="var(--seam-ink)" text-anchor="middle">pyshacl --metashacl over both</text>
+    <text x="471" y="474" class="e-label" fill="var(--seam-ink)" text-anchor="middle">the graph and the dataset —</text>
+    <text x="471" y="492" class="e-label" fill="var(--seam-ink)" text-anchor="middle">so a typo'd shape fails loudly</text>
+
+    <!-- build -->
+    <rect x="664" y="46" width="242" height="330" rx="11" fill="var(--panel)" stroke="var(--generated-line)" stroke-width="1.8"/>
+    <text x="785" y="76" class="b-label" fill="var(--generated-line)" text-anchor="middle">3 · BUILD</text>
+    <text x="785" y="96" class="e-label" fill="var(--ink-faint)" text-anchor="middle">proves it compiles</text>
+
+    <rect x="686" y="112" width="198" height="226" rx="7" fill="var(--generated)" stroke="var(--generated-line)" stroke-width="1.8"/>
+    <text x="785" y="140" class="n-sm" fill="var(--generated-ink)" text-anchor="middle">container</text>
+    <text x="785" y="164" class="e-label" fill="var(--generated-ink)" text-anchor="middle">Kaniko — no privileged</text>
+    <text x="785" y="182" class="e-label" fill="var(--generated-ink)" text-anchor="middle">runner required</text>
+    <text x="785" y="212" class="e-label" fill="var(--generated-ink)" text-anchor="middle">--build-arg CI_COMMIT_SHA</text>
+    <text x="785" y="238" class="e-label" fill="var(--generated-ink)" text-anchor="middle">tagged by short SHA,</text>
+    <text x="785" y="256" class="e-label" fill="var(--generated-ink)" text-anchor="middle">not only :latest</text>
+    <text x="785" y="286" class="e-label" fill="var(--generated-ink)" text-anchor="middle">fails with an explanation</text>
+    <text x="785" y="304" class="e-label" fill="var(--generated-ink)" text-anchor="middle">if CI_REGISTRY is unset</text>
+
+    <!-- smoke -->
+    <rect x="934" y="46" width="250" height="470" rx="11" fill="var(--band-run)" stroke="var(--external-line)" stroke-width="2.2"/>
+    <text x="1059" y="76" class="b-label" fill="var(--external-line)" text-anchor="middle">4 · SMOKE</text>
+    <text x="1059" y="96" class="e-label" fill="var(--external-line)" text-anchor="middle">proves it WORKS</text>
+
+    <rect x="954" y="112" width="212" height="386" rx="7" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+    <text x="1060" y="140" class="n-sm" fill="var(--external-ink)" text-anchor="middle">smoke</text>
+    <text x="1060" y="164" class="e-label" fill="var(--external-ink)" text-anchor="middle">pulls the PUSHED tag,</text>
+    <text x="1060" y="182" class="e-label" fill="var(--external-ink)" text-anchor="middle">not a local rebuild</text>
+
+    <text x="972" y="220" class="e-label" fill="var(--external-ink)">① graph loaded, 3 inferred</text>
+    <text x="972" y="248" class="e-label" fill="var(--external-ink)">② SHACL conforms</text>
+    <text x="972" y="276" class="e-label" fill="var(--external-ink)">③ a real query returns rows</text>
+    <text x="972" y="304" class="e-label" fill="var(--external-ink)">④ INSERT is refused with 400</text>
+    <text x="972" y="332" class="e-label" fill="var(--external-ink)">⑤ provenance names THIS commit</text>
+
+    <rect x="968" y="356" width="184" height="126" rx="7" fill="var(--panel)" stroke="var(--bad-line)" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <text x="1060" y="382" class="g-label" fill="var(--bad-line)" text-anchor="middle">⑤ EXISTS BECAUSE</text>
+    <text x="984" y="406" class="e-label" fill="var(--ink-soft)">a shipped image once had</text>
+    <text x="984" y="424" class="e-label" fill="var(--ink-soft)">ZERO provenance triples</text>
+    <text x="984" y="442" class="e-label" fill="var(--ink-soft)">while the pipeline was</text>
+    <text x="984" y="460" class="e-label" fill="var(--ink-soft)">entirely green.</text>
+
+    <path d="M278,210 L300,210" stroke="var(--ink-faint)" stroke-width="2" fill="none" marker-end="url(#c1)"/>
+    <path d="M636,210 L658,210" stroke="var(--ink-faint)" stroke-width="2" fill="none" marker-end="url(#c1)"/>
+    <path d="M906,210 L928,210" stroke="var(--ink-faint)" stroke-width="2" fill="none" marker-end="url(#c1)"/>
+
+    <rect x="16" y="556" width="1168" height="102" rx="10" fill="var(--panel)" stroke="var(--rule)" stroke-width="1.5"/>
+    <text x="40" y="586" class="g-label" fill="var(--ink-faint)">THE DISTINCTION THE MIDDLE STAGE MAKES</text>
+    <text x="40" y="614" class="n-role" fill="var(--ink-soft)">A code gate proves the source is well-formed. A data gate proves the artefact is right. An ontology can be consistent and classify</text>
+    <text x="40" y="636" class="n-role" fill="var(--ink-soft)">nothing; a shapes file can be typo'd and constrain nothing; a graph can be correct today and stop being reproducible tomorrow.</text>
+  </svg>
+
+  <p class="caption">
+    Jobs run left to right; the image is built only if the middle stage passes, and is then run by the
+    stage after it. Kaniko rather than docker-in-docker because a build job should not need more
+    privilege than the build actually needs.
+  </p>
+  </div>
+
+  <h2>Which gate catches which defect</h2>
+
+  <p>
+    This is the honest summary of the exercise: <strong>every gate added here caught a defect in our
+    own work first.</strong> Each row is a real failure, not a hypothetical.
+  </p>
+
+  <table>
+    <thead><tr><th>Defect</th><th>How it presented</th><th>Gate</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>A defined class that classifies nothing</td>
+        <td>Passes an ordinary consistency check silently — the reasoner ran, and derived nothing</td>
+        <td><code>ontology-consistency</code> asserts 3 inferred, 1 excluded</td>
+      </tr>
+      <tr>
+        <td>Serialisation order drifts</td>
+        <td>The graph stays <em>correct</em> while quietly ceasing to be <em>reproducible</em></td>
+        <td><code>reproducible-build</code>, byte comparison</td>
+      </tr>
+      <tr>
+        <td><code>sh:minCounts</code> — a typo'd shape</td>
+        <td>Constrains nothing, reports no violations, job passes green</td>
+        <td><code>pyshacl --metashacl</code></td>
+      </tr>
+      <tr>
+        <td>Kaniko does not inherit the CI environment</td>
+        <td><strong>The shipped image had zero <code>prov:wasRevisionOf</code> triples while the pipeline was fully green.</strong> Found only by pulling the artefact</td>
+        <td><code>--build-arg CI_COMMIT_SHA</code>, plus smoke assertion ⑤</td>
+      </tr>
+      <tr>
+        <td>A bare <code>uv run</code> re-syncs the dev group</td>
+        <td>pytest, ruff, mypy and bandit shipped inside the runtime image</td>
+        <td><code>uv run --no-dev</code> in the Dockerfile</td>
+      </tr>
+      <tr>
+        <td><code>docker exec</code> without <code>-i</code></td>
+        <td>The heredoc assertions never received stdin — ran nothing, printed nothing, and <strong>passed</strong></td>
+        <td>Found by dry-running the job. Now <em>structurally</em> impossible: the assertions live in <code>ci/smoke.py</code>, and a file has no stdin to lose</td>
+      </tr>
+      <tr>
+        <td><code>EXPECTED_SHA</code> as a job variable</td>
+        <td>Never reached the container; the check compared against an empty string and passed vacuously</td>
+        <td>Also gone: the script runs <em>in</em> the job, where <code>CI_COMMIT_SHA</code> is simply present</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note bad">
+    <p>
+      <strong>The rule these produced: check the artefact, not the log.</strong> Every defect that
+      escaped so far was green in CI and wrong in the image. Two of the seven rows above are bugs
+      <em>in the smoke test itself</em> — it caught two defects in its own implementation before it
+      caught any in the product, which is the strongest argument for having written it.
+    </p>
+  </div>
+
+  <h2>What is still unproven</h2>
+
+  <div class="note warn">
+    <p>
+      <strong>This pipeline is green on a self-hosted instance, and the brief specifies gitlab.com.</strong>
+      A green pipeline on one instance is not a green pipeline on another, and that evidence does not
+      transfer — it was the single blocking defect in the predecessor submission.
+    </p>
+    <p>
+      <strong>What has been done about it:</strong> the CI file no longer contains anything
+      instance-specific, so the same pipeline is provable <em>here</em> before the move. There are no
+      runner tags; Kaniko needs no privileged runner; and <code>smoke</code> — the one job that could
+      not have ported — now reaches the pushed image through a <code>services:</code> container
+      addressed by alias rather than through the host Docker socket, which gitlab.com's hosted runners
+      do not offer. <code>services:</code> is a core CI feature on the docker and kubernetes executors,
+      so the job is byte-identical on both.
+    </p>
+    <p>
+      <code>SOURCE_REPOSITORY</code> is likewise no longer hard-coded. It reads
+      <code>CI_PROJECT_URL</code>, so the graph's <code>prov:wasRevisionOf</code> names whichever host
+      actually built it, and the most dangerous line in the migration checklist has stopped existing.
+    </p>
+    <p>
+      <strong>What remains is genuinely only a swap:</strong> a gitlab.com project, a token, and the
+      documentation URLs in <code>README.md</code>, <code>pyproject.toml</code>,
+      <code>CITATION.cff</code> and <code>docs/index.md</code> — which deliberately still point here,
+      because pointing them at a project that does not yet exist would just be a different dead link.
+      <code>MIGRATION_TO_GITLAB_COM.md</code> holds the runbook. Until it is done, <strong>step 5 of
+      the brief is not evidenced</strong>, and no amount of refinement elsewhere substitutes for it.
+    </p>
+  </div>
+
+  <h3>Also honest about scope</h3>
+  <p>
+    The reproducibility claim is narrower than "reproducible build". What is proven is
+    <em>deterministic graph generation within a locked environment</em>: two runs in the same CI job
+    produce identical bytes. The Dockerfile still pulls a mutable base tag and resolves
+    <code>default-jre-headless</code> through apt, neither of which is pinned by digest — so the
+    container is not bit-reproducible at a later date, and the sheet does not claim it is.
+  </p>
+
+  <footer>
+    <div class="pager">
+      <a href="02-ontology.html">← 02 · The ontology</a>
+      <a href="04-identity.html">04 · Identity and federation →</a>
+    </div>
+    <p>
+      Sheet 03 of the tacat architecture series. Self-contained: no external scripts, fonts or
+      stylesheets. Renders from <code>file://</code>, light and dark.
+    </p>
+  </footer>
+
+</main>
+</body>
+</html>

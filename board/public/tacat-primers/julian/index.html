@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tacat primer (CS edition) — start here</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a class="here" href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+    <li class="extra"><a href="../cards/cheatsheet.html">Glossary &amp; cards — every term</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Start here</p>
+<h1>Two unfamiliar things, and one of them isn&rsquo;t the code</h1>
+<p class="standfirst">
+  This primer covers the parts of the transaminase knowledge-graph project that a full-stack
+  developer has no reason to have met: the RDF/OWL/SHACL/SPARQL stack, and enough enzymology to
+  understand why the modelling decisions are what they are. Everything on the computing side is
+  introduced as a delta from something you already use in production.
+</p>
+
+<div class="chips">
+  <span class="chip hot">Assumes SQL, HTTP, a graph DB, Docker, CI</span>
+  <span class="chip">Assumes no chemistry</span>
+  <span class="chip">~2.5 h end to end</span>
+</div>
+
+<h2 id="shape">1. What the project actually is</h2>
+
+<p>
+  A small read-only service. You POST it a query in a standard query language; it answers from a
+  graph of facts about three enzyme-catalysed reactions. Architecturally it is unremarkable — a
+  FastAPI app over an in-process store, containerised, built by GitLab CI. If that were all, you
+  would be done in an afternoon.
+</p>
+<p>
+  What makes it a real exercise is that <strong>each layer is required to prove something about the
+  layer beneath it</strong>, and the domain it describes fails silently in ways your usual stack
+  does not.
+</p>
+
+<div class="pipeline">
+  <div class="step">
+    <div class="n">1</div>
+    <div>
+      <h4>Verified reference data</h4>
+      <p>Nine chemical entities, three EC numbers, three Rhea reaction IDs, seven UniProt accessions.
+         Typed frozen dataclasses in one Python module, each value checked by hand against the
+         primary database it came from.</p>
+      <div class="proves">&rarr; proves the facts are real and traceable</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">2</div>
+    <div>
+      <h4>An OWL ontology</h4>
+      <p>A formal, machine-computable description of what a reaction <em>is</em> — its parts, and the
+         roles those parts play. Think of it as a schema written in description logic instead of DDL.</p>
+      <div class="proves">&rarr; proves the vocabulary is coherent and can classify</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">3</div>
+    <div>
+      <h4>A graph, with a reasoner run over it</h4>
+      <p>Instance data in that vocabulary. Then a logic engine (HermiT) derives conclusions nobody
+         wrote down — the reaction types are <em>inferred</em>, never asserted.</p>
+      <div class="proves">&rarr; proves the ontology does work rather than decorating</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">4</div>
+    <div>
+      <h4>Validation and tests</h4>
+      <p>SHACL shapes reject malformed data under closed-world semantics. Domain questions run as
+         automated tests on every commit.</p>
+      <div class="proves">&rarr; proves the graph answers what it claims to</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">5</div>
+    <div>
+      <h4>A SPARQL endpoint</h4>
+      <p>Implements the published SPARQL 1.1 Protocol, not a bespoke JSON API, so stock clients work
+         against it unmodified.</p>
+      <div class="proves">&rarr; proves the data is reachable by someone who isn&rsquo;t you</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">6</div>
+    <div>
+      <h4>A container, built by CI</h4>
+      <p>Multi-stage image; the reasoner runs at build time so the runtime ships no JVM. Every gate
+         above runs before the image is allowed to build.</p>
+      <div class="proves">&rarr; proves the result reproduces off your laptop</div>
+    </div>
+  </div>
+</div>
+
+<h2 id="transfers">2. What transfers, and what doesn&rsquo;t</h2>
+
+<p>
+  Being a full-stack developer helps enormously with steps 5 and 6 and almost not at all with steps
+  2 and 3. The honest map:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>You already know</th><th>Maps onto</th><th>Where it breaks down</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Tables, rows, foreign keys</td>
+      <td>Triples, subjects, IRIs</td>
+      <td>There is no schema enforcing shape, and identifiers are global URLs rather than
+          table-local integers</td>
+    </tr>
+    <tr>
+      <td>Neo4j / property graphs</td>
+      <td>RDF graphs</td>
+      <td><strong>RDF edges carry no properties.</strong> This single limitation generates the
+          project&rsquo;s central modelling decision</td>
+    </tr>
+    <tr>
+      <td>SQL</td>
+      <td>SPARQL</td>
+      <td>Very close. Joins are implicit through repeated variable names; there are four query
+          forms, not one</td>
+    </tr>
+    <tr>
+      <td><code>CHECK</code> constraints, JSON Schema, Zod</td>
+      <td>SHACL</td>
+      <td>Almost a clean mapping — and it is <em>not</em> what OWL does, which is the single most
+          common misconception</td>
+    </tr>
+    <tr>
+      <td>TypeScript types, class hierarchies</td>
+      <td>OWL classes</td>
+      <td><strong>The real gap.</strong> OWL classes are sets defined by conditions, and membership
+          is <em>computed</em>. Nothing in mainstream development works this way</td>
+    </tr>
+    <tr>
+      <td>REST, content negotiation, OpenAPI</td>
+      <td>SPARQL 1.1 Protocol</td>
+      <td>Transfers directly. This part of the project is ordinary web engineering</td>
+    </tr>
+    <tr>
+      <td>Docker, CI/CD, semver, lockfiles</td>
+      <td>The same things</td>
+      <td>Transfers directly</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box key">
+  <span class="box-title">The one thing to internalise</span>
+  <p>
+    Every mental model you have for a database assumes a <strong>closed world</strong>: if the row
+    is not there, the answer is <em>no</em>. RDF and OWL assume an <strong>open world</strong>: if
+    the triple is not there, the answer is <em>unknown</em>. Almost every surprise in this stack —
+    why OWL cannot validate, why a reasoner infers rather than rejects, why SHACL had to be invented
+    as a separate standard — comes from that one line.
+  </p>
+</div>
+
+<h2 id="silent">3. The property that shapes the whole design</h2>
+
+<p>
+  You are used to failures that announce themselves: a constraint violation, a 500, a type error, a
+  failed assertion. This domain mostly does not do that.
+</p>
+<p>
+  Use the wrong chemical identifier and your federated query returns <strong>zero rows</strong> —
+  not an error, an empty result set, which is indistinguishable from a correct answer to a question
+  with no matches. Store an identifier as a string where a URL was needed and you get the same
+  empty result. Write a logical class definition that matches nothing and the consistency checker
+  passes it happily, because a class with no members is perfectly consistent.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">The nearest thing in your world</span>
+  <p>
+    A <code>LEFT JOIN</code> where you meant <code>INNER</code>, on a key whose type coerces —
+    joining a <code>VARCHAR</code> column against an <code>INT</code> in a database that silently
+    casts. Every query runs. Every row comes back <code>NULL</code> on the right-hand side. Nothing
+    logs. You find out weeks later from a business report.
+  </p>
+  <p>
+    Now imagine the join key is a chemical identifier, the right-hand table lives at a URL owned by
+    a European research institute, and the correct value differs from the plausible-looking wrong
+    one by a single hydrogen atom. That is the actual bug that broke the first submission, and
+    <a href="07-identity.html">chapter 7</a> is about why it was undetectable from inside the code.
+  </p>
+</div>
+
+<p>
+  Read that way, the parts of the project that look over-engineered — SHACL shapes on a ~390-triple
+  graph, a CI job asserting that the reasoner <em>fired</em>, a deliberately wrong negative-control
+  reaction — are not gold-plating. Each one exists because the corresponding failure is invisible.
+</p>
+
+<h2 id="use">4. How to use this</h2>
+
+<p>
+  Nine chapters. Chapters 1&ndash;5 are the computing stack, told as deltas from what you know;
+  they go quickly if you skim the comparisons and slow down at chapter 3, which is the genuinely
+  new idea. Chapters 6&ndash;8 are the chemistry, built from zero, and are where the real reading
+  time is. Chapter 9 maps everything onto files in the repository.
+</p>
+
+<div class="cards">
+  <a class="card" href="01-rdf.html">
+    <div class="k">Chapter 1</div>
+    <h3>RDF as a database</h3>
+    <p>Triples vs rows vs property graphs, IRIs as global keys, four serialisations of one graph,
+       and how to read Turtle.</p>
+  </a>
+  <a class="card" href="02-sparql.html">
+    <div class="k">Chapter 2</div>
+    <h3>SPARQL &amp; the protocol</h3>
+    <p>SQL side by side with SPARQL, the four query forms, the HTTP binding, and federation as a
+       cross-database join over the internet.</p>
+  </a>
+  <a class="card" href="03-owl.html">
+    <div class="k">Chapter 3</div>
+    <h3>OWL &amp; inference</h3>
+    <p>The one part with no analogue in your stack: open-world semantics, necessary vs sufficient
+       conditions, and what a reasoner computes.</p>
+  </a>
+  <a class="card" href="04-shacl.html">
+    <div class="k">Chapter 4</div>
+    <h3>SHACL &amp; validation</h3>
+    <p>The constraint layer you were expecting OWL to be. Closed world, and the example where OWL
+       and SHACL give opposite answers.</p>
+  </a>
+  <a class="card" href="05-stack.html">
+    <div class="k">Chapter 5</div>
+    <h3>Stores &amp; the stack</h3>
+    <p>Triplestores against the databases you know, why rdflib is SQLite-shaped, and the DCAT/PROV
+       metadata envelope.</p>
+  </a>
+  <a class="card" href="06-enzymes.html">
+    <div class="k">Chapter 6</div>
+    <h3>Enzymes from zero</h3>
+    <p>Catalysis, substrates and products, EC numbers, what a transaminase does, and the cofactor
+       that must not be a participant.</p>
+  </a>
+  <a class="card" href="07-identity.html">
+    <div class="k">Chapter 7</div>
+    <h3>Chemical identity</h3>
+    <p>Why one molecule has many identifiers, what a microspecies is, and the exact trap that made
+       the first submission unjoinable.</p>
+  </a>
+  <a class="card" href="08-databases.html">
+    <div class="k">Chapter 8</div>
+    <h3>The reference databases</h3>
+    <p>ChEBI, Rhea, UniProt, EC, SBO — what each identifies, and why the choice between them
+       decides whether federation is possible at all.</p>
+  </a>
+  <a class="card" href="09-map.html">
+    <div class="k">Chapter 9</div>
+    <h3>Repo map &amp; glossary</h3>
+    <p>Every file and what it is for, the open questions, and a lookup table for every acronym in
+       the project.</p>
+  </a>
+</div>
+
+<div class="box ask">
+  <span class="box-title">On the other primer</span>
+  <p>
+    <code>docs/primer_kundai/</code> is the same project explained in the opposite direction — the
+    computing for someone who knows the biochemistry cold. If you want the chemistry stated by
+    someone assuming you already have it, that is the one to read; this edition assumes the
+    reverse. Where the two overlap they agree, and both are written against the same source
+    documents in <code>docs/</code>.
+  </p>
+</div>
+
+<div class="pager">
+  <span></span>
+  <a class="next" href="01-rdf.html">
+    <span class="dir">Next</span>
+    <span class="t">1 &middot; RDF as a database &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

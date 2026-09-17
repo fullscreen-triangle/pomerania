@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tacat — extension proposal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="1">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a class="here" href="index.html">Start here</a></li>
+    <li><a href="01-floor.html">The floor under identity</a></li>
+    <li><a href="02-closure.html">Closure, not confidence</a></li>
+    <li><a href="03-coherence.html">Three sources or none</a></li>
+    <li><a href="04-boundary.html">Where the model stops</a></li>
+    <li><a href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a href="07-three.html">Three verdicts on one run</a></li>
+    <li><a href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Extension proposal</p>
+<h1>What I would build next, and why</h1>
+<p class="standfirst">
+  Two series. The first five chapters each take a gap the <code>tacat</code> documentation already
+  records against itself and propose one concrete thing to build. The last three are a different
+  register: they describe a personal project — an operating system I have been building alone — that
+  turns out to share LARA's three-part architecture, and they state the experiment that would show
+  the idea is wrong. Nothing here is in the submission.
+</p>
+
+<div class="chips">
+  <span class="chip hot">not shipped</span>
+  <span class="chip">~90 min total</span>
+  <span class="chip">4 proposals · 1 retracted</span>
+  <span class="chip ask">written to be argued with</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance, stated once here and again on every page.</strong> These chapters draw on
+  unpublished, single-author, un-peer-reviewed work of mine — six papers on individuation in finite
+  weighted graphs and bounded resolvable spaces. Nobody else has checked them. They are used here as
+  a source of <em>questions</em>, and every engineering proposal below is written so that it stands
+  without them: if you reject the theory outright, each proposal is still an ordinary,
+  independently-motivated change with an ordinary justification. Where a step is an analogy of mine
+  rather than a theorem in the paper, the chapter says so at that point —
+  <a href="04-boundary.html#honest">Chapter 4 §5</a> is the clearest instance.
+</div>
+
+<h2 id="what">1. What this is, and what it is not</h2>
+
+<div class="vs">
+  <div class="side bad">
+    <h4>It is not</h4>
+    <p>Part of the submission. The <code>tacat</code> repository froze on 28 July 2026 and contains
+    none of this.</p>
+    <p>A claim that the built thing is inadequate. Every gap discussed here is one the project's own
+    <code>GAPS</code> and <code>RATIONALE</code> documents found first, and recorded against
+    themselves.</p>
+    <p>A substitute for the five brief steps. <code>JOB_PROFILE.md</code> §1 is explicit that the
+    stated technology surface is a closed list; this is strictly additional and belongs after it,
+    never instead of it.</p>
+  </div>
+  <div class="side good">
+    <h4>It is</h4>
+    <p>An answer to the question <code>RATIONALE.md</code> §6 says is the real target: <em>does the
+    candidate know where the model stops?</em></p>
+    <p>Four costed proposals, ordered by value per hour, with the weakest one explicitly withdrawn
+    for this scale in <a href="05-cost.html#drop">Chapter 5 §2</a>.</p>
+    <p>Written so that the strongest objection to it appears in it —
+    <a href="05-cost.html#against">Chapter 5 §3</a> states the case against the whole approach as
+    forcefully as I can.</p>
+  </div>
+</div>
+
+<h2 id="map">2. The map</h2>
+
+<p>Each chapter connects one recorded gap to one result to one buildable thing.</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Ch.</th><th>Gap the docs already record</th><th>What the theory says</th><th>Proposal</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="01-floor.html">1</a></td>
+      <td><code>GAPS_2</code> G10 — every identifier could be fabricated and all nine competency
+      questions still passed</td>
+      <td>Identity is a region with positive cost, never a point. No internal check reaches it.</td>
+      <td>A dereference gate comparing formula and charge against the authority itself</td>
+    </tr>
+    <tr>
+      <td><a href="02-closure.html">2</a></td>
+      <td><code>RATIONALE</code> §4 — "everything here fails green"</td>
+      <td>Closure is strictly stronger than a confidence threshold; contested closure ("decline")
+      is a correct outcome, not a failure</td>
+      <td><code>tacat closure</code> — a fourth CLI verb reporting whether any unconsulted source
+      could still change an answer</td>
+    </tr>
+    <tr>
+      <td><a href="03-coherence.html">3</a></td>
+      <td><code>GAPS_2</code> G10 — "human verification … is not a gate: it does not re-run"</td>
+      <td>Robustness to one source failing needs three mutually supporting sources; decidable from
+      agreement signs alone</td>
+      <td><code>tacat:supportedBy</code> recording which independent sources back each fact —
+      <strong>without</strong> the cardinality constraint, see Ch. 5</td>
+    </tr>
+    <tr>
+      <td><a href="04-boundary.html">4</a></td>
+      <td><code>OUT_OF_SCOPE_QUESTIONS</code> — an enumerated boundary that nothing verifies</td>
+      <td>A question is unanswerable when the distinction it needs is finer than any the vocabulary
+      draws; authorship reaches only to its own resolution</td>
+      <td>A test asserting the recorded boundary is really the boundary</td>
+    </tr>
+    <tr>
+      <td><a href="05-cost.html">5</a></td>
+      <td><code>PLAN</code> R5 — anything indefensible is a liability</td>
+      <td>—</td>
+      <td>Costs, build order, one retraction, and the case against all of it</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="second">2b. The second series</h2>
+
+<p>
+  Chapters 6–8 are not proposals against this repository. They describe a hobby project of mine and
+  ask whether it has anything to offer a lab-automation system, which is a claim with a much higher
+  chance of being worthless — so each chapter is written to make that easy to determine.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Ch.</th><th>What it is about</th><th>The load-bearing claim</th><th>How to check it</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="06-lara.html">6</a></td>
+      <td>LARA's architecture (CoRDI 2023) beside mine</td>
+      <td>Two unrelated derivations partitioned the same job the same way</td>
+      <td>Read §1 against §2 — the components are named and public on both sides</td>
+    </tr>
+    <tr>
+      <td><a href="07-three.html">7</a></td>
+      <td>A transaminase screen validated three independent ways</td>
+      <td>The three verdicts must <em>not</em> converge; the middle value carries the information</td>
+      <td>The worked example in §2, and the objection in §6</td>
+    </tr>
+    <tr>
+      <td><a href="08-os.html">8</a></td>
+      <td>What runs, what does not, and what would disprove it</td>
+      <td>Four modules implemented the floor independently — the abstraction was found, not designed</td>
+      <td>§2 names all four; §3 is the experiment that has never been run</td>
+    </tr>
+    <tr>
+      <td><a href="09-enforced.html">9</a></td>
+      <td>Two tests applied to twenty of my own artefacts</td>
+      <td>A floor no machine checks is a field, not a floor — and a validation that cannot fail is not
+      a validation</td>
+      <td>§4 is the tally, including where my own work fails; §3 is a theorem a check forced me to
+      retract</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box trap">
+  <span class="box-title">The pivot between the series</span>
+  <p>
+    <a href="01-floor.html#observed">Chapter 1</a> records G10: three gates green over a graph in
+    which every external identifier was fabricated, because all three were asking variants of one
+    question. <a href="07-three.html#tacat">Chapter 7 §5</a> argues a robot run fails the same way
+    for the same reason — which is why the second series exists at all, and why it is here rather
+    than in a separate document.
+  </p>
+</div>
+
+<h2 id="thread">3. The single thread</h2>
+
+<p>
+  All four proposals are the same move, and it is worth naming because it is the only idea here:
+</p>
+
+<div class="box key">
+  <span class="box-title">The move</span>
+  <p>
+    Every check in the submission today compares the graph against <strong>something inside the
+    graph</strong> — a label against the row that generated it, a PURL against a shape, a test suite
+    against the questions someone thought to write. Those checks are necessary and they are all
+    blind in the same direction. Each proposal below replaces one such check with a comparison
+    against something the project <strong>does not own</strong>: an external authority, an
+    unconsulted source, a distinction the vocabulary cannot draw.
+  </p>
+</div>
+
+<p>
+  That is what the floor theorem says, in one sentence: <em>a thing is individuated only against what
+  it is not</em>, so a check that never leaves the thing cannot individuate it. Whether you reach
+  that conclusion from the theorem or from the G10 corruption run is immaterial to the code — and the
+  code is what is being graded.
+</p>
+
+<h2 id="start">4. Where to start</h2>
+
+<div class="tiles">
+  <a class="tile" href="04-boundary.html">
+    <span class="n">Read this first</span>
+    <h3>4 · Where the model stops</h3>
+    <p>The chapter closest to what <code>RATIONALE</code> §6 names as the real target, and the source
+    of the one-hour proposal I would build before any other.</p>
+  </a>
+  <a class="tile" href="05-cost.html">
+    <span class="n">Then this</span>
+    <h3>5 · What it would cost</h3>
+    <p>The prices, the build order, the proposal I withdraw, and the strongest argument that none of
+    this is needed.</p>
+  </a>
+  <a class="tile" href="01-floor.html">
+    <span class="n">For the theory</span>
+    <h3>1 · The floor under identity</h3>
+    <p>Why G10 was predictable rather than unlucky, and the difference between checking an
+    identifier's spelling and checking that it denotes.</p>
+  </a>
+  <a class="tile" href="02-closure.html">
+    <span class="n">Strongest transfer</span>
+    <h3>2 · Closure, not confidence</h3>
+    <p>Why "the suite is green" is the wrong stopping rule, and what the right one costs.</p>
+  </a>
+  <a class="tile" href="07-three.html">
+    <span class="n">Second series</span>
+    <h3>7 · Three verdicts on one run</h3>
+    <p>One screening plate, three independent validations, three unrelated answers — and why merging
+    them destroys the only information they carry.</p>
+  </a>
+  <a class="tile" href="08-os.html">
+    <span class="n">Second series · the honest one</span>
+    <h3>8 · What exists, and what does not</h3>
+    <p>The status table with nothing held back, and the single experiment that would show chapters 6
+    and 7 are wrong.</p>
+  </a>
+  <a class="tile" href="09-enforced.html">
+    <span class="n">Second series · strongest transfer</span>
+    <h3>9 · Enforced, or merely represented</h3>
+    <p>Two cheap tests, applied to twenty of my own artefacts. One passes both. The proposal that
+    falls out costs an hour and is justified by G10 alone.</p>
+  </a>
+</div>
+
+<div class="box ask">
+  <span class="box-title">One page, if that is all there is time for</span>
+  <p>
+    <a href="05-cost.html">Chapter 5</a> for the first series. It contains the costs, the retraction,
+    and the counterargument — which are the three things that show whether the rest was thought about
+    or merely written. For the second series the equivalent page is
+    <a href="08-os.html">Chapter 8</a>, for the same reason: it is the one carrying the status table
+    and the disproof condition.
+  </p>
+</div>
+
+<div class="pagenav">
+  <span class="spacer"></span>
+  <a href="01-floor.html"><span class="dir">Begin</span>1 · The floor under identity</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

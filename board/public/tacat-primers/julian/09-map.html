@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9 · Repo map &amp; glossary — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a class="here" href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 9</p>
+<h1>Repo map &amp; glossary</h1>
+<p class="standfirst">
+  Where everything lives, what was open and how it closed, and a lookup table for every acronym. This
+  chapter is reference material rather than reading — skim it now, come back to it.
+</p>
+
+<h2 id="trees">1. What is in the working directory</h2>
+
+<p>
+  The repository holds several trees, and knowing which is which saves confusion:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Path</th><th>What it is</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="mono">nfdi4cat-v0/</td>
+      <td>The <strong>already-submitted</strong> first version. Runs, and wrong in the two specific
+          ways chapters 3 and 7 describe. Kept for comparison</td>
+    </tr>
+    <tr>
+      <td class="mono">nfdi4cat-v1/</td>
+      <td>The rebuild — package name <code>tacat</code>. Its own git repository with conventional
+          commit history. <strong>This is the live one</strong></td>
+    </tr>
+    <tr>
+      <td class="mono">nfdi4cat-v1-client/</td>
+      <td>The browser client — its own repository, <code>catalysis/tacat-client</code>. Depends on
+          nothing in the other two: it reaches the endpoint over HTTP like any third party, and a
+          test asserts no module in it imports <code>tacat</code></td>
+    </tr>
+    <tr>
+      <td class="mono">nfdi4cat-sources/</td>
+      <td>Correspondence, research notes, verified reference data</td>
+    </tr>
+    <tr>
+      <td class="mono">refs/</td>
+      <td>Vendored reference material — DCAT-AP+, EMMO, the assessor&rsquo;s own packages</td>
+    </tr>
+    <tr>
+      <td class="mono">docs/</td>
+      <td>The written record. See §2</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Inside <code>nfdi4cat-v1/</code></h3>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>File</th><th>Does</th><th>Chapter</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">src/tacat/reference_data.py</td><td>Verified identifiers as typed frozen dataclasses — the single source of truth, with the three traps documented inline</td><td><a href="07-identity.html">7</a></td></tr>
+    <tr><td class="mono">src/tacat/ontology/</td><td>The build pipeline, one module per stage: <code>schema</code> (T-Box) · <code>population</code> (A-Box) · <code>inference</code> (HermiT) · <code>linking</code> (<code>rdf:type</code>) · <code>provenance</code> · <code>namespaces</code> · <code>builder</code> · <code>build</code></td><td><a href="03-owl.html">3</a></td></tr>
+    <tr><td class="mono">src/tacat/store/</td><td><code>repository</code> is the <code>GraphRepository</code> contract; <code>memory</code> is the rdflib implementation; <code>statistics</code> counts the graph</td><td><a href="05-stack.html">5</a></td></tr>
+    <tr><td class="mono">src/tacat/api/</td><td><code>app</code> (routes) · <code>policy</code> (<strong>the read-only contract</strong>) · <code>negotiation</code> (content types) · <code>examples</code></td><td><a href="02-sparql.html">2</a>, <a href="05-stack.html">5</a></td></tr>
+    <tr><td class="mono">src/tacat/validation.py</td><td>SHACL validation, lifted out of the HTTP layer — conformance is a property of the data</td><td><a href="04-shacl.html">4</a></td></tr>
+    <tr><td class="mono">src/tacat/queries/competency.py</td><td><strong>Eleven</strong> competency questions (CQ01&ndash;CQ11) as executable tests, plus <code>OUT_OF_SCOPE_QUESTIONS</code>. CQ10/CQ11 are the identifier oracles &mdash; they project the PURL rather than the label, because a label-only oracle shares its source with its subject</td><td><a href="02-sparql.html">2</a></td></tr>
+    <tr><td class="mono">src/tacat/queries/federated.py</td><td>The live Rhea + UniProt join, with caching and loud degradation</td><td><a href="02-sparql.html">2</a></td></tr>
+    <tr><td class="mono">src/tacat/artefacts.py</td><td>The build-time / run-time seam</td><td><a href="05-stack.html">5</a></td></tr>
+    <tr><td class="mono">src/tacat/cli.py</td><td><code>tacat build | infer | serve | federate | questions | query</code></td><td>&mdash;</td></tr>
+    <tr><td class="mono">data/reactions.ttl</td><td><strong>Generated.</strong> The reasoned graph, inferred types materialised</td><td><a href="01-rdf.html">1</a></td></tr>
+    <tr><td class="mono">data/shapes.ttl</td><td>SHACL shapes, <code>sh:message</code> on every constraint</td><td><a href="04-shacl.html">4</a></td></tr>
+    <tr><td class="mono">data/dataset.ttl</td><td>DCAT-AP+ self-description; the PROV activity carries the commit SHA and an input checksum</td><td><a href="05-stack.html">5</a></td></tr>
+    <tr><td class="mono">tests/</td><td><strong>182 tests</strong> across 8 files, incl. negative SHACL fixtures and 3 network-marked</td><td><a href="04-shacl.html">4</a></td></tr>
+    <tr><td class="mono">Dockerfile</td><td>Multi-stage; HermiT in the builder, no JVM at runtime</td><td><a href="05-stack.html">5</a></td></tr>
+    <tr><td class="mono">.gitlab-ci.yml</td><td>quality &rarr; verify &rarr; build &rarr; smoke, nine jobs</td><td><a href="05-stack.html">5</a></td></tr>
+    <tr><td class="mono">DECISIONS.md</td><td>Each modelling choice, the alternative rejected, and why</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="docs">2. The written record in <code>docs/</code></h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Document</th><th>Answers</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">BRIEF.md</td><td>Who is assessing this, and what to build</td></tr>
+    <tr><td class="mono">V0_REVIEW.md</td><td>An independent review of the submitted v0 — where the identifier error is diagnosed</td></tr>
+    <tr><td class="mono">IDEAS_1.md</td><td>A separate analysis pass that reached substantially the same architecture</td></tr>
+    <tr><td class="mono">GAPS_0.md</td><td>Round 0 — G1&ndash;G4, all closed; what was declined; and D1&ndash;D3, the decisions with no right answer</td></tr>
+    <tr><td class="mono">GAPS_1.md</td><td>Round 1 — G5&ndash;G8, all closed. Image smoke test, module seams, the w3id namespace, house style</td></tr>
+    <tr><td class="mono">JOB_PROFILE.md</td><td>Who is being hired, as distinct from what was asked for — and what the evidence does <em>not</em> support</td></tr>
+    <tr><td class="mono">TODO_BEFORE_SUBMISSION.md</td><td>What had to be true before the link was sent. A record now &mdash; it was sent on 28 July</td></tr>
+    <tr><td class="mono">CHEATSHEET.md · cheatsheet/</td><td>The live-recall app used <em>during</em> the presentation, and why its content contract is hostile to prose</td></tr>
+    <tr><td class="mono">PLAN.md</td><td>What was built, in what order, and the verification done first-hand</td></tr>
+    <tr><td class="mono">RATIONALE.md</td><td>Why the problem is hard and what is actually being probed</td></tr>
+    <tr><td class="mono">primer_kundai/</td><td>The same project for a biochemist — the computing explained, chemistry assumed</td></tr>
+    <tr><td class="mono">primer_julian/</td><td>This one</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="commands">3. Running it</h2>
+
+<pre><code data-lang="bash">cd nfdi4cat-v1
+
+uv sync --all-groups           # create the environment
+tacat build             # run HermiT, write data/reactions.ttl   (needs a JVM)
+tacat infer             # print what the reasoner derived        (needs a JVM)
+tacat questions         # print the competency questions
+tacat query "SELECT ..."  # one query against the built graph
+tacat federate          # join the graph to live Rhea/UniProt   (needs network)
+uv run pytest                  # 182 tests; 3 network tests deselected by default
+tacat serve             # http://localhost:8000
+
+docker compose up --build      # reasoning happens in the build stage</code></pre>
+
+<p>
+  Two things to know before the first run. <code>build</code> and <code>infer</code> need a JVM on
+  <code>PATH</code>, because Owlready2 runs HermiT as a subprocess. <code>serve</code> does not,
+  <em>provided</em> <code>data/reactions.ttl</code> exists — on a clean checkout it falls back to
+  building in-process and does then need one, and it says so in the log before trying.
+</p>
+
+<h2 id="open">4. What was open, and what is left</h2>
+
+<p>
+  <strong>G1&ndash;G8 are all closed.</strong> They are kept here rather than deleted because the
+  shape of each fix is more interesting than the fix, and because a reviewer who read an earlier
+  draft will ask. Full detail in <code>docs/GAPS_0.md</code> and <code>docs/GAPS_1.md</code>.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th>Item</th><th>State</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="chip ok">G1</span></td>
+      <td><strong>Reproducibility is now guarded.</strong> The <code>reproducible-build</code> job
+          builds twice and compares bytes; <code>tests/test_reproducibility.py</code> asserts the
+          same property, plus the weaker isomorphism form</td>
+      <td class="yes">closed</td>
+    </tr>
+    <tr>
+      <td><span class="chip ok">G2</span></td>
+      <td><strong>Read-only is a policy.</strong> <code>api/policy.py</code> refuses update forms and
+          <code>SERVICE</code> by form rather than by accident of rdflib&rsquo;s parser;
+          <code>tests/test_policy.py</code> covers it</td>
+      <td class="yes">closed</td>
+    </tr>
+    <tr>
+      <td><span class="chip ok">G3</span></td>
+      <td><strong>Provenance carries content.</strong> <code>ontology/provenance.py</code> emits the
+          commit SHA and a sha256 of <code>reference_data.py</code> — deliberately not a timestamp,
+          which would have broken G1</td>
+      <td class="yes">closed</td>
+    </tr>
+    <tr>
+      <td><span class="chip ok">G4</span></td>
+      <td><strong><code>GET /validation</code> exists.</strong> The SHACL report is observable at
+          runtime, not merely asserted in CI</td>
+      <td class="yes">closed</td>
+    </tr>
+    <tr>
+      <td><span class="chip open">D2</span></td>
+      <td>Mint local IRIs typed as the ChEBI class, or use ChEBI PURLs as the nodes directly</td>
+      <td>defensible either way — have the argument ready</td>
+    </tr>
+    <tr>
+      <td><span class="chip open">D3</span></td>
+      <td>Rhea masters are undirected about <em>physiological</em> direction; the local node carries
+          an orientation the master does not assert</td>
+      <td>expect the question</td>
+    </tr>
+    <tr>
+      <td><span class="chip open">K5</span></td>
+      <td>Three reactions map to two proteins (GOT1 carries both 2.6.1.1 and 2.6.1.3), but the
+          builder mints three <code>Enzyme</code> individuals</td>
+      <td>data and code disagree</td>
+    </tr>
+    <tr>
+      <td><span class="chip ok">G7</span></td>
+      <td><code>w3id.org/bitspark/tacat</code> is unregistered <em>deliberately</em> — registering is
+          a permanence commitment. Stated in the README and <code>DECISIONS.md</code> § “The w3id namespace is used but not registered”</td>
+      <td class="yes">closed by disclosure</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="glossary">5. Glossary</h2>
+
+<div class="gloss">
+  <div><span class="term">A-Box</span><span class="def">The instance data of an ontology — individuals and their facts. Your rows.</span></div>
+  <div><span class="term">ALT / AST</span><span class="def">Alanine and aspartate transaminase. Two of the three enzymes here, and the standard liver-function markers on a blood panel.</span></div>
+  <div><span class="term">amino group</span><span class="def">&minus;NH<sub>2</sub>. The thing a transaminase moves from one molecule to another.</span></div>
+  <div><span class="term">bridge node</span><span class="def">An intermediate node that carries the attributes of a relationship, because RDF edges cannot. A join table with columns.</span></div>
+  <div><span class="term">ChEBI</span><span class="def">Chemical Entities of Biological Interest. The identifier authority for molecules.</span></div>
+  <div><span class="term">cofactor</span><span class="def">A non-protein molecule an enzyme needs to work. A <em>prosthetic group</em> stays bound and is not consumed.</span></div>
+  <div><span class="term">competency question</span><span class="def">A question the model must be able to answer, written before building. Here they are also the test suite.</span></div>
+  <div><span class="term">conjugate acid / base</span><span class="def">Two species differing by one hydrogen ion, so by charge and formula. Different ChEBI IDs.</span></div>
+  <div><span class="term">DCAT</span><span class="def">W3C vocabulary for describing datasets in a catalogue. DCAT-AP+ is the NFDI extension.</span></div>
+  <div><span class="term">defined class</span><span class="def">A class with necessary <em>and sufficient</em> conditions, so a reasoner can compute membership rather than being told it.</span></div>
+  <div><span class="term">EC number</span><span class="def">Four-level classification of an enzyme <em>activity</em>, not of a protein. Many-to-many with actual proteins.</span></div>
+  <div><span class="term">FAIR</span><span class="def">Findable, Accessible, Interoperable, Reusable. The research-data principles the whole design answers to.</span></div>
+  <div><span class="term">federation</span><span class="def">Evaluating part of a SPARQL query against a remote endpoint. A cross-database join over HTTP.</span></div>
+  <div><span class="term">HermiT</span><span class="def">The OWL reasoner used here. A Java program Owlready2 runs as a subprocess.</span></div>
+  <div><span class="term">IRI</span><span class="def">Internationalised Resource Identifier. A URL used as a globally unique key.</span></div>
+  <div><span class="term">JSON-LD</span><span class="def">RDF serialised as valid JSON. The format that survives a normal web stack.</span></div>
+  <div><span class="term">materialise</span><span class="def">Write computed triples into the stored graph so queries need no reasoner. A materialised view.</span></div>
+  <div><span class="term">microspecies</span><span class="def">One protonation state of a compound. The Unicode normalisation form of chemistry.</span></div>
+  <div><span class="term">n-ary relation</span><span class="def">A relationship with more than two participants, or with its own attributes. Needs a bridge node in RDF.</span></div>
+  <div><span class="term">NFDI4Cat</span><span class="def">The German national research-data infrastructure consortium for catalysis. The context for the assignment.</span></div>
+  <div><span class="term">OBO Foundry</span><span class="def">The biomedical ontology community and its principles — including FP-005, reuse rather than mint.</span></div>
+  <div><span class="term">open-world assumption</span><span class="def">A missing fact is unknown, not false. Why OWL cannot validate.</span></div>
+  <div><span class="term">OWL</span><span class="def">Web Ontology Language. Description logic for the semantic web.</span></div>
+  <div><span class="term">Owlready2</span><span class="def">Python library for authoring OWL and driving a reasoner.</span></div>
+  <div><span class="term">PLP</span><span class="def">Pyridoxal 5&prime;-phosphate. The vitamin-B6-derived prosthetic group of all three enzymes here. CHEBI:597326.</span></div>
+  <div><span class="term">ping-pong bi-bi</span><span class="def">Two substrates in, two products out, first product leaving before the second substrate binds. Why PLP does not balance.</span></div>
+  <div><span class="term">property path</span><span class="def">Multi-hop traversal in one SPARQL pattern, with regex-like operators. <code>+</code> is a recursive CTE.</span></div>
+  <div><span class="term">PROV-O</span><span class="def">W3C provenance vocabulary — entity, activity, agent.</span></div>
+  <div><span class="term">PURL</span><span class="def">Persistent URL, run by the curating institution so the identifier outlives the hosting.</span></div>
+  <div><span class="term">RDF</span><span class="def">Resource Description Framework. Graph data as subject-predicate-object triples.</span></div>
+  <div><span class="term">Reac4Cat</span><span class="def">NFDI4Cat&rsquo;s own reaction ontology, which chose a BFO role pattern rather than n-ary participation.</span></div>
+  <div><span class="term">reasoner</span><span class="def">A theorem prover that checks consistency, classifies, and computes class membership.</span></div>
+  <div><span class="term">Rhea</span><span class="def">Reference database of biochemical reactions. Four IDs per reaction; models them as OWL classes.</span></div>
+  <div><span class="term">SBO</span><span class="def">Systems Biology Ontology. Supplies the participant-role terms.</span></div>
+  <div><span class="term">SHACL</span><span class="def">Shapes Constraint Language. Closed-world validation for RDF. Your JSON Schema.</span></div>
+  <div><span class="term">SPARQL</span><span class="def">The query language and the HTTP protocol for RDF.</span></div>
+  <div><span class="term">stoichiometric coefficient</span><span class="def">How many equivalents of a species take part. The value a binary predicate has nowhere to put.</span></div>
+  <div><span class="term">substrate / product</span><span class="def">What goes in / what comes out. <strong>Roles in a direction, not types of molecule.</strong></span></div>
+  <div><span class="term">T-Box</span><span class="def">The classes, properties and axioms of an ontology. Schema-shaped, but not enforced.</span></div>
+  <div><span class="term">tautomer</span><span class="def">Same formula, hydrogen in a different place, interconverting spontaneously. Different ChEBI ID.</span></div>
+  <div><span class="term">transaminase</span><span class="def">An enzyme that moves an amino group between an amino acid and a 2-oxo acid.</span></div>
+  <div><span class="term">QueryPolicy</span><span class="def">The read-only contract in <code>api/policy.py</code> — which query forms may be asked of the endpoint, decided rather than inherited from a parser.</span></div>
+  <div><span class="term">GraphRepository</span><span class="def">What the service needs of a store, stated in one place. For legibility, not portability — rdflib already ships <code>SPARQLStore</code>.</span></div>
+  <div><span class="term">Turtle</span><span class="def">The readable RDF syntax. <code>.ttl</code>.</span></div>
+  <div><span class="term">UniProt</span><span class="def">Protein database. Also the source of the canonical EC class IRIs.</span></div>
+  <div><span class="term">w3id.org</span><span class="def">Community-run persistent-identifier redirect service. Namespaces are registered by pull request.</span></div>
+  <div><span class="term">zwitterion</span><span class="def">A form with both a positive and a negative site, net charge zero. Not the same as the neutral form.</span></div>
+</div>
+
+<h2 id="five">6. If you retain five things</h2>
+
+<div class="pipeline">
+  <div class="step">
+    <div class="n">1</div>
+    <div>
+      <h4>Identifiers are global URLs, and that is the whole architecture</h4>
+      <p>Reuse them and a live join against UniProt works. Mint your own and it returns zero rows,
+         with no error.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">2</div>
+    <div>
+      <h4>RDF edges carry no properties</h4>
+      <p>So participation needs a bridge node carrying entity, role and coefficient — which is what
+         makes &ldquo;4 reactions involve L-glutamate, 3 produce it&rdquo; expressible.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">3</div>
+    <div>
+      <h4>Necessary versus sufficient is the difference from a database</h4>
+      <p>Nothing asserts these reactions are transaminations — a reasoner derives it from the
+         participant-role structure, and a control is correctly excluded. Two caveats worth carrying:
+         the definition is a <em>signature</em>, so a reaction where nothing happens would satisfy it;
+         and the shipped control fails on <em>arity</em>, not role.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">4</div>
+    <div>
+      <h4>PLP is on the enzyme, not the reaction</h4>
+      <p>It cycles and returns to its starting state, so it does not balance. Modelling it as a
+         substrate would pass every syntactic check and be chemically false.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">5</div>
+    <div>
+      <h4>This domain fails green</h4>
+      <p>Wrong identifier, string instead of link, empty defined class, truncated federated join —
+         all return success. Every gate in the project exists because a specific failure is
+         invisible.</p>
+    </div>
+  </div>
+</div>
+
+<div class="box key">
+  <span class="box-title">And one framing</span>
+  <p>
+    <strong>The requested demo, treated as a miniature FAIR data product.</strong> Reusing ChEBI rather than
+    minting, running a reasoner, the validation gates, the federated query — each is a consequence
+    of that sentence rather than an item on a feature list.
+  </p>
+</div>
+
+<div class="pager">
+  <a href="08-databases.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; 8 &middot; The reference databases</span>
+  </a>
+  <a class="next" href="index.html">
+    <span class="dir">Back to</span>
+    <span class="t">Start here &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

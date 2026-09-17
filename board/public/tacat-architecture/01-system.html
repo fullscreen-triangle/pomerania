@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tacat architecture · 01 · System overview</title>
+<style>
+  :root {
+      --bg:        #141413;
+      --panel:     #1c1b1a;
+      --ink:       #ecebe9;
+      --ink-soft:  #b0aca6;
+      --ink-faint: #7d7973;
+      --rule:      #322f2c;
+
+      --authored:      #16305c;
+      --authored-line: #6ba3f5;
+      --authored-ink:  #cfe0fb;
+
+      --generated:      #4a3208;
+      --generated-line: #e8a838;
+      --generated-ink:  #f7e2b4;
+
+      --seam:      #33215e;
+      --seam-line: #a78bfa;
+      --seam-ink:  #e2d8fb;
+
+      --external:      #12401f;
+      --external-line: #4ade80;
+      --external-ink:  #c9f2d5;
+
+      --tool:      #2a2825;
+      --tool-line: #9c9791;
+      --tool-ink:  #d6d2cc;
+
+      --band-build: #1d1a2b;
+      --band-run:   #16241f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #141413;
+      --panel:     #1c1b1a;
+      --ink:       #ecebe9;
+      --ink-soft:  #b0aca6;
+      --ink-faint: #7d7973;
+      --rule:      #322f2c;
+
+      --authored:      #16305c;
+      --authored-line: #6ba3f5;
+      --authored-ink:  #cfe0fb;
+
+      --generated:      #4a3208;
+      --generated-line: #e8a838;
+      --generated-ink:  #f7e2b4;
+
+      --seam:      #33215e;
+      --seam-line: #a78bfa;
+      --seam-ink:  #e2d8fb;
+
+      --external:      #12401f;
+      --external-line: #4ade80;
+      --external-ink:  #c9f2d5;
+
+      --tool:      #2a2825;
+      --tool-line: #9c9791;
+      --tool-ink:  #d6d2cc;
+
+      --band-build: #1d1a2b;
+      --band-run:   #16241f;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1.5rem 6rem;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.65 ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 1240px; margin: 0 auto; }
+
+  nav.sheets {
+    display: flex; flex-wrap: wrap; gap: .35rem; margin: 0 0 2.25rem;
+    padding-bottom: .9rem; border-bottom: 1px solid var(--rule); font-size: .82rem;
+  }
+  nav.sheets a, nav.sheets span {
+    padding: .34rem .7rem; border-radius: 6px; text-decoration: none;
+    color: var(--ink-soft); border: 1px solid transparent;
+  }
+  nav.sheets a:hover { background: var(--panel); border-color: var(--rule); color: var(--ink); }
+  nav.sheets a[aria-current="page"] {
+    background: var(--seam); border-color: var(--seam-line); color: var(--seam-ink); font-weight: 620;
+  }
+  nav.sheets span.planned { color: var(--ink-faint); opacity: .65; }
+  nav.sheets span.planned::after { content: " · planned"; font-size: .9em; }
+
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; font-size: .9rem; }
+  .pager a { color: var(--seam-line); text-decoration: none; font-weight: 560; }
+  .pager a:hover { text-decoration: underline; }
+
+  .eyebrow {
+    font-size: .78rem; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 600; margin: 0 0 .5rem;
+  }
+  h1 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); line-height: 1.15; margin: 0 0 .75rem; letter-spacing: -.02em; }
+  h2 {
+    font-size: 1.18rem; margin: 3rem 0 .9rem; letter-spacing: -.01em;
+    padding-bottom: .45rem; border-bottom: 1px solid var(--rule);
+  }
+  h3 { font-size: .97rem; margin: 1.8rem 0 .5rem; letter-spacing: -.005em; }
+  p { margin: 0 0 1rem; max-width: 74ch; color: var(--ink-soft); }
+  p.lede { font-size: 1.06rem; color: var(--ink); max-width: 72ch; }
+  strong { color: var(--ink); font-weight: 650; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .875em; background: var(--panel); border: 1px solid var(--rule);
+    border-radius: 4px; padding: .1em .38em;
+  }
+
+  .figure {
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 12px;
+    padding: 1.25rem; margin: 1.75rem 0; overflow-x: auto;
+  }
+  .figure svg { display: block; width: 100%; height: auto; min-width: 940px; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: .5rem 1.5rem;
+    margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--rule);
+    font-size: .84rem; color: var(--ink-soft);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: .5rem; }
+  .swatch { width: 15px; height: 15px; border-radius: 3px; flex: none; }
+
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.5rem; font-size: .9rem; }
+  th, td { text-align: left; padding: .5rem .7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 620; color: var(--ink); font-size: .8rem; letter-spacing: .03em; text-transform: uppercase; }
+  td:first-child { white-space: nowrap; }
+  td code { background: none; border: none; padding: 0; }
+
+  .note {
+    border-left: 3px solid var(--seam-line); background: var(--panel);
+    padding: .85rem 1.1rem; margin: 1.25rem 0; border-radius: 0 8px 8px 0;
+  }
+  .note p:last-child { margin-bottom: 0; }
+
+  footer {
+    margin-top: 4rem; padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    font-size: .85rem; color: var(--ink-faint);
+  }
+  ol.next { color: var(--ink-soft); font-size: .9rem; padding-left: 1.2rem; }
+  ol.next li { margin-bottom: .35rem; }
+
+  /* SVG typography */
+  .n-title { font: 600 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .n-role  { font: 400 11px ui-sans-serif, -apple-system, "Segoe UI", sans-serif; }
+  .g-label { font: 600 11.5px ui-sans-serif, -apple-system, "Segoe UI", sans-serif; letter-spacing: .07em; }
+  .b-label { font: 700 12px ui-sans-serif, -apple-system, "Segoe UI", sans-serif; letter-spacing: .11em; }
+  .e-label { font: 400 10.5px ui-sans-serif, -apple-system, "Segoe UI", sans-serif; }
+</style>
+</head>
+<body>
+<main>
+
+  <nav class="sheets">
+    <a href="01-system.html" aria-current="page">01 · System</a>
+    <a href="02-ontology.html">02 · Ontology</a>
+    <a href="03-delivery.html">03 · Build &amp; delivery</a>
+    <a href="04-identity.html">04 · Identity &amp; federation</a>
+    <a href="05-request.html">05 · The request path</a>
+  </nav>
+
+  <p class="eyebrow">tacat architecture · 01 of a series</p>
+  <h1>System overview</h1>
+
+  <p class="lede">
+    <strong>tacat</strong> is a knowledge graph of three PLP-dependent transaminase reactions: an OWL
+    ontology, reasoned over at build time, served through a SPARQL&nbsp;1.1 endpoint. This diagram
+    shows the components and the direction data moves between them.
+  </p>
+
+  <p>
+    The architecture is organised around one decision, and it is the horizontal band in the middle of
+    the diagram: <strong>reasoning happens when the image is built, never when a request is
+    served.</strong> Everything above that line needs a JVM and runs once; everything below it loads a
+    finished artefact and needs no reasoner at all.
+  </p>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 1010" role="img" aria-labelledby="dt dd">
+    <title id="dt">tacat system architecture</title>
+    <desc id="dd">
+      Curated reference data feeds an ontology build layer which runs the HermiT reasoner and emits a
+      Turtle graph. That artefact is the seam: below it, an in-memory store and a FastAPI service load
+      the finished graph and serve SPARQL over HTTP without a reasoner.
+    </desc>
+
+    <defs>
+      <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+      </marker>
+      <marker id="arw-open" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,1 L9,5 L0,9" fill="none" stroke="var(--seam-line)" stroke-width="1.6"/>
+      </marker>
+    </defs>
+
+    <!-- ============================== BUILD BAND ============================== -->
+    <rect x="16" y="86" width="1168" height="300" rx="12" fill="var(--band-build)"/>
+    <text x="36" y="112" class="b-label" fill="var(--seam-line)">BUILD TIME · REQUIRES A JVM · RUNS ONCE</text>
+
+    <!-- reference data -->
+    <rect x="34" y="196" width="186" height="76" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="127" y="223" class="n-title" fill="var(--authored-ink)" text-anchor="middle">reference_data.py</text>
+    <text x="127" y="241" class="n-role" fill="var(--authored-ink)" text-anchor="middle">verified ChEBI · Rhea</text>
+    <text x="127" y="256" class="n-role" fill="var(--authored-ink)" text-anchor="middle">EC · UniProt identifiers</text>
+
+    <!-- ontology group -->
+    <rect x="256" y="132" width="710" height="220" rx="10" fill="none" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <text x="272" y="152" class="g-label" fill="var(--ink-faint)">ONTOLOGY/ — BUILDS</text>
+
+    <rect x="276" y="168" width="150" height="62" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="351" y="192" class="n-title" fill="var(--authored-ink)" text-anchor="middle">schema.py</text>
+    <text x="351" y="211" class="n-role" fill="var(--authored-ink)" text-anchor="middle">T-Box · defined class</text>
+
+    <rect x="276" y="246" width="150" height="62" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="351" y="270" class="n-title" fill="var(--authored-ink)" text-anchor="middle">population.py</text>
+    <text x="351" y="289" class="n-role" fill="var(--authored-ink)" text-anchor="middle">A-Box · instances</text>
+
+    <rect x="444" y="168" width="150" height="62" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="519" y="192" class="n-title" fill="var(--authored-ink)" text-anchor="middle">linking.py</text>
+    <text x="519" y="211" class="n-role" fill="var(--authored-ink)" text-anchor="middle">rdf:type → external classes</text>
+
+    <rect x="444" y="246" width="150" height="62" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="519" y="270" class="n-title" fill="var(--authored-ink)" text-anchor="middle">provenance.py</text>
+    <text x="519" y="289" class="n-role" fill="var(--authored-ink)" text-anchor="middle">PROV · checksum · SHA</text>
+
+    <rect x="612" y="168" width="152" height="140" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2.2"/>
+    <text x="688" y="222" class="n-title" fill="var(--authored-ink)" text-anchor="middle">builder.py</text>
+    <text x="688" y="243" class="n-role" fill="var(--authored-ink)" text-anchor="middle">orchestration</text>
+    <text x="688" y="259" class="n-role" fill="var(--authored-ink)" text-anchor="middle">only</text>
+
+    <rect x="786" y="168" width="160" height="62" rx="7" fill="var(--tool)" stroke="var(--tool-line)" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <text x="866" y="192" class="n-title" fill="var(--tool-ink)" text-anchor="middle">HermiT</text>
+    <text x="866" y="211" class="n-role" fill="var(--tool-ink)" text-anchor="middle">OWL DL reasoner (JVM)</text>
+
+    <rect x="786" y="246" width="160" height="62" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="866" y="270" class="n-title" fill="var(--authored-ink)" text-anchor="middle">inference.py</text>
+    <text x="866" y="289" class="n-role" fill="var(--authored-ink)" text-anchor="middle">asserted vs derived</text>
+
+    <!-- namespaces, off to the right -->
+    <rect x="994" y="196" width="172" height="76" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="1080" y="223" class="n-title" fill="var(--authored-ink)" text-anchor="middle">namespaces.py</text>
+    <text x="1080" y="241" class="n-role" fill="var(--authored-ink)" text-anchor="middle">BASE_IRI · VERSION_IRI</text>
+    <text x="1080" y="256" class="n-role" fill="var(--authored-ink)" text-anchor="middle">SOURCE_REPOSITORY</text>
+
+    <!-- build-band edges -->
+    <path d="M220,234 L270,234" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#arw)"/>
+    <path d="M426,199 L438,199" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)"/>
+    <path d="M426,277 L438,277" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)"/>
+    <path d="M594,199 L606,199" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)"/>
+    <path d="M594,277 L606,277" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)"/>
+    <path d="M764,208 L780,199" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)"/>
+    <path d="M786,214 Q772,238 766,252" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)"/>
+    <path d="M994,234 L972,234" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)"/>
+
+    <!-- ============================== THE SEAM ============================== -->
+    <!-- The line stops at artefacts.py rather than running past it: that module is
+         where the seam is actually defined, so the boundary terminates in it. -->
+    <line x1="16" y1="404" x2="884" y2="404" stroke="var(--generated-line)" stroke-width="1.5" stroke-dasharray="7 5"/>
+    <path d="M688,308 L688,424" stroke="var(--generated-line)" stroke-width="2.4" fill="none" marker-end="url(#arw)"/>
+
+    <rect x="890" y="370" width="278" height="68" rx="8" fill="var(--authored)"
+          stroke="var(--generated-line)" stroke-width="2.4"/>
+    <text x="1029" y="394" class="n-title" fill="var(--authored-ink)" text-anchor="middle">artefacts.py</text>
+    <text x="1029" y="412" class="n-role" fill="var(--authored-ink)" text-anchor="middle">$TACAT_DATA_DIR, else ./data</text>
+    <text x="1029" y="428" class="n-role" fill="var(--authored-ink)" text-anchor="middle">the seam, in code — imports no reasoner</text>
+
+    <path d="M932,438 Q900,462 816,466" stroke="var(--generated-line)" stroke-width="1.4" fill="none"
+          stroke-dasharray="4 3" marker-end="url(#arw)"/>
+    <text x="884" y="486" class="e-label" fill="var(--ink-faint)" text-anchor="middle">locates</text>
+
+    <rect x="392" y="426" width="416" height="76" rx="9" fill="var(--generated)" stroke="var(--generated-line)" stroke-width="2.4"/>
+    <text x="600" y="455" class="n-title" fill="var(--generated-ink)" text-anchor="middle">data/reactions.ttl</text>
+    <text x="600" y="474" class="n-role" fill="var(--generated-ink)" text-anchor="middle">the reasoned graph — inferred types materialised</text>
+    <text x="600" y="490" class="n-role" fill="var(--generated-ink)" text-anchor="middle">generated · not git-tracked · this is the seam</text>
+
+    <text x="36" y="452" class="b-label" fill="var(--generated-line)">ARTEFACT</text>
+
+    <!-- ============================== RUN BAND ============================== -->
+    <rect x="16" y="524" width="1168" height="256" rx="12" fill="var(--band-run)"/>
+    <text x="36" y="550" class="b-label" fill="var(--external-line)">RUN TIME · NO JVM · NO REASONER IN THE REQUEST PATH</text>
+
+    <path d="M600,502 L600,566 L268,566 L268,588" stroke="var(--ink-faint)" stroke-width="1.8" fill="none" marker-end="url(#arw)"/>
+
+    <!-- store -->
+    <rect x="34" y="590" width="176" height="70" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="122" y="616" class="n-title" fill="var(--authored-ink)" text-anchor="middle">store/memory.py</text>
+    <text x="122" y="635" class="n-role" fill="var(--authored-ink)" text-anchor="middle">loads the artefact</text>
+
+    <rect x="234" y="590" width="196" height="70" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2.4"/>
+    <text x="332" y="612" class="n-title" fill="var(--seam-ink)" text-anchor="middle">GraphRepository</text>
+    <text x="332" y="630" class="n-role" fill="var(--seam-ink)" text-anchor="middle">Protocol — the store contract</text>
+    <text x="332" y="646" class="n-role" fill="var(--seam-ink)" text-anchor="middle">store/repository.py</text>
+
+    <path d="M210,625 L228,625" stroke="var(--seam-line)" stroke-width="1.8" fill="none" marker-end="url(#arw-open)" stroke-dasharray="4 3"/>
+    <text x="219" y="678" class="e-label" fill="var(--seam-line)" text-anchor="middle">implements</text>
+
+    <rect x="234" y="686" width="196" height="70" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2.4"/>
+    <text x="332" y="708" class="n-title" fill="var(--seam-ink)" text-anchor="middle">QueryPolicy</text>
+    <text x="332" y="726" class="n-role" fill="var(--seam-ink)" text-anchor="middle">read-only rules · no web framework</text>
+    <text x="332" y="742" class="n-role" fill="var(--seam-ink)" text-anchor="middle">api/policy.py</text>
+
+    <!-- api -->
+    <rect x="474" y="590" width="176" height="166" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2.2"/>
+    <text x="562" y="662" class="n-title" fill="var(--authored-ink)" text-anchor="middle">api/app.py</text>
+    <text x="562" y="682" class="n-role" fill="var(--authored-ink)" text-anchor="middle">FastAPI wiring</text>
+
+    <path d="M430,625 L468,625" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#arw)"/>
+    <path d="M430,721 L468,700" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#arw)"/>
+
+    <rect x="690" y="590" width="168" height="70" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="774" y="616" class="n-title" fill="var(--authored-ink)" text-anchor="middle">negotiation.py</text>
+    <text x="774" y="635" class="n-role" fill="var(--authored-ink)" text-anchor="middle">JSON · CSV · Turtle</text>
+
+    <rect x="690" y="686" width="168" height="70" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="774" y="712" class="n-title" fill="var(--authored-ink)" text-anchor="middle">examples.py</text>
+    <text x="774" y="731" class="n-role" fill="var(--authored-ink)" text-anchor="middle">advertised queries</text>
+
+    <path d="M650,625 L684,625" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#arw)"/>
+    <path d="M650,700 L684,721" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#arw)"/>
+
+    <rect x="922" y="622" width="244" height="92" rx="9" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+    <text x="1044" y="654" class="n-title" fill="var(--external-ink)" text-anchor="middle">HTTP :8000</text>
+    <text x="1044" y="674" class="n-role" fill="var(--external-ink)" text-anchor="middle">/sparql · /health · /validation</text>
+    <text x="1044" y="690" class="n-role" fill="var(--external-ink)" text-anchor="middle">SPARQL 1.1 protocol, read subset</text>
+
+    <path d="M858,660 L916,666" stroke="var(--ink-faint)" stroke-width="1.8" fill="none" marker-end="url(#arw)"/>
+
+    <!-- ============================== SUPPORTING ============================== -->
+    <text x="36" y="828" class="b-label" fill="var(--ink-faint)">CROSS-CUTTING &amp; EXTERNAL</text>
+
+    <rect x="34" y="844" width="196" height="76" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="132" y="870" class="n-title" fill="var(--authored-ink)" text-anchor="middle">queries/competency.py</text>
+    <text x="132" y="888" class="n-role" fill="var(--authored-ink)" text-anchor="middle">the specification,</text>
+    <text x="132" y="903" class="n-role" fill="var(--authored-ink)" text-anchor="middle">executable — CQ01–CQ11</text>
+
+    <rect x="254" y="844" width="196" height="76" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="352" y="870" class="n-title" fill="var(--authored-ink)" text-anchor="middle">queries/federated.py</text>
+    <text x="352" y="888" class="n-role" fill="var(--authored-ink)" text-anchor="middle">Rhea + UniProt join</text>
+    <text x="352" y="903" class="n-role" fill="var(--authored-ink)" text-anchor="middle">CLI only, never a request</text>
+
+    <rect x="474" y="844" width="196" height="76" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.5"/>
+    <text x="572" y="870" class="n-title" fill="var(--authored-ink)" text-anchor="middle">validation.py</text>
+    <text x="572" y="888" class="n-role" fill="var(--authored-ink)" text-anchor="middle">pySHACL over</text>
+    <text x="572" y="903" class="n-role" fill="var(--authored-ink)" text-anchor="middle">data/shapes.ttl</text>
+
+    <rect x="694" y="844" width="220" height="76" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.8"/>
+    <text x="804" y="870" class="n-title" fill="var(--external-ink)" text-anchor="middle">ChEBI · Rhea · UniProt</text>
+    <text x="804" y="888" class="n-role" fill="var(--external-ink)" text-anchor="middle">PURLs — reused as IRIs,</text>
+    <text x="804" y="903" class="n-role" fill="var(--external-ink)" text-anchor="middle">never minted locally</text>
+
+    <rect x="938" y="844" width="228" height="76" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.8"
+          stroke-dasharray="5 3"/>
+    <text x="1052" y="870" class="n-title" fill="var(--external-ink)" text-anchor="middle">live SPARQL endpoints</text>
+    <text x="1052" y="888" class="n-role" fill="var(--external-ink)" text-anchor="middle">sparql.rhea-db.org</text>
+    <text x="1052" y="903" class="n-role" fill="var(--external-ink)" text-anchor="middle">sparql.uniprot.org</text>
+
+    <path d="M450,882 L688,882" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)" stroke-dasharray="4 3"/>
+    <path d="M914,882 L932,882" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#arw)" stroke-dasharray="4 3"/>
+  </svg>
+
+  <div class="legend">
+    <span><i class="swatch" style="background:var(--authored);border:1.5px solid var(--authored-line)"></i> authored module</span>
+    <span><i class="swatch" style="background:var(--generated);border:1.5px solid var(--generated-line)"></i> generated artefact</span>
+    <span><i class="swatch" style="background:var(--seam);border:2px solid var(--seam-line)"></i> contract (<code>Protocol</code>)</span>
+    <span><i class="swatch" style="background:var(--external);border:1.5px solid var(--external-line)"></i> external / boundary</span>
+    <span><i class="swatch" style="background:var(--tool);border:1.5px dashed var(--tool-line)"></i> third-party tool</span>
+  </div>
+  </div>
+
+  <h2>Reading the diagram</h2>
+
+  <h3>The dashed line is the whole design</h3>
+  <p>
+    Above it, <code>builder.py</code> assembles the T-Box and A-Box, runs <strong>HermiT</strong>, and
+    writes <code>data/reactions.ttl</code> with the inferred types already materialised. Below it,
+    nothing reasons. The container's builder stage installs a JVM; the runtime stage installs no Java
+    at all and copies only the finished graph.
+  </p>
+  <p>
+    The consequence worth stating out loud: the served endpoint answers
+    <code>?r a tacat:TransaminationReaction</code> — an <em>inferred</em> type — from plain SPARQL with
+    no reasoner in the request path. And if reasoning fails, the image does not build.
+  </p>
+  <p>
+    The line terminates in <code>artefacts.py</code> because that is the seam expressed as code rather
+    than as a diagram. It resolves one agreed location for the graph — <code>$TACAT_DATA_DIR</code> in
+    the container, <code>./data</code> in a checkout — so neither side hard-codes a path, and it
+    deliberately imports nothing from <code>ontology/</code>. That omission is the load-bearing part:
+    it is what stops the serving process from pulling in Owlready2, and therefore what makes "no JVM
+    at run time" a property of the code rather than of the Dockerfile alone.
+  </p>
+  <p>
+    What <code>schema.py</code> actually contains — the n-ary participation pattern, the defined class
+    whose four conjuncts produce that inferred type, and the negative control that must not match — is
+    <a href="02-ontology.html">sheet 02</a>.
+  </p>
+
+  <h3>Two contracts, drawn in violet</h3>
+  <p>
+    <code>GraphRepository</code> and <code>QueryPolicy</code> are the only stated interfaces. They exist
+    for legibility rather than portability — the honest claim is that they make the architecture
+    readable, not that a different store could be dropped in unchanged. <code>GraphRepository</code>
+    deliberately exposes an rdflib escape hatch, because pySHACL cannot be handed a Protocol.
+  </p>
+  <p>
+    <code>QueryPolicy</code> imports no web framework and raises a domain error the HTTP layer
+    translates, so the read-only rules are testable without a client. A test asserts the absence of
+    that import.
+  </p>
+
+  <h3>Arrows point the way data moves, not the way modules import</h3>
+  <p>
+    <code>reference_data.py</code> is the single source of curated truth and has no dependencies of its
+    own; three separate modules read it. <code>namespaces.py</code> holds only constants — including
+    <code>SOURCE_REPOSITORY</code>, which is written <em>into</em> the graph as a provenance target
+    rather than being documentation.
+  </p>
+
+  <div class="note">
+    <p>
+      <strong>What the diagram does not show.</strong> The CI pipeline (four stages: quality → verify →
+      build → smoke) and the two-stage Dockerfile both wrap this picture rather than appear in it.
+      They are the subject of sheet 03.
+    </p>
+  </div>
+
+  <h2>Components</h2>
+  <table>
+    <thead><tr><th>Module</th><th>Responsibility</th></tr></thead>
+    <tbody>
+      <tr><td><code>reference_data.py</code></td><td>Verified ChEBI, Rhea, EC and UniProt identifiers as frozen dataclasses. The one source of curated truth; its SHA-256 is recorded in provenance.</td></tr>
+      <tr><td><code>ontology/namespaces.py</code></td><td>Namespace constants. <code>SOURCE_REPOSITORY</code> becomes a <code>prov:wasRevisionOf</code> target in the graph.</td></tr>
+      <tr><td><code>ontology/schema.py</code></td><td>The T-Box — classes, properties, and the defined class <code>TransaminationReaction</code>. One function, because the Owlready2 DSL requires lexical co-location.</td></tr>
+      <tr><td><code>ontology/population.py</code></td><td>The A-Box — reaction, participant and entity individuals built from the reference data.</td></tr>
+      <tr><td><code>ontology/linking.py</code></td><td>Types every minted node as an instance of the external class it reuses. The fix for the defect that made the predecessor unjoinable.</td></tr>
+      <tr><td><code>ontology/provenance.py</code></td><td>PROV envelope: software version, reference-data checksum, commit SHA. Deliberately no wall-clock timestamp — a test fails if one is added.</td></tr>
+      <tr><td><code>ontology/builder.py</code></td><td>Orchestration only: schema → populate → HermiT → flatten the world → link → provenance.</td></tr>
+      <tr><td><code>ontology/inference.py</code></td><td>Reports what was asserted versus what the reasoner derived. Backs the <code>tacat infer</code> command and the CI inference gate.</td></tr>
+      <tr><td><code>ontology/build.py</code></td><td>Stable entry point. Re-exports the build surface so callers depend on one name rather than on the internal split.</td></tr>
+      <tr><td><code>store/repository.py</code></td><td><code>GraphRepository</code> — the contract between the service and the graph it serves.</td></tr>
+      <tr><td><code>store/memory.py</code></td><td>In-process implementation; loads the Turtle artefact, falling back to an in-process build if it is missing.</td></tr>
+      <tr><td><code>store/statistics.py</code></td><td>Graph statistics for the landing page, counted by SPARQL against the contract rather than by reaching into rdflib.</td></tr>
+      <tr><td><code>api/policy.py</code></td><td><code>QueryPolicy</code> — query-form whitelist and result cap, via a lexical scanner rather than a regex, because <code>#</code> is legal inside an IRI.</td></tr>
+      <tr><td><code>api/negotiation.py</code></td><td>SPARQL 1.1 result serialisation and content negotiation.</td></tr>
+      <tr><td><code>api/examples.py</code></td><td>The queries the landing page advertises. Every one is executed by the test suite — an advertised query that does not parse is a defect a green suite would otherwise hide.</td></tr>
+      <tr><td><code>api/app.py</code></td><td>FastAPI wiring. Queries run in a threadpool so one expensive request cannot block <code>/health</code>.</td></tr>
+      <tr><td><code>queries/competency.py</code></td><td>Competency questions as the executable specification — CQ01–CQ04 quoted from NFDI4Cat's own set, CQ10–CQ11 the identifier oracles.</td></tr>
+      <tr><td><code>queries/federated.py</code></td><td>The live Rhea/UniProt join, behind <code>tacat federate</code>. Refused in the HTTP request path.</td></tr>
+      <tr><td><code>validation.py</code></td><td>pySHACL over <code>data/shapes.ttl</code>, exposed at <code>GET /validation</code>.</td></tr>
+      <tr><td><code>artefacts.py</code></td><td>The build-time / run-time seam. Resolves the artefact directory (<code>$TACAT_DATA_DIR</code>, else <code>./data</code>) for both sides, and imports nothing from <code>ontology/</code> so the runtime never pulls in Owlready2.</td></tr>
+      <tr><td><code>tacat_logger.py</code></td><td><code>get_logger(name)</code>. A dedicated logging module, never bare <code>print</code> — house style, and it is what makes the build's decisions observable in CI.</td></tr>
+      <tr><td><code>cli.py</code></td><td><code>build · infer · serve · federate · questions · query</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <footer>
+    <div class="pager">
+      <span>Start of the series</span>
+      <a href="02-ontology.html">02 · The ontology →</a>
+    </div>
+    <p><strong>Sheet 01 of the tacat architecture series</strong>, which is five sheets.</p>
+    <p>Self-contained: no external scripts, fonts or stylesheets. Renders from <code>file://</code>.</p>
+  </footer>
+
+</main>
+</body>
+</html>

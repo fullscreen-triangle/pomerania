@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4 · Checking the data — tacat primer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="4">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li class="extra"><a href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a href="01-data.html">Facts as data</a></li>
+    <li><a href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a href="03-questions.html">Asking questions</a></li>
+    <li><a class="here" href="04-checking.html">Checking the data</a></li>
+    <li><a href="05-serving.html">Serving it</a></li>
+    <li><a href="06-shipping.html">Shipping it</a></li>
+    <li><a href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+  </ol>
+  <div class="nav-label">Readiness</div>
+  <div class="progress" data-progress></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 4</p>
+<h1>Checking the data</h1>
+<p class="standfirst">
+  Two machines run over this graph and they do opposite jobs. Separating them cleanly is one of the
+  fastest ways to show you have worked with this stack.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ must know</span>
+  <span class="chip">15 min</span>
+  <span class="chip">SHACL · tests · competency questions</span>
+  <span class="chip ask">a reliable expert/novice test</span>
+</div>
+
+<div class="resume" data-resume></div>
+
+<h2 id="two">1. Inference and validation are not alternatives</h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th>OWL reasoning</th><th>SHACL validation</th></tr></thead>
+  <tbody>
+    <tr><td>Answers</td><td>"what else must be true?"</td><td>"is this data acceptable?"</td></tr>
+    <tr class="hl"><td>World</td><td><strong>Open</strong> — missing means unknown</td><td><strong>Closed</strong> — missing means violation</td></tr>
+    <tr><td>Output</td><td>new facts</td><td>a pass/fail report</td></tr>
+    <tr><td>Runs</td><td>at image build</td><td>in CI, on every change</td></tr>
+    <tr><td>Tool</td><td>HermiT via Owlready2</td><td>pyshacl</td></tr>
+  </tbody>
+</table>
+</div>
+
+<figure class="fig" data-figure="openclosed">
+  <figcaption>Same missing value, opposite reading — because they answer different questions.</figcaption>
+</figure>
+
+<div class="box bridge">
+  <span class="box-title">You already know both halves</span>
+  <p>
+    <strong>Open world</strong> is how you read an experiment: no catalase assay means no catalase
+    result, not a negative one.
+  </p>
+  <p>
+    <strong>Closed world</strong> is how a sample submission form works: leave the buffer field blank
+    and the sample is rejected. The facility does not reason about what the buffer might have been.
+  </p>
+</div>
+
+<h2 id="licence">2. The example that shows they are genuinely different</h2>
+
+<p>
+  Suppose the ontology says a dataset has <strong>at most one licence</strong>, and the data asserts
+  two: CC-BY and CC0. Press run.
+</p>
+
+<div class="widget" data-widget="owl-shacl"></div>
+
+<p>
+  Same data, same constraint, opposite outcome — and the OWL outcome is worse than useless, because
+  it has silently declared two incompatible licences identical. Neither engine is wrong. Using only
+  one of them leaves a real gap.
+</p>
+
+<button class="checkline" data-check="4:owlshacl" aria-pressed="false">
+  <span class="ct">I can give the licence example from memory
+  <small>maxCardinality 1 + two licences → OWL infers sameAs, SHACL reports a violation</small></span>
+</button>
+
+<h2 id="shacl">3. What SHACL looks like</h2>
+
+<p>
+  SHACL is written in RDF itself — the rules for the data are in the same format as the data. A
+  <em>shape</em> targets a class and lists what must hold.
+</p>
+
+<figure class="code">
+  <figcaption>data/shapes.ttl — the bridge-node shape, abridged</figcaption>
+  <pre><code data-lang="turtle">tacat:ReactionParticipantShape
+    a sh:NodeShape ;
+    sh:targetClass tacat:ReactionParticipant ;      # applies to every participant node
+
+    sh:nodeKind sh:IRI ;
+    sh:message "Participant bridge nodes must be IRIs, not blank nodes: blank nodes
+                duplicate silently across graph merges and cannot be cited in a
+                validation report."@en ;
+
+    sh:property [
+        sh:path     tacat:participatingEntity ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message  "Each participant must reference exactly one chemical entity, by IRI."@en ;
+    ] ;
+
+    sh:property [
+        sh:path         tacat:stoichiometricCoefficient ;
+        sh:minCount     1 ; sh:maxCount 1 ;
+        sh:datatype     xsd:decimal ;
+        sh:minExclusive 0 ;
+        sh:message      "Exactly one positive stoichiometric coefficient is required…"@en ;
+    ] .</code></pre>
+</figure>
+
+<p>For every <code>ReactionParticipant</code> node —</p>
+<ul>
+  <li>it must be a named node, not anonymous;</li>
+  <li>exactly one <code>participatingEntity</code>, and it must be a link, not text;</li>
+  <li>exactly one coefficient, decimal, greater than zero.</li>
+</ul>
+
+<div class="box key">
+  <span class="box-title">Why the bridge node is what gets guarded</span>
+  <p>
+    Recall from <a href="03-questions.html#payoff">Chapter 3</a> that CQ06 works by filtering on the
+    participant's role. A participant missing its role does not error — it <strong>drops out of the
+    join</strong> and quietly changes the answer. Four participants become three; the query still
+    returns a tidy table.
+  </p>
+  <p>The shape exists precisely because that failure is invisible.</p>
+</div>
+
+<h3>Two details worth mentioning out loud</h3>
+
+<p>
+  <strong>Every constraint carries an <code>sh:message</code>.</strong> A machine-generated default
+  message tells whoever has to fix the data almost nothing. Writing the message is where the
+  reasoning gets recorded — the coefficient message explains <em>why decimal and not double</em>:
+  stoichiometric coefficients are exact ratios, not measurements, and binary floating point cannot
+  represent ⅓ of an equivalent exactly. Silent rounding inside a balance check is the kind of bug
+  nobody finds.
+</p>
+
+<p>
+  <strong>The validator runs with <code>--metashacl</code></strong> — "also check the shapes file is
+  itself valid SHACL". Without it, <code>sh:minCounts</code> instead of <code>sh:minCount</code> is
+  not an error: it is an unrecognised property, so the constraint silently constrains nothing and
+  every validation passes. Same failure shape, one level up.
+</p>
+
+<h2 id="tests">4. What a test is, for someone who has not written one</h2>
+
+<p>
+  A <strong>test</strong> is a small piece of code that runs the real code and asserts what the
+  answer should be. If the assertion fails, the build stops.
+</p>
+
+<figure class="code">
+  <figcaption>the shape of every test in the suite</figcaption>
+  <pre><code data-lang="python">def test_negative_control_is_excluded(graph):
+    result = graph.query(SOME_SPARQL)          # ask the graph a question
+    assert not bool(result), "the dehydrogenase control was misclassified"</code></pre>
+</figure>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    A test is a <strong>positive control you run every time</strong>. Not because you expect it to
+    fail, but so that when something drifts you find out immediately rather than in a reviewer's
+    comments.
+  </p>
+  <p>
+    The term for "a test that stops a fixed bug coming back" is a <strong>regression test</strong>.
+    Every defect found in the review has one.
+  </p>
+</div>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">182</span><span class="l">tests collected</span></div>
+  <div class="bignum"><span class="v">12</span><span class="l">negative — deliberately bad data</span></div>
+  <div class="bignum"><span class="v">11</span><span class="l">competency questions</span></div>
+</div>
+
+<p>
+  The twelve negative cases feed the shapes deliberately broken data — a participant with no role,
+  a negative stoichiometric coefficient, SBO:0000014 &ldquo;enzyme&rdquo; used as a participant
+  role, a locally minted ChEBI twin sitting alongside the correct anchor — and assert that
+  validation <em>fails</em>. A validator nobody has seen reject anything is not known to work.
+  (That PLP is never a reaction participant is asserted separately, as a competency-question
+  test rather than a shape.)
+</p>
+
+<h2 id="cq">5. Competency questions: specification and test suite at once</h2>
+
+<p>
+  <strong>Competency questions</strong> are the standard method for specifying an ontology
+  (Grüninger &amp; Fox 1995; NeOn): before building, write the questions it must answer. They are
+  the requirements document.
+</p>
+<p>
+  Here they are also executable. Each carries the natural-language question, the SPARQL, and the
+  expected answer — so the requirements <em>are</em> the regression suite. A question that stops
+  being answerable breaks the build.
+</p>
+
+<figure class="code">
+  <figcaption>queries/competency.py — one question, complete</figcaption>
+  <pre><code data-lang="python">CQ04 = CompetencyQuestion(
+    cq_id="CQ04",
+    question="what is the mechanism of enzyme X ?",
+    source=NFDI4CAT_QUESTION_SET,
+    sparql="""
+    SELECT ?enzyme ?mechanism ?cofactor WHERE {
+        ?e a tacat:Enzyme ; rdfs:label ?enzyme ;
+           tacat:kineticMechanism ?mechanism ;
+           tacat:hasCofactor ?c .
+        ?c rdfs:label ?cofactor .
+    } ORDER BY ?enzyme
+    """,
+    expected=frozenset({
+        ("alanine transaminase",   "ping-pong bi-bi", "pyridoxal 5'-phosphate"),
+        ("aspartate transaminase", "ping-pong bi-bi", "pyridoxal 5'-phosphate"),
+        ("cysteine transaminase",  "ping-pong bi-bi", "pyridoxal 5'-phosphate"),
+    }),
+    rationale=(
+        "Mechanism and cofactor answer together, and that is the point: PLP hangs off the "
+        "enzyme precisely BECAUSE the mechanism is ping-pong bi-bi…"
+    ),
+)</code></pre>
+</figure>
+
+<div class="box key">
+  <span class="box-title">Why this specific choice lands</span>
+  <p>
+    CQ01–CQ04 are <strong>quoted verbatim</strong> from NFDI4Cat's own biocatalysis competency
+    questions — the set Mark Dörr wrote himself and committed to
+    <code>nfdi4cat/ontology-development</code> on 9 April 2024.
+  </p>
+  <p>
+    So the test suite is not invented questions that happen to pass. It is his own contribution to
+    the consortium, returned in working form. <strong>Say the words "competency questions" in the
+    presentation.</strong>
+  </p>
+</div>
+
+<div class="box key">
+  <span class="box-title">CQ10 and CQ11 — the two that exist because a test suite lied</span>
+  <p>
+    There are <strong>eleven</strong> competency questions, not nine. The last two are the best
+    evidence in the repository, and they exist because of something that was
+    <strong>measured</strong> rather than suspected.
+  </p>
+  <p>
+    Every identifier link was repointed to a nonexistent <code>CHEBI_99999999</code>. The result:
+    <strong>9 of 9 questions still passed</strong>, SHACL still conformed, and the test asserting the
+    link is a <code>URIRef</code> was still green. Nothing noticed.
+  </p>
+  <p>
+    The reason is the pattern this project keeps finding in itself: <strong>the oracle and the
+    subject came from the same row</strong>. Every question projected a <em>label</em>, and the label
+    and the identifier are two fields of one <code>reference_data</code> entry. Corrupt the
+    identifier and the label still matches.
+  </p>
+  <p>
+    CQ10 and CQ11 project the <strong>PURL itself</strong>, and a regression test corrupts the graph
+    and asserts the suite notices. <strong>The line to say:</strong> <em>"For a while I couldn't tell
+    a right identifier from a wrong one, and I measured it."</em> That is worth more than any claim
+    of care.
+  </p>
+</div>
+
+
+<h3>The half that cannot be answered is the better half</h3>
+
+<p>
+  His set is <strong>enzyme-centric</strong> — production, purification, characterisation, kinetics,
+  immobilisation, engineering. A three-reaction graph answers a well-defined minority. The rest is
+  recorded explicitly in <code>OUT_OF_SCOPE_QUESTIONS</code>:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Cannot answer</th><th>What that would need</th></tr></thead>
+  <tbody>
+    <tr><td>K<sub>M</sub>, k<sub>cat</sub>, catalytic efficiency</td>
+        <td>quantities with units — where QUDT vs OM-2 vs EMMO stops being academic</td></tr>
+    <tr><td>which organism produces enzyme X</td>
+        <td>the federation (which works) or an organism model</td></tr>
+    <tr><td>purification, immobilisation, engineering</td>
+        <td>a model of laboratory <em>processes</em> — i.e. LARA's actual domain</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ask">
+  <span class="box-title">Why volunteer the limitations?</span>
+  <p>
+    Because the assessor published a paper in November 2025 titled <em>"Limits and solutions for
+    ontological representation of chemical reactions"</em>. He catalogued where this gets hard.
+  </p>
+  <p>
+    Presenting a toy model as though it were general invites him to find the edges himself.
+    Presenting the edges yourself, with what each would require to cross, is the same conversation
+    with you leading it.
+  </p>
+</div>
+
+<button class="checkline" data-check="4:cq" aria-pressed="false">
+  <span class="ct">I can explain that the competency questions are his, and name what is out of scope
+  <small>Grüninger &amp; Fox / NeOn; CQ01–04 verbatim; kinetics needs units, purification needs a process model</small></span>
+</button>
+
+<h2 id="say">6. What to be able to say</h2>
+
+<div class="box key">
+  <span class="box-title">The 30-second version</span>
+  <p>
+    <em>"OWL and SHACL do different jobs — inference under an open world, validation under a closed
+    one — so both are here. The demonstrating case is a cardinality of one with two licences
+    asserted: an OWL reasoner infers the two licences are the same thing, SHACL reports a violation.
+    The shapes are hand-written with a message on every constraint and run with metashacl so a typo
+    fails loudly. And the competency questions are the test suite — CQ01–CQ04 quoted verbatim from
+    NFDI4Cat's own set, with the ones this model cannot answer recorded alongside what each would
+    require."</em>
+  </p>
+</div>
+
+<div class="pager">
+  <a class="prev" href="03-questions.html"><span class="dir">Previous</span><span class="t">← 3 · Asking questions</span></a>
+  <a class="next" href="05-serving.html"><span class="dir">Next</span><span class="t">5 · Serving it →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

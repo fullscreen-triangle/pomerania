@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>8 · What exists, and what does not — tacat extension</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="5">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-floor.html">The floor under identity</a></li>
+    <li><a href="02-closure.html">Closure, not confidence</a></li>
+    <li><a href="03-coherence.html">Three sources or none</a></li>
+    <li><a href="04-boundary.html">Where the model stops</a></li>
+    <li><a href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a href="07-three.html">Three verdicts on one run</a></li>
+    <li><a class="here" href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 8 · second series</p>
+<h1>What exists, and what does not</h1>
+<p class="standfirst">
+  Chapters 6 and 7 described a design. This one describes its state — what runs, what is measured,
+  what is written but not integrated, and what is only a claim. It ends with the single experiment
+  that would show the whole design is wrong, because that experiment does not exist yet and it is the
+  most useful thing anyone could do to this project.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★ the honest page</span>
+  <span class="chip">9 min</span>
+  <span class="chip">status · falsification · cost</span>
+  <span class="chip trap">contains the disproof condition</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance.</strong> Everything here is single-developer hobby work with no users, no
+  reviewers, and no publications. The status table in §1 is the whole of it — there is no fuller
+  version being held back. Where something is described as running, it runs on my machine and nowhere
+  else, which is the weakest sense of the word that is still true.
+</div>
+
+<h2 id="state">1. Status, stated plainly</h2>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Part</th><th>State</th><th>What that means precisely</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>The module DSLs</td>
+      <td class="fig-ok"><strong>built</strong></td>
+      <td>Around eleven, each with a real compiler pipeline — lexer, parser, AST, type checker, IR,
+      interpreter. Two back ends consume a shared IR in one case.</td>
+    </tr>
+    <tr>
+      <td>A booting OS</td>
+      <td class="fig-ok"><strong>runs, measured</strong></td>
+      <td>A Python implementation boots, executes scripts, and has a six-experiment validation
+      harness producing latency, accuracy, scaling and robustness figures to JSON. It was written to
+      test the design, not to be the product.</td>
+    </tr>
+    <tr>
+      <td>A Rust implementation</td>
+      <td><strong>structurally complete</strong></td>
+      <td>Same subsystem layout as the Python one. Rust is where things end up; it is not where the
+      current work is.</td>
+    </tr>
+    <tr>
+      <td>The three-validation architecture</td>
+      <td class="fig-no"><strong>specified, partly built</strong></td>
+      <td>Each of the three exists as a module in TypeScript with its own verdicts and its own floor.
+      They are not yet running together over one task. This is the current work.</td>
+    </tr>
+    <tr>
+      <td>Chapter 7's plate-7 walk-through</td>
+      <td class="fig-no"><strong>not implemented</strong></td>
+      <td>It is a design illustration. No part of it has executed.</td>
+    </tr>
+    <tr>
+      <td>Anything touching lab hardware</td>
+      <td class="fig-no"><strong>does not exist</strong></td>
+      <td>No SiLA, no gRPC, no device drivers, no contact with an instrument of any kind.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">1</span><span class="l">developer</span></div>
+  <div class="bignum"><span class="v">0</span><span class="l">other users</span></div>
+  <div class="bignum"><span class="v">0</span><span class="l">peer-reviewed papers behind it</span></div>
+  <div class="bignum"><span class="v">4</span><span class="l">independent implementations of the floor</span></div>
+</div>
+
+<h2 id="floor">2. The one piece of evidence that is not self-report</h2>
+
+<p>
+  Everything above is me describing my own work, which is worth little. There is one fact in the
+  codebase that is not of that kind, and it is the reason I still think the abstraction is real.
+</p>
+
+<p>
+  The floor β — the positive lower bound on individuation cost from
+  <a href="01-floor.html#theorem">Chapter 1 §2</a> — is implemented <strong>four separate times, in
+  three repositories, by four modules that do not import each other</strong>. I did not plan this; I
+  noticed it afterwards while trying to unify them, and discovered they should not be unified.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Module</th><th>How the floor appears</th><th>What it is doing there</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>the accountability language</td>
+      <td>a field on every type, statically checked</td>
+      <td>A value whose floor is not positive is <strong>not typeable</strong> — the sharp cut is a
+      compile error, not a runtime check.</td>
+    </tr>
+    <tr>
+      <td><code>purpose</code></td>
+      <td>derived: minimum positive edge weight of the context graph</td>
+      <td>The cheapest separator available. Every non-isolated step's residue is guaranteed to sit
+      above it.</td>
+    </tr>
+    <tr>
+      <td>the search engine</td>
+      <td>declared in the script and parsed out</td>
+      <td>The author states the resolution at which the search is willing to individuate.</td>
+    </tr>
+    <tr>
+      <td>the scheduler</td>
+      <td>a divisor guard in the priority formula</td>
+      <td>Prevents a task whose residue has reached its threshold from acquiring infinite priority.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box key">
+  <span class="box-title">Why this is the strongest thing on the page</span>
+  <p>
+    Four modules written months apart for unrelated jobs each needed a positive lower bound on how
+    finely a thing can be distinguished, and each implemented it in the idiom of its own layer — a
+    type invariant, a graph derivation, a script declaration, a division guard. Nothing coordinated
+    that. It is the difference between an abstraction that was designed and one that was
+    <strong>found</strong>, and it is checkable in about a minute: four files, one line each.
+  </p>
+</div>
+
+<h2 id="experiment">3. The experiment that would show this is all wrong</h2>
+
+<p>
+  <a href="07-three.html#nomerge">Chapter 7 §3</a> made an unusual claim: that if the three
+  validations converge, the design is falsified rather than confirmed. That claim is testable, the
+  test is cheap, and <strong>it has never been run</strong>.
+</p>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">The claim the whole design rests on</span>
+    <span class="thm-src">untested</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      For a given task, the necessity decomposition, the sufficiency decomposition and the value
+      decomposition are <em>genuinely different partitions</em> — different subtasks, not one subtask
+      list scored three ways. If they are the same partition, three validations are one validation
+      with ceremony, and two thirds of the architecture should be deleted.
+    </p>
+  </div>
+</div>
+
+<p>
+  The harness for this already exists — the six-experiment validation file from §1 is the right shape
+  and the right place. The experiment is a seventh function in it:
+</p>
+
+<figure class="code">
+  <figcaption>the missing experiment, in outline</figcaption>
+<pre><code><span class="tok-comment"># For a corpus of tasks, decompose each one three ways and ask</span>
+<span class="tok-comment"># whether the partitions actually differ.</span>
+
+<span class="tok-kw">for</span> task <span class="tok-kw">in</span> corpus:
+    n = <span class="tok-fn">decompose_necessity</span>(task)      <span class="tok-comment"># claims</span>
+    s = <span class="tok-fn">decompose_sufficiency</span>(task)    <span class="tok-comment"># steps</span>
+    v = <span class="tok-fn">decompose_value</span>(task)          <span class="tok-comment"># artefacts</span>
+
+    <span class="tok-comment"># Partition distance, pairwise. Near zero on all three pairs</span>
+    <span class="tok-comment"># across the corpus falsifies the design.</span>
+    <span class="tok-fn">record</span>(<span class="tok-fn">variation_of_information</span>(n, s),
+           <span class="tok-fn">variation_of_information</span>(s, v),
+           <span class="tok-fn">variation_of_information</span>(n, v))
+
+    <span class="tok-comment"># Second check: does each residue stay above its own floor,</span>
+    <span class="tok-comment"># and do the three residues move independently over time?</span>
+    <span class="tok-fn">record_residue_traces</span>(task)</code></pre>
+</figure>
+
+<div class="box trap">
+  <span class="box-title">What each outcome would mean</span>
+  <ul>
+    <li><strong>Partitions differ, residues move independently</strong> — the design survives its
+    first real test, and the three-verdict output in Chapter 7 is worth building properly.</li>
+    <li><strong>Partitions differ but residues track each other</strong> — the decompositions are
+    real but the measurements are not independent. Salvageable, and it would say exactly which two
+    to merge.</li>
+    <li><strong>Partitions collapse</strong> — the architecture is one validation wearing three
+    hats. Chapters 6 and 7 are wrong and should be withdrawn.</li>
+  </ul>
+</div>
+
+<h2 id="fit">4. What this would actually be worth to a lab system, if it worked</h2>
+
+<p>
+  Stated at the level it can be defended at, which is lower than the level the idea is exciting at.
+</p>
+
+<div class="vs">
+  <div class="side good">
+    <h4>What it would add</h4>
+    <p>A structured answer to "can this running process be modified?" — the question CoRDI 2023
+    footnote 2 leaves open — in the form of three independent facts rather than one verdict.</p>
+    <p>A recorded residual per run: what the system did <em>not</em> establish, carried in the data
+    alongside what it did. That is the same object as <code>tacat:notCompared</code> from
+    <a href="01-floor.html#proposal">Chapter 1</a>, and it is a provenance claim, which is the layer
+    this whole submission is about.</p>
+    <p>A stopping rule that is not "the checks I wrote passed" — see
+    <a href="02-closure.html">Chapter 2</a>.</p>
+  </div>
+  <div class="side bad">
+    <h4>What it would not</h4>
+    <p>Anything about devices, drivers, protocols or hardware. That is the majority of the difficulty
+    in real lab automation and none of it is addressed.</p>
+    <p>Any improvement to throughput, reliability or cost. The three-verdict output is
+    <em>more</em> work to act on, not less.</p>
+    <p>Any of it soon. Integration of the three validations over one task is the current work and it
+    is not finished.</p>
+  </div>
+</div>
+
+<h2 id="ask">5. The honest summary</h2>
+
+<div class="box ask">
+  <span class="box-title">If asked what this is</span>
+  <p>
+    A hobby project by one person, in integration, with a booting prototype and a measured baseline,
+    whose central claim has never been tested. It shares a three-part architecture with LARA that
+    neither derived from the other, and it has a specific answer to one problem LARA's own paper
+    records as open. Whether that answer is any good depends on an experiment I have described in §3
+    and not run.
+  </p>
+  <p>
+    The reason to mention it at all is not that it is finished. It is that the correspondence in
+    <a href="06-lara.html#mine">Chapter 6 §2</a> is specific enough to be checked, the falsification
+    condition in §3 is stated rather than avoided, and the four-way floor convergence in §2 is a fact
+    about the codebase rather than a claim about my intentions.
+  </p>
+</div>
+
+<div class="box key">
+  <span class="box-title">The one question worth more than all eight chapters</span>
+  <p>
+    Does a scientific task genuinely decompose three different ways? Everything above rests on it and
+    nothing above demonstrates it. Someone who has built a scheduler and thought about lab processes
+    will have a faster and better-informed intuition about that than I do — and if the answer is no,
+    that is worth knowing now rather than after another year of integration.
+  </p>
+</div>
+
+<div class="pagenav">
+  <a href="07-three.html"><span class="dir">Back</span>7 · Three verdicts on one run</a>
+  <span class="spacer"></span>
+  <a href="09-enforced.html"><span class="dir">Next</span>9 · Enforced, or merely represented</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

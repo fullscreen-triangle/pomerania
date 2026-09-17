@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 · OWL &amp; inference — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a class="here" href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 3</p>
+<h1>OWL &amp; inference</h1>
+<p class="standfirst">
+  This is the chapter with no analogue in your stack. OWL classes are not types you assign — they
+  are sets defined by conditions, and membership is <em>computed</em> by a theorem prover. Slow down
+  here; everything that makes this project more than a database with URLs for keys is in §3.
+</p>
+
+<h2 id="tbox">1. T-Box and A-Box</h2>
+
+<p>
+  The vocabulary splits an ontology into two halves. It maps loosely onto schema and data, and the
+  places where the mapping fails are the interesting ones.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th></th><th>T-Box (terminological)</th><th>A-Box (assertional)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Contains</td><td>classes, properties, axioms</td><td>individuals and their facts</td></tr>
+    <tr><td>Roughly</td><td>your schema / type definitions</td><td>your rows</td></tr>
+    <tr><td>In this project</td><td class="mono">src/tacat/ontology/schema.py</td><td class="mono">src/tacat/ontology/population.py</td></tr>
+    <tr><td>Enforced on write?</td><td colspan="2"><strong>No.</strong> Nothing rejects data that contradicts the T-Box. This is the first place the schema analogy breaks</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Two more terms you will meet immediately. A <strong>class</strong> is a set of individuals. An
+  <strong>individual</strong> is a thing in the world (<code>tacat:REACT_0000002</code> — one
+  specific reaction). A <strong>property</strong> is a binary relation; object properties point at
+  individuals, data properties point at literals.
+</p>
+
+<div class="box trap">
+  <span class="box-title">A place the type-system intuition actively misleads</span>
+  <p>
+    In TypeScript, declaring <code>class Reaction</code> and never instantiating it is fine and
+    inert. In OWL, declaring <code>domain</code> and <code>range</code> on a property is
+    <strong>not</strong> a constraint — it is an <em>inference rule</em>. Writing
+    <code>tacat:hasCofactor</code> with <code>domain = [Enzyme]</code> does not mean &ldquo;reject
+    anything that isn&rsquo;t an Enzyme&rdquo;. It means &ldquo;anything appearing on the left of
+    this property <em>is thereby inferred to be</em> an Enzyme.&rdquo;
+  </p>
+  <p>
+    So a typo does not raise an error; it silently adds a type. That is the single most common
+    misreading of OWL by developers, and it is the reason SHACL exists as a separate standard.
+  </p>
+</div>
+
+<h2 id="owa">2. The open-world assumption</h2>
+
+<p>
+  Every database you have used assumes a <strong>closed world</strong>: the data is complete, so
+  absence of a row means the fact is false. <code>SELECT … WHERE NOT EXISTS</code> is a meaningful
+  question with a definite answer.
+</p>
+<p>
+  OWL assumes an <strong>open world</strong>: the data is a partial view of reality, so absence means
+  <em>unknown</em>, not false.
+</p>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">Closed world — your database</span>
+<pre><code data-lang="sql">SELECT 1 FROM cofactor
+WHERE  enzyme_id = 'EC_2_6_1_2';
+-- 0 rows
+
+-- Conclusion: this enzyme has no cofactor.</code></pre>
+    <p>The absence of the row <em>is</em> the answer.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">Open world — OWL</span>
+<pre><code data-lang="turtle"># No hasCofactor triple for this enzyme.
+
+# Conclusion: we do not know whether this
+# enzyme has a cofactor. Possibly it does
+# and nobody has written it down yet.</code></pre>
+    <p>The absence of the triple means nothing at all.</p>
+  </div>
+</div>
+
+<p>
+  This is not perversity. It is the correct semantics for the actual situation: your graph
+  describes three reactions out of tens of thousands, and there is no sense in which it is complete.
+  ChEBI, Rhea and UniProt are all incomplete too, permanently and by design.
+</p>
+
+<div class="box key">
+  <span class="box-title">The three consequences that matter</span>
+  <ul>
+    <li>
+      <strong>OWL cannot validate.</strong> &ldquo;This field is required&rdquo; is unexpressible —
+      a missing value is never a violation, it is missing information. Hence
+      <a href="04-shacl.html">SHACL</a>.
+    </li>
+    <li>
+      <strong>A reasoner only ever adds.</strong> It derives new entailed facts; it never rejects
+      the input. The only thing it can report as wrong is a logical <em>contradiction</em>.
+    </li>
+    <li>
+      <strong>&ldquo;Not inferred&rdquo; is not &ldquo;inferred not&rdquo;.</strong> This one comes
+      back in §5 and is a live nuance in this project.
+    </li>
+  </ul>
+</div>
+
+<h2 id="defined">3. Necessary versus sufficient — the whole idea</h2>
+
+<p>
+  Here is the crux. There are two ways to relate a class to a description, and the difference
+  between them is the difference between a database and a knowledge graph.
+</p>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">Primitive class — necessary only</span>
+<pre><code data-lang="turtle">tacat:Transamination
+    rdfs:subClassOf tacat:Reaction .</code></pre>
+    <p>
+      <em>If</em> something is a Transamination, <em>then</em> it is a Reaction. A one-way
+      implication. It tells you what follows <strong>from</strong> membership, and gives no way to
+      <em>determine</em> membership.
+    </p>
+    <p>Membership must therefore be asserted by hand — by a human, or by a loop in your code.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">Defined class — necessary <em>and</em> sufficient</span>
+<pre><code data-lang="turtle">tacat:TransaminationReaction
+    owl:equivalentClass [ … conditions … ] .</code></pre>
+    <p>
+      Something is a TransaminationReaction <strong>if and only if</strong> it satisfies these
+      conditions. A two-way implication.
+    </p>
+    <p>Membership is now <em>decidable</em>: hand any individual to a reasoner and it works out
+       whether it belongs.</p>
+  </div>
+</div>
+
+<div class="box bridge">
+  <span class="box-title">The closest thing in your world</span>
+  <p>
+    A TypeScript <strong>discriminated union</strong> tells the compiler how to narrow: given
+    <code>{kind: 'circle', r: number}</code>, the compiler <em>determines</em> which branch you are
+    in rather than being told. Or: a database <code>VIEW</code> whose <code>WHERE</code> clause
+    defines membership — rows enter and leave it as the underlying data changes, without anyone
+    tagging them.
+  </p>
+  <p>
+    OWL&rsquo;s version is stronger than both, because the conditions can be arbitrary description
+    logic — nested quantifiers over other classes and properties — and the engine that evaluates
+    them is a full theorem prover rather than a pattern matcher.
+  </p>
+</div>
+
+<h3>The actual definition in this project</h3>
+
+<p>
+  Reproduced from <code>ontology/schema.py</code> (<code>build_schema</code>; <code>build.py</code>
+  only re-exports it). Owlready2 lets you write description logic as
+  Python operator overloads, so <code>&amp;</code> is intersection and <code>.some()</code> is the
+  existential quantifier &exist;:
+</p>
+
+<pre><code data-lang="python">class TransaminationReaction(BiochemicalReaction):
+    equivalent_to = [
+        BiochemicalReaction
+        &amp; hasParticipant.some(
+            ReactionParticipant &amp; participatingEntity.some(AminoAcid)  &amp; participantRole.value(reactant))
+        &amp; hasParticipant.some(
+            ReactionParticipant &amp; participatingEntity.some(TwoOxoAcid) &amp; participantRole.value(reactant))
+        &amp; hasParticipant.some(
+            ReactionParticipant &amp; participatingEntity.some(TwoOxoAcid) &amp; participantRole.value(product))
+        &amp; hasParticipant.some(
+            ReactionParticipant &amp; participatingEntity.some(AminoAcid)  &amp; participantRole.value(product))
+    ]</code></pre>
+
+<p>In English: <em>a biochemical reaction that consumes an amino acid, consumes a 2-oxo acid, produces a 2-oxo acid, and produces an amino acid.</em></p>
+
+<p>
+  Chapter 6 explains why that shape is the chemical signature of a transamination — the amino group
+  moves from donor to acceptor, so each class appears on both sides in opposite roles. What matters
+  here is the engineering property: <strong>the conditions quantify over classes and roles, never
+  over specific molecules.</strong> A definition written as &ldquo;has CHEBI:57972 as a
+  reactant&rdquo; would classify exactly the three reactions it was reverse-engineered from and
+  nothing else. This one generalises.
+</p>
+
+<h2 id="reasoner">4. What a reasoner actually does</h2>
+
+<p>
+  A description-logic reasoner — <strong>HermiT</strong> here; Pellet and ELK are the other names
+  you will see — takes the T-Box and A-Box and computes the deductive closure. Three jobs:
+</p>
+
+<div class="pipeline">
+  <div class="step">
+    <div class="n">1</div>
+    <div>
+      <h4>Consistency checking</h4>
+      <p>Is there any possible world in which all these axioms hold at once? If two axioms
+         contradict, the ontology is inconsistent and the reasoner raises. In this project that is a
+         hard build failure, not a warning.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">2</div>
+    <div>
+      <h4>Classification</h4>
+      <p>Work out the full subclass lattice, including subsumptions nobody declared. If class A&rsquo;s
+         conditions logically entail class B&rsquo;s, then A &sqsubseteq; B whether or not you said so.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">3</div>
+    <div>
+      <h4>Realisation</h4>
+      <p>For every individual, compute every class it belongs to. <strong>This is the step that
+         does the work here.</strong></p>
+    </div>
+  </div>
+</div>
+
+<p>
+  Run it and the reasoner reports:
+</p>
+
+<pre><code data-lang="bash">$ tacat infer
+
+  Asserted as transamination before reasoning:
+    (none - nothing was asserted)
+
+  Inferred by HermiT after reasoning:
+    + alanine transaminase reaction
+    + aspartate transaminase reaction
+    + cysteine transaminase reaction
+
+  Not derived (roles do not match the definition):
+    - glutamate dehydrogenase reaction (negative control, partial)</code></pre>
+
+<p>
+  Nothing in the source asserts that any reaction is a transamination.
+  <code>add_reaction()</code> builds plain <code>BiochemicalReaction</code> individuals with
+  participant nodes. The type in the Turtle file is computed.
+</p>
+
+<h2 id="control">5. The negative control is the load-bearing part</h2>
+
+<p>
+  A defined class that recognises exactly the instances you built it for proves nothing — you could
+  have written <code>equivalent_to = {r1, r2, r3}</code> and got the same output. What distinguishes
+  a definition from an enumeration is a case designed to fool it.
+</p>
+<p>
+  Glutamate dehydrogenase is that case. It contains <strong>both headline molecules</strong> of the
+  transaminations — the two anyone would name if asked what these reactions are about — with their
+  roles reversed:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th></th><th>The three transaminations</th><th>The dehydrogenase control</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>L-glutamate <span class="muted">(an amino acid)</span></td><td class="yes">product</td><td class="no">reactant</td></tr>
+    <tr><td>2-oxoglutarate <span class="muted">(a 2-oxo acid)</span></td><td class="yes">reactant</td><td class="no">product</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Checked against the four conjuncts:</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Conjunct</th><th>Satisfied by the control?</th></tr></thead>
+  <tbody>
+    <tr><td>consumes an amino acid</td><td class="yes">yes — L-glutamate</td></tr>
+    <tr><td>produces a 2-oxo acid</td><td class="yes">yes — 2-oxoglutarate</td></tr>
+    <tr class="wrong"><td>consumes a 2-oxo acid</td><td class="no">no</td></tr>
+    <tr class="wrong"><td>produces an amino acid</td><td class="no">no</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Two of four fail, so it is not derived. Any definition keyed on which molecules are present would
+  have swallowed it whole. But be precise about <em>why</em> it fails, because the honest version is
+  weaker than the obvious one.
+</p>
+
+<div class="box trap">
+  <span class="box-title">The control is excluded on arity, not on role</span>
+  <p>
+    <code>REACT_0000099</code> is modelled with exactly <strong>two</strong> participants —
+    L-glutamate in, 2-oxoglutarate out — of a six-species reaction. Four conjuncts need four
+    role-slots filled, and two participants cannot fill four. The reasoner never reaches the role
+    comparison.
+  </p>
+  <p>
+    <strong>The role discrimination is real all the same:</strong> a four-participant reaction with
+    the roles reversed <em>is</em> refused, verified. That is the control this should have been. As
+    shipped, it does not demonstrate the thing it is cited for.
+  </p>
+</div>
+
+<div class="box ask">
+  <span class="box-title">The honest caveat, and it is worth knowing</span>
+  <p>
+    <code>demonstrate_inference()</code> computes the excluded set as a set difference —
+    <code>all_reactions - transamination.instances()</code>. That is a closed-world read of an
+    open-world result. Under OWA, failing to derive membership is <strong>not</strong> a proof of
+    non-membership.
+  </p>
+  <p>
+    So <em>&ldquo;HermiT proved it isn&rsquo;t a transamination&rdquo;</em> is an overclaim.
+    <em>&ldquo;HermiT did not derive it, because the roles do not match the definition&rdquo;</em>
+    is exact. The distinction is small and someone will ask about it.
+  </p>
+</div>
+
+<h2 id="buildtime">6. Reasoning at build time, not query time</h2>
+
+<p>
+  Reasoning is expensive — description-logic reasoning is <strong>at least EXPTIME</strong> for the
+  expressive profiles, and HermiT is a Java program Owlready2 shells out to. You do not want that in
+  a request path.
+</p>
+<p>
+  So the project runs it once, at build, and <strong>materialises</strong> the results: the derived
+  <code>rdf:type</code> triples are written into <code>data/reactions.ttl</code>. The API then
+  answers <code>?r a tacat:TransaminationReaction</code> from plain triple matching, with no
+  reasoner anywhere near the request.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You know this pattern</span>
+  <p>
+    It is a materialised view, or an ahead-of-time compile. Pay the expensive computation once at
+    build, ship the result, keep the runtime cheap. The Dockerfile makes it structural: the builder
+    stage installs a JVM and runs HermiT; the runtime stage copies only the resulting Turtle and
+    installs no Java at all. <strong>If reasoning fails, the image does not build.</strong>
+  </p>
+</div>
+
+<h3>Two traps in the materialisation, both real bugs</h3>
+
+<ul>
+  <li>
+    <strong>Owlready2 files reasoner output in a separate internal ontology.</strong> Inferences land
+    in <code>http://inferrences/</code> inside the <code>World</code>, so
+    <code>onto.save()</code> silently drops every derived type — the artefact looks fine and
+    contains nothing inferred. The fix serialises the whole <code>World</code>, not the ontology.
+  </li>
+  <li>
+    <strong>Serialising the World drags in Owlready2&rsquo;s own bookkeeping.</strong> That produced
+    three <code>owl:Ontology</code> headers in one file, so OWL tooling picked one arbitrarily and
+    attached <code>owl:versionIRI</code> to the wrong one. Those two internal headers are stripped
+    explicitly.
+  </li>
+</ul>
+
+<h2 id="gate">7. Why CI asserts that the inference <em>fired</em></h2>
+
+<p>
+  A consistency check is not enough. <strong>A defined class that classifies nothing is perfectly
+  consistent</strong> — the empty set satisfies every axiom. So a broken definition passes a
+  consistency check in silence, and the whole point of the project evaporates without any signal.
+</p>
+
+<p>The pipeline therefore asserts the counts:</p>
+
+<pre><code data-lang="python">result = demonstrate_inference()
+assert result["asserted_before"] == [],            "transamination must never be asserted"
+assert len(result["inferred_after"]) == 3,         "expected 3 inferred"
+assert len(result["correctly_excluded"]) == 1,     "the negative control must not be derived"</code></pre>
+
+<p>
+  Three assertions: nothing was asserted, exactly three were derived, the control was not. That is
+  the difference between a gate and a decoration — and it is the same instinct as testing that your
+  cache is actually being hit rather than that the cache code runs.
+</p>
+
+<div class="box key">
+  <span class="box-title">Chapter 3 in five lines</span>
+  <ul>
+    <li>Open world: a missing triple means unknown, not false. OWL therefore cannot validate.</li>
+    <li><code>subClassOf</code> is necessary only; <code>equivalentClass</code> is necessary <em>and</em> sufficient, which makes membership computable.</li>
+    <li>A reasoner checks consistency, classifies, and realises — it only ever <em>adds</em> facts.</li>
+    <li>The negative control is what distinguishes a definition from an enumeration.</li>
+    <li>Reason at build time, materialise the result, keep the runtime free of Java.</li>
+  </ul>
+</div>
+
+<div class="pager">
+  <a href="02-sparql.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; 2 &middot; SPARQL &amp; the protocol</span>
+  </a>
+  <a class="next" href="04-shacl.html">
+    <span class="dir">Next</span>
+    <span class="t">4 &middot; SHACL &amp; validation &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

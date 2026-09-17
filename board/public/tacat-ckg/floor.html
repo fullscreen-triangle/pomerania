@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The floor — what a finite observer is entitled to conclude</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html" aria-current="page">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">02 · The floor</p>
+  <h1>No finite observer separates anything at zero cost.</h1>
+
+  <p class="lede">
+    This is the load-bearing constant of the whole framework, and it appears in two
+    forms that must not be confused. One is arithmetic you can read off a datasheet.
+    The other is an epistemic claim about bounded observers. Every result on this page
+    uses only the first.
+  </p>
+
+  <div class="claim">
+    <span class="label">The instrumental floor — this is all the theorems need</span>
+    <p>
+      A monitor with <span class="mono">N</span> distinguishable outputs partitioning a
+      range of diameter <span class="mono">D</span> has a mean cell of exactly
+      <span class="mono">D/N</span>, so at least one cell is that wide or wider. It is a
+      one-line count, and unlike an existence argument it yields a number you can compute
+      before buying the instrument.
+    </p>
+  </div>
+
+  <div class="caveat">
+    <strong>A correction to the usual argument.</strong> The customary form —
+    <em>no finite monitor returns a point, so some positive floor exists</em> — is
+    <em>false as stated</em>. A finite monitor may have cells of diameter zero: the
+    sign-with-zero quantiser on [−1, 1] has cells of width 1, 0 and 1. The infimum of cell
+    diameters is therefore not in general positive, and any theorem resting on that
+    infimum is unsound. What survives is a bound on the cell you actually
+    <em>occupy</em>, not on the smallest cell in the partition. This framework's own
+    earlier statements used the unsound form.
+  </div>
+
+  <h2 id="instrument">A plate reader, worked through</h2>
+
+  <p>
+    An instrument reporting optical density on [0, 4] to three decimal places has
+    <span class="mono">N = 4001</span> distinguishable outputs and a mean cell of about
+    <span class="mono">10⁻³</span> OD units. Any ranking of variants whose OD differences
+    fall below that is a ranking of quantiser codes, not of variants.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="quant" viewBox="0 0 760 320" role="img"
+           aria-label="Quantisation cells and the ranking that survives them"></svg>
+    </div>
+    <div class="controls">
+      <label>decimal places <input id="dp" type="range" min="1" max="4" step="1" value="3">
+        <output for="dp"></output></label>
+      <label>true separation <input id="sep" type="range" min="0.0002" max="0.02" step="0.0002" value="0.006">
+        <output for="sep"></output></label>
+    </div>
+    <figcaption>
+      <b>Figure 4 — when a ranking stops being about the samples.</b>
+      Two variants with a genuine difference in optical density, read by an instrument of
+      the stated precision. When the separation falls below the cell width the two land
+      in the same code and the ordering between them is produced by the quantiser, not by
+      the biology. Push the separation down and watch the verdict change while nothing
+      about the samples does.
+    </figcaption>
+  </figure>
+
+  <h2 id="dimension">Channels do not add resolution the way you expect</h2>
+
+  <p>
+    In <span class="mono">d</span> dimensions the linear resolution of a partition into
+    <span class="mono">N</span> cells falls only as <span class="mono">N<sup>−1/d</sup></span>.
+    A monitor observing five channels at eight bits each has
+    <span class="mono">2⁴⁰</span> states and a linear resolution corresponding to about
+    <span class="mono">2⁸</span> per axis. The state count is enormous and almost none of
+    it is discrimination along any one axis.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="dim" viewBox="0 0 760 300" role="img"
+           aria-label="Effective bits per axis against channel count"></svg>
+    </div>
+    <div class="controls">
+      <label>channels <input id="ch" type="range" min="1" max="8" step="1" value="5">
+        <output for="ch"></output></label>
+      <label>bits per channel <input id="bits" type="range" min="4" max="16" step="1" value="8">
+        <output for="bits"></output></label>
+    </div>
+    <figcaption>
+      <b>Figure 5 — the dimensional penalty.</b>
+      Hold the state budget fixed at <span class="mono">2⁴⁰</span> and split it across
+      <span class="mono">d</span> channels. At <span class="mono">d = 1</span> that is a
+      trillion levels along the one axis; at <span class="mono">d = 5</span> it is
+      <b>256</b>; at <span class="mono">d = 8</span> it is <b>32</b>. The state count is
+      multiplicative, the discrimination along any single observable is not — and a
+      discrimination question only ever asks about the latter.
+    </figcaption>
+  </figure>
+
+  <h2 id="saturation">More resolution often buys exactly nothing</h2>
+
+  <p>
+    If the decision the instrument feeds takes finitely many distinct actions, then past
+    the point where the monitor can realise the optimal partition, additional resolution
+    buys nothing at all. And the bound is not merely asymptotic: resolution can be
+    <em>non-monotone</em>. Adding one cell can destroy an alignment that a coarser
+    monitor happened to have.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="sat" viewBox="0 0 760 340" role="img"
+           aria-label="Achievable decision gap against monitor cardinality"></svg>
+    </div>
+    <div class="controls">
+      <label>threshold position <input id="theta" type="range" min="0.05" max="0.95" step="0.0001" value="0.3719">
+        <output for="theta"></output></label>
+      <button id="aligned" type="button">aligned (⅓)</button>
+      <button id="mis" type="button">misaligned (0.3719)</button>
+    </div>
+    <figcaption>
+      <b>Figure 6 — saturation, and the non-monotonicity.</b>
+      The decision is a threshold at the stated position; the bars are the worst-case
+      optimality gap achievable with <span class="mono">N</span> uniform cells. At an
+      aligned threshold the gap reaches zero and stays there. At
+      <span class="mono">θ = 0.3719</span> it is <b>1.0 at every</b>
+      <span class="mono">N</span> shown — six doublings of resolution buying nothing. Note
+      the aligned case at <span class="mono">N = 3</span> versus
+      <span class="mono">N = 4</span>: adding a cell makes it worse.
+      <b>The correct advice is to reposition cells, not to add them.</b>
+    </figcaption>
+  </figure>
+
+  <h2 id="triplicate">Triplicate protects against the wrong failure</h2>
+
+  <p>
+    Three independent sources are enough to survive one source that <em>dies</em>, and
+    enough to survive one that fails <em>obviously</em>. They are not enough to survive
+    one that <em>drifts</em>. A miscalibrated instrument is an adaptive fault: its output
+    tracks the true signal with an offset, so it clusters with an honest channel and a
+    majority rule names the wrong value.
+  </p>
+
+  <div class="claim">
+    <span class="label">The consequence for a bench protocol</span>
+    <p>
+      Robustness against one arbitrarily-faulty source requires
+      <span class="mono">n ≥ 3f + 1</span> — four sources, not three. A triplicate
+      measurement protects against a dead instrument and not against a miscalibrated one,
+      and miscalibration is the more common failure.
+    </p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="byz" viewBox="0 0 760 340" role="img"
+           aria-label="Three and four sources against three fault models"></svg>
+    </div>
+    <div class="controls">
+      <label>sources <input id="n" type="range" min="2" max="6" step="1" value="3">
+        <output for="n"></output></label>
+      <button id="f-crash" data-fault="crash" aria-pressed="true" type="button">dead</button>
+      <button id="f-naive" data-fault="naive" type="button">obviously wrong</button>
+      <button id="f-adapt" data-fault="adaptive" type="button">drifting</button>
+    </div>
+    <figcaption>
+      <b>Figure 7 — which fault a redundancy survives.</b>
+      Each disc is a source reporting a value; the true value is marked. A dead source
+      reports nothing, an obviously-wrong source reports a wild value, and a drifting
+      source reports the truth plus an offset — close enough to cluster with an honest
+      channel. Move the source count and watch which configurations recover the truth.
+    </figcaption>
+  </figure>
+
+  <div class="caveat">
+    <strong>What the simulation shows against what the theorem says.</strong> The classical
+    bound gives <span class="mono">n ≥ 4</span> for one arbitrary fault, and that is
+    correct for the algorithm the theorem invokes. Plain majority voting is weaker, and
+    the adversary simulated here is stronger than the model: under majority voting the
+    drifting case is resolved only from five. Both facts are worth stating, and the gap
+    between them is the difference between a voting rule and an agreement protocol.
+  </div>
+
+  <h2>What is claimed here</h2>
+
+  <table>
+    <thead><tr><th>Statement</th><th>Standing</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Mean cell diameter is exactly <span class="mono">D/N</span></td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Additivity of measure. Computable from a datasheet.</td></tr>
+      <tr><td>The infimum-of-cells form of the floor is unsound</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Explicit counterexample. This corrects the framework's own earlier
+              statements.</td></tr>
+      <tr><td>Linear resolution falls as <span class="mono">N<sup>−1/d</sup></span></td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Via the isodiametric inequality.</td></tr>
+      <tr><td>Beyond saturation, extra cells buy nothing</td>
+          <td><span class="tag proved">proved</span> <span class="tag measured">measured</span></td>
+          <td>And placement can matter more than count.</td></tr>
+      <tr><td>One arbitrary fault needs four sources</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Classical; not original here. The contribution is noticing it applies to
+              triplicate measurement.</td></tr>
+      <tr><td>The epistemic floor (a bounded knower has an irreducible blind region)</td>
+          <td><span class="tag open">separate</span></td>
+          <td>Deliberately quarantined. No theorem on this page uses it. A reader who
+              accepts only the instrumental floor loses nothing.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pager">
+    <a href="individuation.html"><span class="dir">back</span>01 · Individuation</a>
+    <a href="propagation.html"><span class="dir">next</span>03 · Propagation</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="floor.js"></script>
+</body>
+</html>

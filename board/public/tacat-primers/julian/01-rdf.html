@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1 · RDF as a database — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a class="here" href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 1</p>
+<h1>RDF as a database</h1>
+<p class="standfirst">
+  RDF is a graph database with two unusual commitments: every identifier is a URL that means the
+  same thing everywhere, and edges cannot carry properties. The first is what makes the project
+  interoperable. The second is what forces its central modelling decision.
+</p>
+
+<h2 id="triple">1. The only data structure</h2>
+
+<p>
+  RDF has one construct. A <strong>triple</strong>: subject, predicate, object. That is the entire
+  data model — there are no tables, no documents, no columns, no nesting.
+</p>
+
+<div class="triple">
+  <div class="t s"><span class="r">Subject</span>tacat:PART_0000002_01</div>
+  <div class="arrow">&rarr;</div>
+  <div class="t p"><span class="r">Predicate</span>tacat:participatingEntity</div>
+  <div class="arrow">&rarr;</div>
+  <div class="t o"><span class="r">Object</span>tacat:CHEBI_57972</div>
+</div>
+
+<p>
+  Read it as a sentence: <em>this participant node has, as its participating entity, the thing
+  identified as CHEBI:57972.</em> A set of triples is a directed labelled graph; the object of one
+  triple is very often the subject of the next, and that is how structure emerges without any
+  container construct.
+</p>
+<p>
+  Subjects and predicates are always <strong>IRIs</strong>. Objects are either an IRI (making the
+  triple an edge to another node) or a <strong>literal</strong> — a string, number, date — which
+  terminates that branch. That asymmetry matters more than it looks; it comes back in §6.
+</p>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">What you'd write in SQL</span>
+<pre><code data-lang="sql">CREATE TABLE participant (
+  id        TEXT PRIMARY KEY,
+  entity_id TEXT REFERENCES entity(id),
+  role_id   TEXT REFERENCES role(id),
+  coeff     NUMERIC
+);</code></pre>
+    <p>Shape is declared up front and enforced on write. A row that violates it is rejected.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">The RDF equivalent</span>
+<pre><code data-lang="turtle">tacat:PART_0000002_01
+    a                        tacat:ReactionParticipant ;
+    tacat:participatingEntity tacat:CHEBI_57972 ;
+    tacat:participantRole     tacat:Reactant ;
+    tacat:stoichiometricCoefficient 1.0 .</code></pre>
+    <p>Shape is not declared or enforced anywhere. Any subject may have any predicate. Adding a
+       nonsense triple is legal and silent — which is why <a href="04-shacl.html">SHACL</a> exists.</p>
+  </div>
+</div>
+
+<h2 id="iri">2. Identifiers are global, and that is the whole point</h2>
+
+<p>
+  In your systems, <code>user_id = 42</code> is meaningful inside one database and meaningless
+  outside it. Two services that both have a <code>users</code> table share nothing; reconciling them
+  is an integration project.
+</p>
+<p>
+  In RDF, the identifier <em>is</em> a URL, and it is intended to be the same URL everyone else
+  uses:
+</p>
+
+<pre><code data-lang="turtle">http://purl.obolibrary.org/obo/CHEBI_57972      # L-alanine, in ChEBI's namespace
+http://rdf.rhea-db.org/19453                    # a reaction, in Rhea's namespace
+http://purl.uniprot.org/enzyme/2.6.1.2          # an enzyme class, in UniProt's namespace</code></pre>
+
+<p>
+  These are <strong>PURLs</strong> — persistent URLs, run by the institution that curates the data,
+  guaranteed stable and redirected to wherever the resource currently lives. When this project
+  writes a triple pointing at <code>CHEBI_57972</code>, it is pointing at the <em>same node</em>
+  that UniProt, Rhea and several thousand other datasets point at. No integration step, no mapping
+  table.
+</p>
+
+<div class="box key">
+  <span class="box-title">Why this is the load-bearing decision</span>
+  <p>
+    Chapter 2 shows a query that joins this project&rsquo;s local graph against Swiss servers holding
+    UniProt and Rhea, live, and gets back real protein counts. It works for exactly one reason:
+    both sides use the same URLs as keys. Had the project minted <code>tacat:Alanine</code>
+    instead, the join would return zero rows — and, as always here, <em>no error</em>.
+  </p>
+  <p>
+    The community rule for this is OBO Foundry principle FP-005: import terms that are out of
+    scope, don&rsquo;t invent them. Minting your own identifier for water instead of using
+    <code>CHEBI:15377</code> is, in this field, the fastest way to be dismissed.
+  </p>
+</div>
+
+<h3>Prefixes are import aliases</h3>
+
+<p>
+  Writing full URLs is unbearable, so every RDF syntax has a prefix mechanism. It is exactly an
+  import alias and has no semantic content:
+</p>
+
+<pre><code data-lang="turtle">@prefix tacat: &lt;https://w3id.org/bitspark/tacat/&gt; .
+@prefix rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+
+tacat:CHEBI_57972 rdf:type &lt;http://purl.obolibrary.org/obo/CHEBI_57972&gt; .
+
+# means exactly:
+# &lt;https://w3id.org/bitspark/tacat/CHEBI_57972&gt;
+#     &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#type&gt;
+#     &lt;http://purl.obolibrary.org/obo/CHEBI_57972&gt; .</code></pre>
+
+<p>
+  <code>tacat:CHEBI_57972</code> is a <em>prefixed name</em>; it expands by string concatenation.
+  One consequence bites in practice: a prefixed name cannot contain characters that would break the
+  grammar. An unescaped <code>/</code> in the local part is a parse error — which is precisely the
+  bug that made one of the first submission&rsquo;s advertised example queries return HTTP 400 to
+  anyone who copy-pasted it.
+</p>
+
+<h2 id="propertygraph">3. The difference from Neo4j that changes everything</h2>
+
+<p>
+  If you know property graphs, RDF looks familiar until you try to put data on an edge.
+</p>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">Property graph (Cypher)</span>
+<pre><code data-lang="cypher">CREATE (r:Reaction {rhea: 19453})
+      -[:HAS_PARTICIPANT {
+          role: 'reactant',
+          coefficient: 1.0
+        }]-&gt;
+       (e:Entity {chebi: 57972})</code></pre>
+    <p>The relationship is a first-class object with its own key/value properties. Role and
+       coefficient live on the edge, which is where they belong.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">RDF</span>
+<pre><code data-lang="turtle">tacat:REACT_0000002
+    tacat:hasParticipant tacat:CHEBI_57972 .
+
+# ...and now where do the role and the
+# coefficient go? There is no third slot.
+# A triple is exactly three things.</code></pre>
+    <p><strong>RDF edges carry no properties.</strong> A predicate is an IRI and nothing else.
+       There is no attachment point.</p>
+  </div>
+</div>
+
+<p>
+  This is not an oversight; it follows from the triple being the atom. The standard workaround is
+  the <strong>n-ary relation pattern</strong> — W3C published a note on it — and it will be
+  familiar the moment you see it, because you have written it a hundred times.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You already know this as a join table</span>
+  <p>
+    A many-to-many relationship with attributes on the relationship itself cannot live in either
+    end&rsquo;s table, so you create a third table for it: <code>order_line</code> between
+    <code>order</code> and <code>product</code>, carrying <code>quantity</code> and
+    <code>unit_price</code>. Nobody thinks of that as a workaround; it is just how you model a
+    relationship that has its own facts.
+  </p>
+  <p>
+    RDF needs the identical move for the identical reason, and calls the intermediate node a
+    <strong>bridge node</strong>. <code>ReactionParticipant</code> is
+    <code>order_line</code>.
+  </p>
+</div>
+
+<p>
+  Here it is as the project actually writes it — one reaction, one of its four participants:
+</p>
+
+<pre><code data-lang="turtle">tacat:REACT_0000002 a tacat:BiochemicalReaction,
+                      &lt;http://rdf.rhea-db.org/19453&gt; ;
+    rdfs:label       "alanine transaminase reaction" ;
+    tacat:catalysedBy    tacat:EC_2_6_1_2 ;
+    tacat:hasParticipant tacat:PART_0000002_01,
+                         tacat:PART_0000002_02,
+                         tacat:PART_0000002_03,
+                         tacat:PART_0000002_04 .
+
+tacat:PART_0000002_01 a tacat:ReactionParticipant ;
+    rdfs:label                      "L-alanine as reactant" ;
+    tacat:participatingEntity        tacat:CHEBI_57972 ;   # what
+    tacat:participantRole            tacat:Reactant ;      # in what role
+    tacat:stoichiometricCoefficient  1.0 .                 # how many</code></pre>
+
+<p>
+  Four participants per reaction, each a node carrying <em>what / in what role / how many</em>.
+  Chapter 6 explains why that role slot is not a nicety: substrate and product are not properties of
+  a molecule, they are roles it plays in a given direction, and the same molecule flips between them
+  across reactions and even across organisms.
+</p>
+
+<div class="box ask">
+  <span class="box-title">Worth knowing: this choice is contested</span>
+  <p>
+    NFDI4Cat&rsquo;s own reaction ontology, <strong>Reac4Cat</strong>, models roles a different way
+    (a BFO-style role pattern) and does not use n-ary participation. BioPAX and SBML both do use
+    bridge nodes; Rhea uses a third approach again, numbering sub-predicates
+    (<code>rh:contains1</code>, <code>rh:contains2</code>&hellip;). There is no settled answer, which
+    means &ldquo;I chose the n-ary pattern because it carries stoichiometry, and here is when I
+    would switch&rdquo; is the defensible position — not &ldquo;this is the right way&rdquo;.
+  </p>
+</div>
+
+<h2 id="syntax">4. Four file formats, one graph</h2>
+
+<p>
+  RDF is a data model, not a file format. The serialisations are interchangeable — parse any of
+  these, emit any other, and the triples are identical. This trips people up constantly, so it is
+  worth seeing once. All four below encode <strong>the same single statement</strong>.
+</p>
+
+<p class="codelabel">Turtle — <code>.ttl</code>, what humans read and what this project ships</p>
+<pre><code data-lang="turtle">@prefix tacat: &lt;https://w3id.org/bitspark/tacat/&gt; .
+@prefix rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+
+tacat:CHEBI_57972 rdfs:label "L-alanine" .</code></pre>
+
+<p class="codelabel">N-Triples — <code>.nt</code>, one complete statement per line, no abbreviations</p>
+<pre><code data-lang="turtle">&lt;https://w3id.org/bitspark/tacat/CHEBI_57972&gt; &lt;http://www.w3.org/2000/01/rdf-schema#label&gt; "L-alanine" .</code></pre>
+
+<p class="codelabel">RDF/XML — the 1999 original; verbose, still everywhere, and what Owlready2 emits</p>
+<pre><code data-lang="turtle">&lt;rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"&gt;
+  &lt;rdf:Description rdf:about="https://w3id.org/bitspark/tacat/CHEBI_57972"&gt;
+    &lt;rdfs:label&gt;L-alanine&lt;/rdfs:label&gt;
+  &lt;/rdf:Description&gt;
+&lt;/rdf:RDF&gt;</code></pre>
+
+<p class="codelabel">JSON-LD — RDF that is also valid JSON, so it survives a normal web stack</p>
+<pre><code data-lang="json">{
+  "@context": { "rdfs": "http://www.w3.org/2000/01/rdf-schema#" },
+  "@id": "https://w3id.org/bitspark/tacat/CHEBI_57972",
+  "rdfs:label": "L-alanine"
+}</code></pre>
+
+<div class="box bridge">
+  <span class="box-title">Why JSON-LD is worth your attention specifically</span>
+  <p>
+    It is the format a full-stack developer would actually reach for: it goes through
+    <code>JSON.parse</code>, it sits in a document store, and a consumer who ignores
+    <code>@context</code> entirely still gets usable JSON. That is also why it is the format the
+    assessor&rsquo;s own lab tooling uses (<em>SciDatS</em> represents scientific metadata as
+    JSON-LD). If you ever need to bridge this world to a normal web application, this is the seam.
+  </p>
+</div>
+
+<h2 id="turtle">5. Reading Turtle properly</h2>
+
+<p>
+  You will be looking at <code>data/reactions.ttl</code>, so the three abbreviations are worth five
+  minutes. Turtle is just triples plus punctuation sugar.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Token</th><th>Means</th><th>Expands to</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono">a</td>
+      <td>&ldquo;is of type&rdquo;</td>
+      <td class="mono">rdf:type</td>
+    </tr>
+    <tr>
+      <td class="mono">;</td>
+      <td>same subject, next predicate</td>
+      <td>repeats the subject</td>
+    </tr>
+    <tr>
+      <td class="mono">,</td>
+      <td>same subject and predicate, next object</td>
+      <td>repeats both</td>
+    </tr>
+    <tr>
+      <td class="mono">.</td>
+      <td>end of statement group</td>
+      <td>&mdash;</td>
+    </tr>
+    <tr>
+      <td class="mono">"x"^^xsd:string</td>
+      <td>a typed literal</td>
+      <td>&mdash;</td>
+    </tr>
+    <tr>
+      <td class="mono">"x"@en</td>
+      <td>a literal tagged English</td>
+      <td>&mdash;</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>So this real block from the project&hellip;</p>
+
+<pre><code data-lang="turtle">tacat:REACT_0000001 a owl:NamedIndividual,
+        tacat:BiochemicalReaction,
+        &lt;http://rdf.rhea-db.org/21824&gt;,
+        tacat:TransaminationReaction ;
+    rdfs:label "aspartate transaminase reaction"^^xsd:string ;
+    tacat:catalysedBy tacat:EC_2_6_1_1 .</code></pre>
+
+<p>&hellip;is six triples, and one of them is not like the others:</p>
+
+<pre><code data-lang="turtle">REACT_0000001  rdf:type    owl:NamedIndividual .
+REACT_0000001  rdf:type    BiochemicalReaction .
+REACT_0000001  rdf:type    &lt;http://rdf.rhea-db.org/21824&gt; .   # the Rhea identifier, as a type
+REACT_0000001  rdf:type    TransaminationReaction .           # &lt;- nobody wrote this one
+REACT_0000001  rdfs:label  "aspartate transaminase reaction" .
+REACT_0000001  catalysedBy EC_2_6_1_1 .</code></pre>
+
+<p>
+  The third triple was <em>computed</em> by a logic engine during the build and written into the
+  file. Nothing in the source code asserts it. That is <a href="03-owl.html">chapter 3</a>, and it
+  is the single thing that distinguishes this from a database with RDF-flavoured syntax.
+</p>
+
+<h2 id="literals">6. The distinction that broke the first submission</h2>
+
+<p>
+  Back to the asymmetry from §1: an object is either an IRI or a literal. To a JSON eye these look
+  interchangeable. They are not.
+</p>
+
+<div class="vs">
+  <div class="newthing">
+    <span class="vs-label">A literal — text that happens to look like a URL</span>
+<pre><code data-lang="turtle">tacat:CHEBI_57972
+    tacat:chebiIRI
+      "http://purl.obolibrary.org/obo/CHEBI_57972"
+      ^^xsd:string .   # how this project first did it</code></pre>
+    <p>A dead end. The graph stops here. A join against ChEBI matches <strong>nothing</strong>,
+       because the other side has a node and this side has a string.</p>
+  </div>
+  <div class="known">
+    <span class="vs-label">An IRI — an actual edge</span>
+<pre><code data-lang="turtle">tacat:CHEBI_57972
+    a &lt;http://purl.obolibrary.org/obo/CHEBI_57972&gt; .</code></pre>
+    <p>An edge to a node that other datasets also reference. This is what makes a federated join
+       return rows.</p>
+  </div>
+</div>
+
+<div class="box trap">
+  <span class="box-title">The failure, in full</span>
+  <p>
+    An earlier revision of this project carried every external identifier <em>only</em> as an
+    <code>xsd:string</code>. The graph validated. The tests passed — they checked the string was
+    well-formed. The README claimed interoperability. And a federated query against UniProt would
+    have returned an empty result set with a <strong>200 OK</strong>.
+  </p>
+  <p>
+    The first fix emitted <em>both</em>: the literal, on the premise that <code>sh:pattern</code> in
+    SHACL can only regex-check a literal; and an IRI, because only a node can be joined. The
+    regression test asserts the object is a <code>URIRef</code> — not that some well-formed string is
+    present, which is the check that gave false confidence the first time.
+  </p>
+  <p>
+    <strong>That premise was wrong, and it is worth knowing why.</strong> <code>sh:pattern</code>
+    matches the <em>lexical form of the value node</em>, and for an IRI the lexical form is the IRI
+    string. The literal copy validated nothing the IRI could not validate itself, so it was deleted.
+  </p>
+</div>
+
+<h3>Why <code>rdf:type</code>, and not <code>owl:sameAs</code> or <code>skos:exactMatch</code></h3>
+
+<p>
+  <code>owl:sameAs</code> is a logical identity claim: a reasoner is licensed to merge everything
+  either side asserts. Point <code>sameAs</code> at a ChEBI term and you have, formally, pulled all
+  of ChEBI&rsquo;s assertions about that molecule into your graph — including any you never reviewed.
+</p>
+
+<p>
+  <code>skos:exactMatch</code> is the weaker mapping assertion, and this project used it for a while.
+  It is still wrong here: SKOS mapping properties are sub-properties of
+  <code>skos:semanticRelation</code>, whose domain and range are both <code>skos:Concept</code> — so
+  the graph was <em>entailing</em> that ChEBI terms and our nodes are thesaurus concepts, and it was
+  pointing an individual at a class.
+</p>
+
+<p>
+  <code>rdf:type</code> makes neither claim. The ChEBI term <em>is</em> a class; our node <em>is</em>
+  an instance of it. One triple, exactly true, joinable, and still validated by the same shape.
+</p>
+
+<h2 id="blank">7. Blank nodes, and why this project bans them</h2>
+
+<p>
+  RDF permits anonymous nodes — a node with no IRI, valid only inside one document. Turtle writes
+  them with square brackets:
+</p>
+
+<pre><code data-lang="turtle">tacat:REACT_0000002 tacat:hasParticipant [
+    tacat:participatingEntity tacat:CHEBI_57972 ;
+    tacat:participantRole     tacat:Reactant
+] .</code></pre>
+
+<p>
+  Convenient, and a trap. A blank node has no stable identity, so merging two graphs that each
+  describe &ldquo;the same&rdquo; participant produces <em>two</em> nodes, silently — and any
+  aggregate query then double-counts. It is the auto-increment primary key of RDF: fine until data
+  crosses a system boundary, at which point you cannot deduplicate.
+</p>
+<p>
+  Every bridge node in this project therefore gets a real IRI
+  (<code>tacat:PART_0000002_01</code>), and the SHACL shapes enforce it with
+  <code>sh:nodeKind sh:IRI</code> so a regression fails the build rather than quietly corrupting a
+  count.
+</p>
+
+<h2 id="vocab">8. The vocabularies you will see in the file</h2>
+
+<p>
+  A handful of standard namespaces do most of the work. You do not need to learn these, only to
+  recognise them, the way you recognise <code>Content-Type</code> without reading RFC 9110.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Prefix</th><th>What it is for</th><th>Terms you will actually meet</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="mono">rdf:</td><td>the core model</td><td class="mono">rdf:type</td></tr>
+    <tr><td class="mono">rdfs:</td><td>lightweight schema</td><td class="mono">rdfs:label, rdfs:subClassOf, rdfs:comment</td></tr>
+    <tr><td class="mono">owl:</td><td>the logic layer</td><td class="mono">owl:Class, owl:NamedIndividual, owl:equivalentClass, owl:versionIRI</td></tr>
+    <tr><td class="mono">skos:</td><td>mappings between vocabularies</td><td class="mono">skos:exactMatch, skos:prefLabel</td></tr>
+    <tr><td class="mono">xsd:</td><td>literal datatypes, borrowed from XML Schema</td><td class="mono">xsd:string, xsd:decimal, xsd:dateTime</td></tr>
+    <tr><td class="mono">dcterms:</td><td>Dublin Core — bibliographic metadata</td><td class="mono">dcterms:title, dcterms:license, dcterms:source</td></tr>
+    <tr><td class="mono">dcat:</td><td>describing datasets as catalogue entries</td><td class="mono">dcat:Dataset, dcat:distribution</td></tr>
+    <tr><td class="mono">prov:</td><td>provenance — who or what generated this</td><td class="mono">prov:Activity, prov:wasGeneratedBy</td></tr>
+    <tr><td class="mono">sh:</td><td>SHACL constraints</td><td class="mono">sh:NodeShape, sh:minCount, sh:pattern</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box key">
+  <span class="box-title">Chapter 1 in four lines</span>
+  <ul>
+    <li>One data structure: the triple. No schema is enforced by the model itself.</li>
+    <li>Identifiers are global URLs, which is what makes cross-dataset joins possible at all.</li>
+    <li>Edges carry no properties &rarr; a bridge node, exactly like a join table with attributes.</li>
+    <li>An identifier stored as a <em>string</em> rather than a <em>link</em> is unjoinable, and
+        fails with zero rows and no error.</li>
+  </ul>
+</div>
+
+<div class="pager">
+  <a href="index.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; Start here</span>
+  </a>
+  <a class="next" href="02-sparql.html">
+    <span class="dir">Next</span>
+    <span class="t">2 &middot; SPARQL &amp; the protocol &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

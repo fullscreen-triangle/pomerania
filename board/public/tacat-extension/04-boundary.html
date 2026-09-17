@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4 · Where the model stops — tacat extension</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="4">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-floor.html">The floor under identity</a></li>
+    <li><a href="02-closure.html">Closure, not confidence</a></li>
+    <li><a href="03-coherence.html">Three sources or none</a></li>
+    <li><a class="here" href="04-boundary.html">Where the model stops</a></li>
+    <li><a href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a href="07-three.html">Three verdicts on one run</a></li>
+    <li><a href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 4</p>
+<h1>Where the model stops</h1>
+<p class="standfirst">
+  <code>RATIONALE.md</code> §6 says the real thing being graded is whether the candidate knows where
+  the model stops. <code>OUT_OF_SCOPE_QUESTIONS</code> answers that by listing what the ontology
+  cannot do. This chapter proposes making the boundary <em>derivable</em> rather than enumerated —
+  so that it holds for questions nobody has thought of yet.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ the stated target</span>
+  <span class="chip">13 min</span>
+  <span class="chip">RATIONALE §6.3 · OUT_OF_SCOPE</span>
+  <span class="chip ask">his own paper's subject</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance.</strong> This chapter rests on unpublished single-author work
+  (<em>The Irreducible Boundary of a Bounded Resolvable Space</em>, §6; <em>Contact Graphs</em>, T8).
+  It has not been peer-reviewed. The detectability criterion below is stated in measure-theoretic
+  terms in the source; the translation to "what a fixed vocabulary can express" is <em>an
+  analogy I am drawing</em>, not a theorem in the paper. It is offered because it is productive, and
+  flagged because it is the weakest inferential step in these five chapters.
+</div>
+
+<h2 id="current">1. What the repository does now</h2>
+
+<p>
+  <code>queries/competency.py</code> carries <code>OUT_OF_SCOPE_QUESTIONS</code> — competency
+  questions from NFDI4Cat's own set that the ontology deliberately cannot answer, each with what it
+  would take:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Question</th><th>Recorded blocker</th></tr></thead>
+  <tbody>
+    <tr><td>Kinetic parameters — <em>K</em><sub>m</sub>, <em>k</em><sub>cat</sub></td><td>Needs quantities with units: QUDT vs OM-2 vs EMMO</td></tr>
+    <tr><td>Purification protocol</td><td>Needs a laboratory-process model</td></tr>
+    <tr><td>Immobilisation</td><td>Needs materials and a process model</td></tr>
+    <tr><td>Assay conditions</td><td>Needs experiment, device, measurement classes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  This is already the right instinct, and it is unusual — most submissions list what they built. But
+  it is an <strong>enumeration</strong>, and enumerations have a specific weakness: they answer "can
+  it do X?" only for the X someone thought to write down. Ask a question not on the list and the
+  honest answer is a shrug.
+</p>
+
+<div class="box trap">
+  <span class="box-title">The failure mode of an enumerated boundary</span>
+  <p>
+    An enumerated boundary looks complete from inside. There is no way to tell, from the list, whether
+    the list is exhaustive — which is the same structural problem as a green test suite in
+    Chapter 2. A boundary you can <em>derive</em> answers for questions nobody enumerated.
+  </p>
+</div>
+
+<h2 id="detect">2. Detectability</h2>
+
+<p>
+  The bounded-space paper asks when a region is distinguishable at all by an agent with finite
+  resolution. Its answer is a ratio, not a size:
+</p>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Thm · Detectability</span>
+    <span class="thm-src">Irreducible Boundary, Thm 6.3</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      A region is distinguishable if and only if its own scale exceeds its boundary thickness. Below
+      that, it is <strong>engulfed</strong> by its own separator: every part of it also borders
+      something else, so nothing of it stands clear.
+    </p>
+  </div>
+</div>
+
+<div class="box key">
+  <span class="box-title">The inversion that makes it useful</span>
+  <p>
+    Smallness is never the cause of silence. A thing fails to register because <strong>its boundary is
+    thick relative to it</strong> — the distinctions you would need to draw to mark it off are
+    coarser than the thing itself. Translate to vocabulary: a question is unanswerable not because it
+    is "advanced" but because <em>the distinctions it requires are finer than any the vocabulary
+    draws</em>.
+  </p>
+</div>
+
+<p>
+  That gives a mechanical test, and it is one a person can apply in a presentation without any of the
+  theory: <strong>name the finest distinction the question turns on, then ask whether the vocabulary
+  has a term that makes exactly that distinction.</strong> If not, the question is engulfed — and the
+  answer to "can it do X?" is not "no", it is "no, and here is the specific term that is missing".
+</p>
+
+<h3>2.1 Applied to the four recorded questions</h3>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Question</th><th>Finest distinction it turns on</th><th>Nearest term tacat has</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>What is <em>K</em><sub>m</sub> for ALT?</td>
+      <td>A number that is a <em>concentration</em>, distinguished from a number that is a rate</td>
+      <td><code>stoichiometricCoefficient</code> — a bare <code>float</code>, no unit, no dimension</td>
+      <td><strong>engulfed</strong> — every quantity collapses to one undifferentiated kind</td>
+    </tr>
+    <tr>
+      <td>How was the enzyme purified?</td>
+      <td>One process step distinguished from the next in time</td>
+      <td>none — the graph has no process, no ordering, no event</td>
+      <td><strong>engulfed</strong> — no boundary between steps exists to be drawn</td>
+    </tr>
+    <tr>
+      <td>What buffer was used?</td>
+      <td>A substance <em>present as a condition</em> vs. <em>as a participant</em></td>
+      <td><code>ParticipantRole</code> distinguishes substrate/product only</td>
+      <td><strong>engulfed</strong> — but by the narrowest margin of the four</td>
+    </tr>
+    <tr>
+      <td>Which reactions share L-glutamate?</td>
+      <td>Entity identity across two reactions</td>
+      <td><code>participatingEntity</code> → shared IRI</td>
+      <td><span class="fig-ok"><strong>detectable</strong></span> — this is CQ04, and it passes</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box bridge">
+  <span class="box-title">Why the buffer row is the interesting one</span>
+  <p>
+    It is the closest miss, and it shows the criterion doing real work. tacat <em>does</em> have a
+    role concept — <code>ParticipantRole</code> — and it <em>does</em> already model one non-participant
+    correctly: PLP is domained on the enzyme as <code>hasCofactor</code>, deliberately not on the
+    reaction. So the vocabulary has the <em>shape</em> of the distinction "present but not consumed".
+    What it lacks is one more term. That makes the buffer question the cheapest of the four to reach,
+    and the detectability test is what surfaces that ordering — an enumeration lists all four as
+    equally out.
+  </p>
+</div>
+
+<h2 id="authored">3. The bound on authorship</h2>
+
+<p>
+  There is a second result worth having in a presentation, because it answers a question that gets
+  asked of every ontology: <em>why does your model not cover everything?</em>
+</p>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Thm · Floor-limited authorship</span>
+    <span class="thm-src">Contact Graphs, Thm 9.9 (T8, Bound III)</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      An author who specifies a structure using distinctions of resolution β can express only
+      distinctions of cost ≥ β. Any finer distinction present in the thing modelled is
+      <strong>below the author's resolution</strong> — present in the world, absent from the
+      specification, and not through carelessness.
+    </p>
+  </div>
+</div>
+
+<p>
+  The paper's phrase for it is <em>doors, not rooms</em>: an author lays down the boundaries at their
+  own resolution; whatever is finer belongs to the thing itself. For an ontology this is not a
+  limitation to apologise for — it is what a vocabulary <em>is</em>. A term makes exactly one
+  distinction, and everything finer than that term is inside it, undifferentiated.
+</p>
+
+<div class="vs">
+  <div class="side bad">
+    <h4>Usual framing</h4>
+    <p>"The model is incomplete; with more time we would add kinetics, process, materials."</p>
+    <p>Invites the question <em>how much more would be enough</em>, which has no answer, and implies
+    completeness is reachable.</p>
+  </div>
+  <div class="side good">
+    <h4>Floor framing</h4>
+    <p>"The model resolves to the level of <em>which species participates in which role</em>. Anything
+    finer is inside a term, by construction."</p>
+    <p>States a resolution, which is checkable, and predicts <em>which</em> questions fail before
+    anyone asks them.</p>
+  </div>
+</div>
+
+<h2 id="proposal">4. What this proposes building</h2>
+
+<h3>4.1 Out-of-scope questions get a stated resolution</h3>
+
+<p>
+  Each entry gains one field: the distinction the question needs, and the term that would carry it.
+  This turns a list of gaps into a specification of the next increment.
+</p>
+
+<figure class="code">
+  <figcaption>proposed: extending <code>OUT_OF_SCOPE_QUESTIONS</code> in <code>queries/competency.py</code></figcaption>
+<pre><code><span class="tok-fn">OutOfScopeQuestion</span>(
+    question=<span class="tok-string">"What is the Km of alanine transaminase for L-alanine?"</span>,
+    <span class="tok-comment"># Existing field: what it would take, in prose.</span>
+    requires=<span class="tok-string">"quantities with units (QUDT / OM-2 / EMMO)"</span>,
+    <span class="tok-comment"># Proposed: the distinction the vocabulary does not draw, and</span>
+    <span class="tok-comment"># the single term that would draw it. Stating it this way makes</span>
+    <span class="tok-comment"># the entry testable: if the term is ever added, this row is</span>
+    <span class="tok-comment"># stale and a test can say so.</span>
+    finest_distinction=<span class="tok-string">"a concentration is not a rate is not a count"</span>,
+    blocking_term=<span class="tok-string">"tacat:Quantity with tacat:hasUnit"</span>,
+    nearest_existing=<span class="tok-string">"stoichiometricCoefficient: float — dimensionless"</span>,
+)</code></pre>
+</figure>
+
+<h3>4.2 A test that the boundary is where it is claimed to be</h3>
+
+<p>
+  The listed questions are asserted to be unanswerable. Nothing checks that. If a later change made
+  one of them answerable, the list would silently become wrong — the same failure shape as everything
+  in <code>RATIONALE.md</code> §4.
+</p>
+
+<figure class="code">
+  <figcaption>proposed: <code>tests/test_boundary.py</code></figcaption>
+<pre><code><span class="tok-kw">def</span> <span class="tok-fn">test_out_of_scope_questions_are_genuinely_out_of_scope</span>(graph):
+    <span class="tok-string">"""The recorded boundary must actually be the boundary.
+
+    Each out-of-scope question names a blocking term. Assert that
+    term is absent from the vocabulary. If someone adds it, this
+    test fails and the entry must be re-examined — either the
+    question is now answerable, or the term was named wrongly.
+
+    Without this, OUT_OF_SCOPE_QUESTIONS is documentation that
+    decays silently, which is the one failure mode this project
+    exists to argue against.
+    """</span>
+    <span class="tok-kw">for</span> q <span class="tok-kw">in</span> OUT_OF_SCOPE_QUESTIONS:
+        term = <span class="tok-fn">URIRef</span>(BASE + q.blocking_term.<span class="tok-fn">split</span>(<span class="tok-string">":"</span>)[<span class="tok-num">1</span>])
+        <span class="tok-kw">assert</span> (term, <span class="tok-kw">None</span>, <span class="tok-kw">None</span>) <span class="tok-kw">not in</span> graph, (
+            <span class="tok-string">f"{q.blocking_term} now exists; {q.question!r} may be answerable"</span>
+        )</code></pre>
+</figure>
+
+<div class="box key">
+  <span class="box-title">Why this is the single highest-value item in the five chapters</span>
+  <p>
+    <code>RATIONALE.md</code> §6 is explicit: the third differentiator — "does the candidate know
+    where the model stops?" — is "the real target. It is the subject of his own paper, it is the
+    explicit agenda for the presentation." A test that <em>guards</em> the stated boundary is the
+    strongest possible form of the answer, because it converts the claim from something asserted in a
+    document into something the pipeline would notice becoming false.
+  </p>
+</div>
+
+<h2 id="honest">5. What this does not fix</h2>
+
+<div class="box ask">
+  <span class="box-title">Be able to say this out loud</span>
+  <ul>
+    <li>
+      <strong>The detectability analogy is mine, not the paper's.</strong> Thm 6.3 is about regions in
+      a measure space with a finite partition. Reading "boundary thickness" as "the coarsest
+      distinction the vocabulary draws" is an interpretation. It is productive and it generates the
+      ordering in §2.1, which an enumeration does not — but if challenged, concede it immediately and
+      fall back on the table, which stands as ordinary analysis without any theorem.
+    </li>
+    <li>
+      <strong>"Finest distinction the question turns on" is a judgement call.</strong> Two people can
+      analyse the same question differently. The value is that the disagreement becomes explicit and
+      arguable, not that the method is mechanical.
+    </li>
+    <li>
+      <strong>The boundary test is easy to write badly.</strong> Asserting a term's absence is a weak
+      check — the term could be added under a different name and the test would still pass. It guards
+      against the obvious regression, not against a determined one.
+    </li>
+    <li>
+      <strong>None of this makes the out-of-scope questions answerable.</strong> Kinetics still needs
+      a unit vocabulary, and choosing between QUDT, OM-2 and EMMO is a real decision with real
+      consequences that this chapter does not make.
+    </li>
+  </ul>
+</div>
+
+<div class="pagenav">
+  <a href="03-coherence.html"><span class="dir">Back</span>3 · Three sources or none</a>
+  <span class="spacer"></span>
+  <a href="05-cost.html"><span class="dir">Next</span>5 · What it would cost</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Causal Knowledge Graph — one object, several readings</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html" aria-current="page">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">Kundai Farai Sachikonye · for Mark Doerr</p>
+  <h1>Modelling means drawing a boundary,<br>and a boundary is never free.</h1>
+
+  <p class="lede">
+    That one sentence, taken seriously, produces a solvent that is a vertex rather than
+    an attribute, a reaction direction that belongs to the medium rather than to the
+    reaction, a causal graph that is computed rather than curated, and a runtime in which
+    the graph that models the chemistry is the same object that runs the experiment.
+  </p>
+
+  <p style="margin-top:2rem">
+    This page is the map. Each idea below has its own page with the argument stated
+    plainly, an interactive figure you can push on, and a note saying exactly what is
+    proved, what is measured, and what is still open. Follow whichever thread interests
+    you — they are independent, and none of them requires the others to be read first.
+  </p>
+
+  <div class="claim">
+    <span class="label">The through-line</span>
+    <p>
+      Individuation has a cost that never reaches zero. Everything else in this
+      framework is a consequence of taking that seriously in one domain or another —
+      chemistry, instruments, computation.
+    </p>
+  </div>
+
+  <h2>The ideas</h2>
+
+  <div class="grid">
+    <a class="card" href="s-entropy.html">
+      <span class="n">00</span>
+      <h3>S-entropy</h3>
+      <p>Where the rest comes from: distance to truth measured from a stated observer.
+         The foundation — including where its own derivation fails.</p>
+    </a>
+    <a class="card" href="individuation.html">
+      <span class="n">01</span>
+      <h3>Individuation</h3>
+      <p>A part is fixed as the complement of everything it is not. Put the surroundings
+         in the graph as a vertex, and identity becomes a minimum cut.</p>
+    </a>
+    <a class="card" href="floor.html">
+      <span class="n">02</span>
+      <h3>The floor</h3>
+      <p>No finite observer separates anything at zero cost. The same statement covers a
+         bounded knower and a plate reader with 4001 outputs.</p>
+    </a>
+    <a class="card" href="propagation.html">
+      <span class="n">03</span>
+      <h3>Propagation</h3>
+      <p>For a system with a dynamical description the causal graph is already there:
+         edges are recovered, not asserted. One map, two arguments.</p>
+    </a>
+    <a class="card" href="opacity.html">
+      <span class="n">04</span>
+      <h3>Path opacity</h3>
+      <p>Only endpoints are checked, so interiors are free. That is where the speed
+         comes from — and why mechanism is not recoverable from endpoint data.</p>
+    </a>
+    <a class="card" href="languages.html">
+      <span class="n">05</span>
+      <h3>The languages</h3>
+      <p>Four domain languages over one semantics, and a converter that records
+         whether the source stated a fact or the toolkit supplied it.</p>
+    </a>
+    <a class="card" href="runtime.html">
+      <span class="n">06</span>
+      <h3>The graph as runtime</h3>
+      <p>A node is a subtask fused with the code that realises it. An edge exists
+         because a value propagated. The runtime judges nothing.</p>
+    </a>
+    <a class="card" href="lara.html">
+      <span class="n">→</span>
+      <h3>What this means for LARA</h3>
+      <p>Ontology, reasoner, query layer, scheduler and provenance store as one object
+         addressed at different depths. The layer mapping, stated concretely.</p>
+    </a>
+  </div>
+
+  <h2>How the ideas connect</h2>
+
+  <p>
+    The diagram is live: hover a node to see what it carries, and click to open its
+    page. The edges are dependencies of argument, not of reading order.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="map" viewBox="0 0 760 380" role="img"
+           aria-label="Dependency map of the five ideas and their domain instances"></svg>
+    </div>
+    <figcaption>
+      <b>Figure 0 — the shape of the argument.</b>
+      Blue nodes are the structural ideas; warm nodes are places where an idea was taken
+      into a domain and produced something checkable. The floor sits under everything
+      because every other claim needs a positive separation cost to be well posed.
+    </figcaption>
+  </figure>
+
+  <h2>What is claimed, and how firmly</h2>
+
+  <p>
+    Different parts of this work stand on very different ground, and the distinction
+    matters more than any individual result. Each page repeats its own version of this
+    table; here is the whole picture.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Statement</th><th>Standing</th><th>Where</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>A finite-resolution observer cannot separate a part at zero cost</td>
+        <td><span class="tag proved">proved</span></td>
+        <td><a href="floor.html">The floor</a></td>
+      </tr>
+      <tr>
+        <td>Solvent role is derivable from the graph rather than annotated</td>
+        <td><span class="tag proved">proved</span> <span class="tag measured">measured</span></td>
+        <td><a href="individuation.html#solvent">Individuation</a></td>
+      </tr>
+      <tr>
+        <td>Two views of one reaction disagree about the cofactor for structural reasons</td>
+        <td><span class="tag proved">proved</span> <span class="tag measured">measured</span></td>
+        <td><a href="individuation.html#cofactor">Individuation</a></td>
+      </tr>
+      <tr>
+        <td>Endpoint invariants cannot distinguish interior routes</td>
+        <td><span class="tag proved">proved</span></td>
+        <td><a href="opacity.html">Path opacity</a></td>
+      </tr>
+      <tr>
+        <td>A monitor with <span class="mono">N</span> outputs has a mean cell of <span class="mono">D/N</span></td>
+        <td><span class="tag proved">proved</span></td>
+        <td><a href="floor.html#instrument">The floor</a></td>
+      </tr>
+      <tr>
+        <td>Robustness to one <em>miscalibrated</em> instrument needs four sources, not three</td>
+        <td><span class="tag proved">proved</span></td>
+        <td><a href="floor.html#triplicate">The floor</a></td>
+      </tr>
+      <tr>
+        <td>Beyond a saturation point, more monitor resolution buys nothing</td>
+        <td><span class="tag proved">proved</span> <span class="tag measured">measured</span></td>
+        <td><a href="floor.html#saturation">The floor</a></td>
+      </tr>
+      <tr>
+        <td>Admitting non-physical intermediates is what makes backward completion cheap</td>
+        <td><span class="tag open">conjecture</span></td>
+        <td><a href="opacity.html#virtual">Path opacity</a></td>
+      </tr>
+      <tr>
+        <td>Exactly when an endpoint check remains a sound certificate</td>
+        <td><span class="tag open">open</span></td>
+        <td><a href="opacity.html#soundness">Path opacity</a></td>
+      </tr>
+      <tr>
+        <td>73.4% of a SMILES-derived structure graph is convention, not record</td>
+        <td><span class="tag measured">measured</span></td>
+        <td><a href="languages.html#federation">The languages</a></td>
+      </tr>
+      <tr>
+        <td>A converter returning “a graph or nothing” conflates four outcomes</td>
+        <td><span class="tag proved">proved</span></td>
+        <td><a href="languages.html#federation">The languages</a></td>
+      </tr>
+      <tr>
+        <td>Catalytic powers compose as <span class="mono">1 − (1−κ₁)(1−κ₂)</span></td>
+        <td><span class="tag proved">proved</span> <span class="tag measured">verified</span></td>
+        <td><a href="s-entropy.html#catalyst">S-entropy</a></td>
+      </tr>
+      <tr>
+        <td>A bounded receiver's unreachable region keeps the cardinality of the whole</td>
+        <td><span class="tag proved">proved</span></td>
+        <td><a href="s-entropy.html#residue">S-entropy</a></td>
+      </tr>
+      <tr>
+        <td>Floor positivity, as derived in the foundational paper</td>
+        <td><span class="tag refuted">circular</span></td>
+        <td><a href="s-entropy.html#floor">S-entropy</a></td>
+      </tr>
+      <tr>
+        <td>A three-axis coordinate stays informative on every network</td>
+        <td><span class="tag refuted">refuted</span></td>
+        <td><a href="propagation.html#oxphos">Propagation</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="caveat">
+    <strong>On the last row.</strong> The coordinate collapses on oxidative phosphorylation,
+    because water at bulk concentration dominates the normalisation. That was found by the
+    validation, reported against interest, and turned into a usage rule rather than
+    quietly dropped. It is on this table for the same reason it is in the paper.
+  </div>
+
+  <h2>Where the implementation lives</h2>
+
+  <p>
+    None of this is a proposal for work to be done. The runtime is implemented, four
+    domain-specific languages compile and execute against it, and the cytochrome P450
+    monograph takes the framework through one enzyme family across roughly twenty
+    papers. The <a href="runtime.html#demo">runtime page</a> describes what actually
+    runs and what does not.
+  </p>
+
+  <hr class="rule">
+
+  <p class="aside">
+    Every page states its own limits. Where a number here disagrees with a number in a
+    paper, the validation output is the authority and the disagreement is noted on the
+    page rather than reconciled silently.
+  </p>
+
+</div>
+</main>
+
+<script type="module" src="map.js"></script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The languages — what each one says that the others cannot</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html" aria-current="page">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">06 · The languages</p>
+  <h1>Four languages, one graph, and a converter that refuses.</h1>
+
+  <p class="lede">
+    Each language serves a domain that a general-purpose language makes awkward, and each
+    emits the same kind of thing: facts on nodes of one graph. They are not libraries with
+    a shared data format — they are separate surface syntaxes over one semantics, which is
+    why a circuit result and a mass-spectrometry acquisition can occupy the same node
+    without either knowing about the other.
+  </p>
+
+  <div class="claim">
+    <span class="label">The composition, in one sentence</span>
+    <p>
+      A question is posed in whichever language states it naturally; the runtime
+      dispatches to whichever modules can answer; each writes its answer as a fact keyed
+      <span class="mono">fact:&lt;module&gt;#&lt;chunk&gt;</span> onto the node named. No
+      language has to know what the others can do — only the runtime does, and it does not
+      translate between them. <b>It keeps their outputs whole.</b>
+    </p>
+  </div>
+
+  <p>
+    Eighteen modules are registered in the running system. Four of them are the languages
+    below; the rest are contributors — a virtual mass spectrometer, a memory kernel, a
+    remote-dispatch pool, and the cytochrome P450 monograph itself as a source of facts.
+  </p>
+
+  <h2>The four languages</h2>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="langs" viewBox="0 0 760 400" role="img"
+           aria-label="Four languages compiling to one graph"></svg>
+    </div>
+    <div class="controls">
+      <button id="l-hj"  data-lang="hj"  aria-pressed="true" type="button">honjo · .hj</button>
+      <button id="l-sbs" data-lang="sbs" type="button">SBS · .sbs</button>
+      <button id="l-ss"  data-lang="ss"  type="button">shapeshifter · .ss</button>
+      <button id="l-grf" data-lang="grf" type="button">graffiti · .grf</button>
+    </div>
+    <figcaption>
+      <b>Figure 17 — each language, from source to fact.</b>
+      Select a language to see its pipeline and what it emits. Every one ends in the same
+      place: a typed fact on a node. The stages differ because the domains differ — a
+      circuit language needs a solver, an accountability language needs a type system that
+      can reject a claim of zero cost.
+    </figcaption>
+  </figure>
+
+  <p>
+    They are four genuinely different compiler shapes, and the differences follow from
+    the domains rather than from taste:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th></th><th class="mono">.sbs</th><th class="mono">.ss</th><th class="mono">.grf</th><th class="mono">.hj</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>domain</td><td>metabolic circuits</td><td>virtual mass-spec</td><td>search as individuation</td><td>chemical individuation</td></tr>
+      <tr><td>lexer</td><td>char scan, <span class="mono">-&gt; |&gt;</span></td><td>line / indent</td><td>char scan, <span class="mono">&gt;&gt; ||</span></td><td>char scan, <span class="mono">~ #</span></td></tr>
+      <tr><td>typecheck</td><td>none</td><td>structural warnings</td><td><b>full, theorem-named</b></td><td><b>full, 8 types</b></td></tr>
+      <tr><td>IR</td><td>GLSL + JS</td><td>JSON AST</td><td>direct interp</td><td><b>register machine</b></td></tr>
+      <tr><td>execute</td><td>WebGL2 shader</td><td>capability dispatch</td><td>graph-mutating</td><td>switch VM</td></tr>
+      <tr><td>emits</td><td>R, V, S-triples</td><td>a workspace</td><td>Claim or Decline</td><td>Atom/Bond/Compound/Path</td></tr>
+    </tbody>
+  </table>
+
+  <div class="claim">
+    <span class="label">The common thread</span>
+    <p>
+      Three of the four declare a <b>floor</b> — a resolution below which distinctions are
+      not expressible — and enforce it at compile time. In honjo,
+      <span class="mono">floor must be &gt; 0; the sharp cut is not expressible</span> is a
+      type error. In graffiti, a program with no declared floor does not compile.
+      <a href="floor.html">The floor is idea 02 →</a>
+    </p>
+  </div>
+
+  <h3 id="honjo">honjo · <span class="mono">.hj</span> — one verb, and the verb is <em>cut</em></h3>
+
+  <p>
+    The cheminformatics language. Its single computational primitive is the
+    <b>cut</b>: individuating a part from a bounded whole at a strictly positive
+    irreducible cost. The semantic identity it carries is that
+    <em>generating an atom, forming a bond, and tracking an item through a process are not
+    distinct operations</em> — they are the same cut at different arities.
+  </p>
+
+  <table>
+    <thead><tr><th>Arity</th><th>The cut is</th><th>In chemistry</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>individuating one item from the medium</td><td>an atom</td></tr>
+      <tr><td class="num">2</td><td>a cut between two items</td><td>a bond</td></tr>
+      <tr><td class="num">n</td><td>a residue-chained sequence of cuts</td><td>a process track</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    So the language has one verb and one composition rule, and atom generation, compound
+    construction, molecular geometry and causal process tracking all follow rather than
+    being separate features. <a href="individuation.html">The cut is the individuation
+    idea →</a>
+  </p>
+
+  <div class="claim">
+    <span class="label">Accountability is in the type system</span>
+    <p>
+      Every value carries the floor at which it was cut and the provenance of the data it
+      was cut from. A value claiming <b>zero residue is rejected at compile time</b>, and
+      a value computed over <em>supplied</em> data can never be mistaken for one computed
+      over <em>stated</em> data. Evaluation <em>is</em> measurement: the committed-cut
+      count is monotone, so every program carries an intrinsic clock and an intrinsic
+      audit trail.
+    </p>
+  </div>
+
+  <h3 id="sbs">SBS · <span class="mono">.sbs</span> — systems biology shaders</h3>
+
+  <p>
+    A network language: declare nodes and weighted edges, then <span class="mono">observe</span>,
+    <span class="mono">perturb</span> or <span class="mono">navigate</span>. It compiles
+    to GLSL and solves on the graphics hardware, with a CPU fallback. The reason it exists
+    as a language rather than a library is that the interesting operation is
+    <em>perturbation</em> — inhibit this edge by this factor, and tell me what moved —
+    which is clumsy to express as function calls and natural as a declaration.
+  </p>
+
+  <p>
+    <a href="propagation.html#circuit">This is the circuit reading of a metabolic
+    network →</a>
+  </p>
+
+  <h3 id="shapeshifter">shapeshifter · <span class="mono">.ss</span> — virtual mass spectrometry</h3>
+
+  <p>
+    Declares an <span class="mono">objective</span>, an <span class="mono">instrument</span>,
+    a sequence of <span class="mono">phase</span> blocks and a <span class="mono">validate</span>
+    condition. It compiles a stage and executes it against a capability layer, so the
+    program says <em>what is to be acquired and what would count as success</em> rather
+    than which library calls to make in which order. The instrument's own resolution
+    limits enter here. <a href="floor.html#instrument">What an instrument entitles you to
+    conclude →</a>
+  </p>
+
+  <p>
+    The runtime then <b>forward-simulates the experiment</b> — no instrument present.
+    <span class="mono">classes: ["PC"], mz_window: [150,500]</span> expands to a
+    cross-product over chain lengths, double-bond counts, adducts and polarity: thousands
+    of predicted ions from four lines. And the <span class="mono">validate</span> block
+    does real physics, deriving a minimum transient duration from the mass–energy–time
+    uncertainty relation, so you can assert an instrument setting is
+    <em>physically achievable before spending the run</em>.
+  </p>
+
+  <h3 id="graffiti">graffiti · <span class="mono">.grf</span> — search as individuation</h3>
+
+  <p>
+    Not “find a document” but: separate a claim from an undifferentiated medium, at a
+    stated resolution floor, and either converge on one claim-region or
+    <b>decline honestly</b>. A <span class="mono">seek</span> declares what it excludes
+    (<span class="mono">not{…}</span>), what it moves toward, which catalysts to compose,
+    and what to do if the evidence splits.
+  </p>
+
+  <div class="claim">
+    <span class="label">It makes “I don't know” a typed value</span>
+    <p>
+      A search returning three mutually incompatible answers normally either picks one —
+      silently wrong — or throws, losing the information. Graffiti returns a
+      <span class="mono">Decline</span> carrying <em>the actual competing claim-regions</em>.
+      And a <span class="mono">seek</span> that reaches contested closure without an
+      <span class="mono">otherwise decline</span> clause is a runtime refusal: the
+      interpreter will not guess. Zero exclusion criteria is likewise an error —
+      “individuation is undefined”.
+    </p>
+  </div>
+
+  <h2 id="federation">The converter: what a format can state, and what it merely implies</h2>
+
+  <p>
+    Structures do not enter the chemistry language directly — they arrive through a
+    <b>converter</b>, and the converter is where the honesty lives. Read
+    <span class="mono">CCO</span> with any toolkit and you get a molecule with nine atoms.
+    Six of those hydrogens were never in the file: a valence model invented them. In the
+    output object, and everywhere downstream, they are
+    <em>indistinguishable from six hydrogens someone actually recorded</em>.
+  </p>
+
+  <div class="claim">
+    <span class="label">The claim</span>
+    <p>
+      That indistinguishability, not the conversion difficulty, is the substantive
+      problem. Conversion is largely solved; <b>the audit of conversion is not</b>. When
+      two pipelines agree you cannot tell whether they agree because they read the same
+      facts or because they applied the same convention to the same silence.
+    </p>
+  </div>
+
+  <div class="caveat">
+    <strong>Scope, stated precisely.</strong> This is a capability-typed, refusal-first
+    source-description discipline for chemical formats, in the lineage of capability-aware
+    query planning, with element-level provenance. It is <em>not</em> SPARQL federation,
+    ontology alignment, OWL reasoning, or an SBML/BioPAX bridge — a plan may name several
+    sources of different formats and read from each, and that is the whole of what
+    "federated" means here.
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="federate" viewBox="0 0 760 380" role="img"
+           aria-label="Records converted to contact graphs, then queried across representations"></svg>
+    </div>
+    <div class="controls">
+      <button id="q-cap" data-stage="capability" aria-pressed="true" type="button">1 · capability check</button>
+      <button id="q-conv" data-stage="convert" type="button">2 · convert</button>
+      <button id="q-query" data-stage="query" type="button">3 · dispatch across modules</button>
+    </div>
+    <figcaption>
+      <b>Figure 18 — a query crossing representations.</b>
+      Step 1: the plan is checked against what each <em>format</em> can state, before any
+      record is read — a large class of failures is decided statically. Step 2: records
+      become contact graphs, every element tagged
+      <span class="mono">stated</span>, <span class="mono">supplied</span> or
+      <span class="mono">absent</span>. Step 3: the query is answered from whichever
+      representation can answer it, and the answer carries the provenance of what it was
+      computed from.
+    </figcaption>
+  </figure>
+
+  <h3>Provenance typing — the number that should worry a curator</h3>
+
+  <p>
+    Every vertex, edge and attribute in a converted graph carries a tag recording whether
+    the source <b>stated</b> it, the converter <b>supplied</b> it from a declared
+    convention, or it is <b>absent</b>. Provenance is preserved under composition of
+    conversions, and the supplied fraction is computable without re-reading the source.
+  </p>
+
+  <div class="claim">
+    <span class="label">Measured over a 48-structure corpus in two formats</span>
+    <p>
+      A mean of <b>73.4%</b> of the elements of a SMILES-derived contact graph are
+      <em>supplied</em> rather than <em>stated</em>, with <b>no structure below 50%</b>.
+      The majority of a translated structure is convention, not record — and today a
+      downstream analysis cannot tell a hydrogen the file recorded from one a valence model
+      invented.
+    </p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="provenance" viewBox="0 0 760 320" role="img"
+           aria-label="Stated versus supplied elements in a converted structure"></svg>
+    </div>
+    <div class="controls">
+      <label>structure <input id="struct" type="range" min="0" max="7" step="1" value="0">
+        <output for="struct"></output></label>
+      <button id="showTags" data-tag="all" aria-pressed="true" type="button">all</button>
+      <button id="tagStated" data-tag="stated" type="button">stated only</button>
+      <button id="tagSupplied" data-tag="supplied" type="button">supplied only</button>
+    </div>
+    <figcaption>
+      <b>Figure 19 — what the record said, and what the converter decided.</b>
+      Filter to <span class="mono">stated only</span> to see how much of a molecule
+      actually came from the file. The hydrogens, most bond orders and all coordinates are
+      typically supplied by a valence model or a perception algorithm. None of that is
+      wrong — it is just <em>not the record</em>, and the distinction is currently
+      invisible downstream.
+    </figcaption>
+  </figure>
+
+  <h3>Capability declaration — refusing before reading</h3>
+
+  <p>
+    Each source format is characterised by the set of structural features it can state.
+    Translation is total and faithful exactly on the requests whose feature requirements
+    the format's capability set contains — which makes a large class of translation
+    failures <b>decidable statically</b>, before any record is read.
+  </p>
+
+  <p>
+    Measured: capability containment decided <b>19 of 24</b> format–request pairs before
+    reading anything, and agreed with the post-read outcome on <b>all 24</b>.
+  </p>
+
+  <h3 id="benzene">Two faithful records, one molecule, undetected disagreement</h3>
+
+  <p>
+    This is the sharpest consequence, and it is checkable in a minute. Take benzene and
+    write it two ways — both valid SMILES, both faithful to what they state:
+    <span class="mono">c1ccccc1</span> with a lower-case aromatic ring, and
+    <span class="mono">C1=CC=CC=C1</span> with an explicit Kekulé assignment.
+  </p>
+
+  <table>
+    <thead><tr><th>Instrument</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Molecular formula</td><td>identical — C₆H₆ both</td></tr>
+      <tr><td>Canonical InChI</td><td>identical — <em>by design</em>, it normalises bond-order assignment away</td></tr>
+      <tr><td>Round-trip test</td><td>passes — it compares a structure with itself, not two representations</td></tr>
+      <tr><td><b>Contact graph</b></td><td><b>differs</b> — 6 delocalised contacts against 0, and per-contact cell counts against none</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    And the supplied fraction moves in exactly the right direction: the aromatic form is
+    <span class="mono">φ = 0.750</span>, the Kekulé form <span class="mono">0.625</span>,
+    because stating per-contact cell counts removes them from what convention must supply.
+    <b>The gap is a measurement of how much the aromatic notation leaves to the reader.</b>
+  </p>
+
+  <p>
+    Neither graph converts into the other without supplying a fact. The ring commits nine
+    cells; exactly two integer assignments sum to nine — the two Kekulé forms — and the
+    source does not choose between them. Assigning 1.5 to each bond does not help: that
+    asserts a <em>pairwise</em> claim where the source made a <em>ring-level</em> one.
+  </p>
+
+  <p>
+    Measured over ten aromatic molecules: contact graphs differ <b>10/10</b>, molecular
+    formula agrees <b>10/10</b>, detected by formula-level comparison <b>0/10</b>.
+  </p>
+
+  <div class="caveat">
+    <strong>That 10/10 is not a base rate.</strong> The ten pairs were constructed to
+    contain an aromatic ring, so the mechanism was guaranteed present. What the run
+    establishes is that <em>wherever it is present it is invisible</em> to formula-level
+    and canonical-identity comparison — not how often it arises. A base rate would need a
+    corpus not selected for the mechanism, and that does not exist here.
+  </div>
+
+  <h3>Verdicts, not empty values</h3>
+
+  <p>
+    A translation returns a labelled verdict rather than a graph that may or may not be
+    trustworthy. The argument for this is a theorem: a converter with a
+    <em>graph-or-nothing</em> interface conflates at least four distinguishable outcomes,
+    and <b>no discipline on its callers can recover them</b>.
+  </p>
+
+  <table>
+    <thead><tr><th>What actually happened</th><th>What a null return says</th></tr></thead>
+    <tbody>
+      <tr><td>The format cannot state this feature at all</td><td class="mono">null</td></tr>
+      <tr><td>The record is silent on it, though the format could state it</td><td class="mono">null</td></tr>
+      <tr><td>The record states it and the converter could not parse it</td><td class="mono">null</td></tr>
+      <tr><td>The converter succeeded and the answer is genuinely empty</td><td class="mono">null</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    These are four different situations for a curator, and a pipeline that returns
+    <span class="mono">null</span> for all of them has destroyed the distinction before
+    anyone can act on it. <a href="opacity.html">This is the same discipline as refusing
+    rather than answering →</a>
+  </p>
+
+  <h3 id="plan">“How much of my data was invented?” as a precondition</h3>
+
+  <p>
+    The plan language makes the supplied fraction a declarable, statically checked
+    precondition of an analysis rather than something nobody computes:
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <pre style="margin:0;padding:1rem 1.2rem;overflow-x:auto;font-family:var(--mono);font-size:0.82rem;line-height:1.7;color:var(--ink-dim)">
+<span style="color:var(--medium)">plan</span> bond_order_study {
+  <span style="color:var(--medium)">source</span> lib : sdf <span style="color:var(--medium)">at</span> <span style="color:var(--good)">"compounds.sdf"</span>
+  <span style="color:var(--medium)">budget</span> 5000 records
+
+  <span style="color:var(--medium)">let</span> raw := <span style="color:var(--medium)">read</span> lib
+
+  <span style="color:var(--ink-faint)">-- translation states what it needs; the check is static</span>
+  <span style="color:var(--medium)">let</span> mols := <span style="color:var(--medium)">translate</span> raw
+                <span style="color:var(--accent)">require</span> element, connectivity, cellcount, stereo
+                <span style="color:var(--warm)">expect</span> supplied &lt; 0.25
+                <span style="color:var(--medium)">else</span> report
+
+  <span style="color:var(--ink-faint)">-- keep only fully-stated structures for the sensitive analysis</span>
+  <span style="color:var(--medium)">let</span> core := <span style="color:var(--medium)">select</span> mols <span style="color:var(--medium)">where</span> mols.supplied == 0.0
+
+  <span style="color:var(--medium)">assert</span> core.count &gt; 100  <span style="color:var(--medium)">emit</span> <span style="color:var(--good)">"too few fully-stated structures"</span>
+  <span style="color:var(--medium)">emit</span> core <span style="color:var(--medium)">with</span> provenance
+}</pre>
+    </div>
+    <figcaption>
+      <b>Figure 20 — a plan that refuses rather than proceeding.</b>
+      <span class="mono">expect supplied &lt; 0.25</span> is not decoration: it is a checked
+      threshold, and a translation exceeding it is reported rather than silently carried
+      forward. The <span class="mono">select</span> then narrows to
+      <span class="mono">φ = 0.0</span> — structures in which nothing was supplied at all.
+      Declaration order is execution order; there is no dependency inference and no
+      user-defined abstraction, because a plan that reorders itself is a plan you cannot
+      audit.
+    </figcaption>
+  </figure>
+
+  <div class="claim">
+    <span class="label">Refusal has a cost, and the paper says so</span>
+    <p>
+      Pipelines that today proceed on repaired structures will instead halt, and an
+      analyst has to decide what to do. Surfacing that decision is the point — but for an
+      automated pipeline it is a real cost, not a free improvement.
+    </p>
+  </div>
+
+  <h2>What the operating system does</h2>
+
+  <p>
+    The runtime's job is deliberately small, and the smallness is the design. It does
+    <em>not</em> know chemistry, does not compare results to expectations, and does not
+    schedule.
+  </p>
+
+  <table>
+    <thead><tr><th>The OS does</th><th>The OS does not</th></tr></thead>
+    <tbody>
+      <tr><td>Execute every chunk bundled on a node</td><td>Choose among chunks</td></tr>
+      <tr><td>Route emitted values onto nodes as keyed facts</td><td>Interpret what a value means</td></tr>
+      <tr><td>Record which values were read to produce which</td><td>Order the graph in advance</td></tr>
+      <tr><td>Convert a raised exception into a value</td><td>Halt, or issue a verdict</td></tr>
+      <tr><td>Maintain a monotone commitment count</td><td>Compare a result to an expectation</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Because the runtime judges nothing, the languages can disagree without the system
+    breaking: two modules writing different facts about one node is the normal case, not
+    an error to resolve. Adjudication belongs to a consumer that reads both.
+    <a href="runtime.html">How the runtime executes →</a>
+  </p>
+
+  <h2>What is claimed here</h2>
+
+  <table>
+    <thead><tr><th>Statement</th><th>Standing</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Provenance is preserved under composition of conversions</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>So a chain of format conversions does not launder supplied data into
+              stated data.</td></tr>
+      <tr><td>A graph-or-nothing interface conflates four outcomes</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>And no caller discipline recovers them.</td></tr>
+      <tr><td>Translation is faithful exactly on requests within the capability set</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Which makes static refusal possible.</td></tr>
+      <tr><td>73.4% of a SMILES-derived graph is supplied, none below 50%</td>
+          <td><span class="tag measured">measured</span></td>
+          <td>48 structures, two formats.</td></tr>
+      <tr><td>19 of 24 pairs decided before reading; agreement on all 24</td>
+          <td><span class="tag measured">measured</span></td>
+          <td>Static decision against post-read outcome.</td></tr>
+      <tr><td>Delocalisation is not a per-bond attribute</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>A counting argument over the two Kekulé assignments. The one piece of
+              genuine chemistry-mathematics here, and it is sound.</td></tr>
+      <tr><td>Ten aromatic pairs: graphs differ 10/10, formula agrees 10/10</td>
+          <td><span class="tag measured">measured</span></td>
+          <td>Explicitly <em>not</em> a base rate — the corpus was selected for the
+              mechanism.</td></tr>
+      <tr><td>Two back ends agree up to the floor</td>
+          <td><span class="tag open">conditional</span></td>
+          <td>Exactly when the target's numeric resolution is at least as fine as the
+              floor — stated as a checkable hypothesis rather than assumed.</td></tr>
+      <tr><td>Capability declarations are honest</td>
+          <td><span class="tag open">assumed</span></td>
+          <td><b>The largest gap, and the paper does not minimise it.</b> Under-declaration
+              is safe; over-declaration is unsound and silent. No mechanical check is known
+              short of differential testing against an independent reader.</td></tr>
+      <tr><td>The converter adjudicates between conflicting sources</td>
+          <td><span class="tag refuted">not claimed</span></td>
+          <td>It does not adjudicate, does not repair records, and does not compute
+              chemistry.</td></tr>
+      <tr><td>The corpus generalises to chemical space</td>
+          <td><span class="tag refuted">not claimed</span></td>
+          <td>48 hand-assembled structures. “A property of a reader and a corpus, not a
+              constant of a notation.”</td></tr>
+    </tbody>
+  </table>
+
+  <div class="caveat">
+    <strong>A defect the implementation exposed.</strong> Two faithful representations of
+    the same compound produced contact graphs that <em>differ</em>, while every
+    formula-level and identity-level comparison reported agreement. That is reported in
+    the paper as one of four defects that writing the implementation surfaced, and it is
+    the kind of thing that only shows up when a conversion is audited rather than trusted.
+  </div>
+
+  <div class="pager">
+    <a href="opacity.html"><span class="dir">back</span>04 · Path opacity</a>
+    <a href="runtime.html"><span class="dir">next</span>05 · The graph as runtime</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="languages.js"></script>
+</body>
+</html>

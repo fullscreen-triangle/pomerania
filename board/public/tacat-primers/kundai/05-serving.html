@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5 · Serving it — tacat primer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="5">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li class="extra"><a href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a href="01-data.html">Facts as data</a></li>
+    <li><a href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a href="03-questions.html">Asking questions</a></li>
+    <li><a href="04-checking.html">Checking the data</a></li>
+    <li><a class="here" href="05-serving.html">Serving it</a></li>
+    <li><a href="06-shipping.html">Shipping it</a></li>
+    <li><a href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+  </ol>
+  <div class="nav-label">Readiness</div>
+  <div class="progress" data-progress></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 5</p>
+<h1>Serving it</h1>
+<p class="standfirst">
+  A graph on a laptop helps nobody. Here is the twenty minutes of HTTP you need — and the one
+  decision that separates "I wired up a web framework" from "I implemented a protocol".
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★ good to know</span>
+  <span class="chip">12 min</span>
+  <span class="chip">HTTP · API · SPARQL protocol</span>
+  <span class="chip trap">one open item</span>
+</div>
+
+<div class="resume" data-resume></div>
+
+<h2 id="api">1. What an API is</h2>
+
+<p>
+  An <strong>API</strong> is a fixed set of requests a program will accept, and a promise about what
+  it sends back. Nothing more.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    A liquid-handling robot has a command interface: a documented list of instructions, in a defined
+    syntax, each with defined effects. You do not open the machine to move liquid — you send
+    <code>aspirate(well=A1, volume=50)</code> and it holds up its end.
+  </p>
+  <p>
+    The value is the <strong>contract</strong>: anything that speaks the syntax can drive the
+    machine, and the internals can be rebuilt without breaking the callers.
+  </p>
+</div>
+
+<h2 id="http">2. HTTP in ten minutes</h2>
+
+<p>
+  A client sends a <strong>request</strong>, the server sends a <strong>response</strong>, the
+  exchange ends. Four parts to a request:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Part</th><th>What it is</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Method</strong></td><td>the verb</td><td><code>GET</code>, <code>POST</code></td></tr>
+    <tr><td><strong>Path</strong></td><td>which resource</td><td><code>/sparql</code>, <code>/health</code></td></tr>
+    <tr><td><strong>Headers</strong></td><td>metadata about the request</td><td><code>Accept: text/csv</code></td></tr>
+    <tr><td><strong>Body</strong></td><td>the payload</td><td>the query text</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  <code>GET</code> means "give me something and change nothing" — safe to repeat.
+  <code>POST</code> means "here is data, do something with it", used when the payload is too big for
+  a URL. Long SPARQL queries go by POST.
+</p>
+
+<figure class="fig" data-figure="statustree">
+  <figcaption>The response carries a three-digit status code, and the ranges are the point.</figcaption>
+</figure>
+
+<div class="box bridge">
+  <span class="box-title">Why the distinction matters</span>
+  <p>
+    <code>400</code> is "your sample arrived mislabelled — fix the label and resubmit".
+    <code>500</code> is "the instrument caught fire". Both mean no result, but they tell you
+    completely different things about what to do next, and they route to different people.
+  </p>
+  <p>
+    A service returning <code>500</code> for a typo is lying about whose problem it is — and
+    generating an alert for the operator at 3am over a user's missing bracket. The submission
+    returns <strong>400 for a malformed query</strong>. A small thing that reads as professional.
+  </p>
+</div>
+
+<h2 id="stack">3. What FastAPI and uvicorn are</h2>
+
+<div class="vs">
+  <div class="side">
+    <h4>uvicorn — the server</h4>
+    <p>Listens on a network port, accepts connections, speaks raw HTTP. Knows nothing about SPARQL
+       or chemistry.</p>
+  </div>
+  <div class="side">
+    <h4>FastAPI — the framework</h4>
+    <p>Your Python code, organised so a function is attached to each path. Knows nothing about
+       network sockets.</p>
+  </div>
+</div>
+
+<p>
+  uvicorn receives the request and hands it to FastAPI, which routes it and hands the answer back.
+  Both were specified in the assignment.
+</p>
+<p>
+  FastAPI has one property worth knowing: it generates its own interactive documentation from the
+  code. <code>/docs</code> is a live page listing every endpoint with a "try it" button — free, and
+  it means the API documents itself rather than drifting from a hand-written README.
+</p>
+
+<h2 id="protocol">4. The decision that matters: implement the standard</h2>
+
+<p>
+  The brief asked for "a SPARQL endpoint via an API". The minimum reading: accept a query string,
+  return some JSON. That works, and nothing else in the world can talk to it.
+</p>
+<p>
+  There is a published W3C standard — the <strong>SPARQL 1.1 Protocol</strong> — specifying how a
+  SPARQL service should behave over HTTP. Implementing that means every existing SPARQL client works
+  <strong>unmodified</strong>: YASGUI, curl, <code>SPARQLWrapper</code>, rdflib's remote store.
+</p>
+
+<figure class="code">
+  <figcaption>three ways the standard says a query may arrive — all supported</figcaption>
+  <pre><code data-lang="bash"># 1. GET, query in the URL
+curl --get http://localhost:8000/sparql --data-urlencode \
+  'query=PREFIX tacat: &lt;https://w3id.org/bitspark/tacat/&gt;
+         SELECT ?r WHERE { ?r a tacat:TransaminationReaction }'
+
+# 2. POST, raw query as the body
+curl -X POST http://localhost:8000/sparql \
+  -H 'Content-Type: application/sparql-query' \
+  --data-binary @query.rq
+
+# 3. POST as an HTML form field (the third form in the spec)</code></pre>
+</figure>
+
+<div class="box key">
+  <span class="box-title">Why this is the professional signal</span>
+  <p>
+    "I built an endpoint" and "I implemented the protocol so your existing tools work" are different
+    claims, and the second is checkable in ten seconds by pointing any SPARQL client at it.
+  </p>
+  <p>
+    It also <em>is</em> the FAIR "A" — accessible by a standard protocol — rather than a README
+    assertion about it.
+  </p>
+</div>
+
+<h3>Content negotiation</h3>
+<p>
+  The same query returns different formats depending on what the caller asks for, via the
+  <code>Accept</code> header: <strong>four</strong> media types — SPARQL-results JSON by default,
+  SPARQL-results <strong>XML</strong>, CSV on request, and Turtle for queries returning a graph.
+</p>
+<p>
+  The XML one has the best story, and it is worth volunteering: it was added because a stock SPARQL
+  client asked for it and got JSON with a <code>200</code> on it. <em>"A client asking for XML should
+  get XML or a 406, not JSON that it cannot parse."</em> That is the kind of bug only an external
+  client can find, which is the argument for implementing the protocol rather than an API that
+  resembles it.
+</p>
+<p>
+  One subtlety fixed after review: asking for CSV when the query is an <code>ASK</code> (true/false,
+  not a table) is a request that cannot be satisfied. That is <code>406 Not Acceptable</code>, not
+  <code>500</code> — again, whose fault it is.
+</p>
+
+<h2 id="endpoints">5. The endpoints</h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Path</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>GET /</code></td><td>Landing page: ready-to-run examples and graph statistics.</td></tr>
+    <tr><td><code>GET|POST /sparql</code></td><td>The endpoint proper.</td></tr>
+    <tr><td><code>GET /health</code></td><td>A <em>liveness probe</em> — machine-readable "am I working?", fails if the graph is empty. The Dockerfile's <code>HEALTHCHECK</code> calls it and marks the container unhealthy; something above it has to act on that. Nothing here does.</td></tr>
+    <tr><td><code>GET /validation</code></td><td>The SHACL report for the graph being served — so conformance is <em>observable</em>, not merely asserted in CI.</td></tr>
+    <tr><td><code>GET /docs</code></td><td>Auto-generated interactive API documentation.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box trap">
+  <span class="box-title">The trap — an advertised query that does not parse</span>
+  <p>
+    v0's landing page listed an example containing
+    <code>res:reaction/ALT ta:hasSubstrate ?s</code>. That is invalid SPARQL — an abbreviated name
+    cannot contain an unescaped <code>/</code>.
+  </p>
+  <p>
+    So the most likely first action of any reviewer — copy the example, run it — returned an error,
+    from a test suite that was entirely green. The fix is four lines: a test that executes
+    <em>every advertised example</em>.
+  </p>
+</div>
+
+<h2 id="security">6. One real security hole, and why it was there</h2>
+
+<p>
+  Recall <code>SERVICE</code> from <a href="03-questions.html#federation">Chapter 3</a>: it makes the
+  query engine fetch data from another server. Extremely useful for federation — and a serious
+  problem in an endpoint that accepts queries from anyone.
+</p>
+
+<figure class="fig" data-figure="ssrf">
+  <figcaption>The caller never touches the internal host. Your server does it for them, carrying your
+    network's trust. This class of bug is called <strong>SSRF</strong> — server-side request
+    forgery.</figcaption>
+</figure>
+
+<p>
+  The fix is a policy decision, not a patch: <strong>federation runs from the command line, never
+  from the request path.</strong> The service refuses any query containing a <code>SERVICE</code>
+  clause. The federated query still exists and still runs — as <code>tacat federate</code>,
+  deliberately, by whoever holds the shell, not by an anonymous caller.
+</p>
+
+<div class="box trap">
+  <span class="box-title">The guard has been wrong four times — and one is still live</span>
+  <p>
+    <strong>Read-only is now a decision, not an accident.</strong> <code>QueryPolicy</code> whitelists
+    the four read forms explicitly and <code>DECISIONS.md</code> records why. That gap is closed —
+    <em>do not volunteer it</em>, or the correction comes from him.
+  </p>
+  <p>
+    The <code>SERVICE</code> guard is the one that keeps moving. Four times wrong: once
+    <em>over</em>-refusing — a regex rejected the legal <code>SELECT ?service WHERE …</code> — and
+    three times <em>under</em>-refusing, each the same bug, a skip that ran too far and swallowed the
+    clause. A <code>&lt;</code> comparison read as an IRI; a prefixed name whose local part re-entered
+    the IRI branch; and an escaped quote that closed a literal one character early.
+  </p>
+  <p>
+    <strong>The third is live in the submitted code.</strong> Verified end to end: the server made an
+    outbound request to a caller-chosen host. The caller still gets a <code>400</code>, raised
+    afterwards by rdflib — but <strong>only when the target returns something rdflib cannot
+    parse</strong>. Against a target that speaks SPARQL the caller gets <strong>200 and the target's
+    data</strong>. Full SSRF with exfiltration, not blind. Fixed on a branch that will
+    not be merged, because the published repository is what was assessed.
+  </p>
+  <p>
+    <strong>Volunteer this one, if the conversation earns it.</strong> Every one was found by reading
+    the code against the prose, never by a test — which is the more useful observation about where the
+    tests are weak.
+  </p>
+</div>
+
+<h3>One more, briefly</h3>
+<p>
+  Queries originally ran on the server's main event loop, so one expensive query blocked
+  <em>every</em> other request — including <code>/health</code>, meaning a slow query could make the
+  container report itself unhealthy. They now run off the main loop. The kind of thing
+  that never shows up with one user and takes a service down with ten.
+</p>
+
+<button class="checkline" data-check="5:protocol" aria-pressed="false">
+  <span class="ct">I can explain why implementing the SPARQL 1.1 protocol mattered, and 400 vs 500
+  <small>stock clients work unmodified; whose fault the failure is; SERVICE refused and why</small></span>
+</button>
+
+<h2 id="say">7. What to be able to say</h2>
+
+<div class="box key">
+  <span class="box-title">The 30-second version</span>
+  <p>
+    <em>"It implements the read subset of the SPARQL 1.1 protocol rather than a bespoke endpoint, so
+    stock clients — YASGUI, curl, SPARQLWrapper — work against it unmodified. GET, POST-as-body and
+    POST-as-form, with content negotiation across SPARQL-results JSON, XML, CSV and Turtle. Malformed
+    queries return 400 rather than 500, and every example query advertised on the landing page is
+    executed by the test suite. SERVICE clauses are refused: federation is something I do at build
+    time, not something an anonymous caller does through my server."</em>
+  </p>
+</div>
+
+<div class="pager">
+  <a class="prev" href="04-checking.html"><span class="dir">Previous</span><span class="t">← 4 · Checking the data</span></a>
+  <a class="next" href="06-shipping.html"><span class="dir">Next</span><span class="t">6 · Shipping it →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

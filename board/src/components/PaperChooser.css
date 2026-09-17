@@ -1,4 +1,4 @@
-.bib-root {
+.chooser-root {
   min-height: 100%;
   background: var(--bg);
   padding: 40px 48px 80px;
@@ -6,7 +6,7 @@
   margin: 0 auto;
 }
 
-.bib-home-btn {
+.chooser-home-btn {
   background: var(--panel-2);
   color: var(--ink-2);
   border: 1px solid var(--line);
@@ -17,19 +17,19 @@
   font-family: var(--mono);
   margin-bottom: 32px;
 }
-.bib-home-btn:hover {
+.chooser-home-btn:hover {
   color: var(--ink);
   border-color: var(--ink-3);
 }
 
-.bib-header h1 {
+.chooser-header h1 {
   margin: 0 0 10px;
   font-size: 36px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
-.bib-sub {
+.chooser-sub {
   margin: 0 0 40px;
   color: var(--ink-2);
   font-size: 16px;
@@ -37,13 +37,13 @@
   line-height: 1.6;
 }
 
-.bib-cards {
+.chooser-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 24px;
 }
 
-.bib-card {
+.chooser-card {
   display: block;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -54,49 +54,55 @@
   color: inherit;
   transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
 }
-.bib-card[data-accent="k1"] {
+.chooser-card[data-accent="k1"] {
   border-left-color: var(--k1);
 }
-.bib-card[data-accent="k3"] {
+.chooser-card[data-accent="k2"] {
+  border-left-color: var(--k2);
+}
+.chooser-card[data-accent="k3"] {
   border-left-color: var(--k3);
 }
-.bib-card:hover {
+.chooser-card[data-accent="k4"] {
+  border-left-color: var(--k4);
+}
+.chooser-card:hover {
   background: var(--panel-2);
   transform: translateY(-2px);
 }
 
-.bib-card h2 {
+.chooser-card h2 {
   margin: 0 0 4px;
   font-size: 19px;
   font-weight: 600;
   color: var(--ink);
 }
 
-.bib-card-subtitle {
+.chooser-card-subtitle {
   margin: 0 0 14px;
   font-size: 13.5px;
   color: var(--ink-3);
   font-style: italic;
 }
 
-.bib-card-summary {
+.chooser-card-summary {
   margin: 0 0 18px;
   font-size: 14.5px;
   color: var(--ink-2);
   line-height: 1.6;
 }
 
-.bib-card-link {
+.chooser-card-link {
   font-family: var(--mono);
   font-size: 13px;
   color: var(--accent);
 }
 
 @media (max-width: 640px) {
-  .bib-root {
+  .chooser-root {
     padding: 28px 20px 60px;
   }
-  .bib-header h1 {
+  .chooser-header h1 {
     font-size: 28px;
   }
 }

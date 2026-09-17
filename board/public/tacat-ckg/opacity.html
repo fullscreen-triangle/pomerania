@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Path opacity — only the endpoint is checked</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html" aria-current="page">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">04 · Path opacity</p>
+  <h1>If only the endpoint is checked, the interior is free.</h1>
+
+  <p class="lede">
+    Two routes with the same input and the same output are indistinguishable to any
+    invariant computed at the endpoints. That is nearly a tautology, and it has two
+    consequences pointing in opposite directions: it is where the speed comes from, and
+    it is a hard limit on what endpoint-characterised data can tell you about mechanism.
+    Both matter, and the second is the one a scientist should hear first.
+  </p>
+
+  <h2>The snow</h2>
+
+  <blockquote>
+    If we wake up to find snow outside, and I claim that it came from space, it does not
+    change the fact that there is snow outside.
+  </blockquote>
+
+  <p>
+    The proposal is not refuted by the local implausibility of the step. It is refuted
+    only if no route containing that step reaches the snow. There are two separate
+    questions here — <em>is there snow</em>, settled by looking, and <em>where did it come
+    from</em>, which is a different question whose answer does not retroact on the first.
+    A locally impossible intermediate is admissible exactly when some completion through
+    it reaches the observed output.
+  </p>
+
+  <div class="claim">
+    <span class="label">Why the triviality is the point</span>
+    <p>
+      The proof that substituting an intermediate leaves the endpoint alone is three
+      lines, and that is not a weakness. The endpoint check is what carries the weight, so
+      the substitution argument <em>should</em> be short. A long proof there would mean
+      the intermediates were load-bearing — which is exactly what the principle denies.
+    </p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="routes" viewBox="0 0 760 360" role="img"
+           aria-label="Several routes between fixed endpoints, and what the check sees"></svg>
+    </div>
+    <div class="controls">
+      <label>route <input id="route" type="range" min="0" max="3" step="1" value="0">
+        <output for="route"></output></label>
+      <button id="obs-end" data-obs="endpoint" aria-pressed="true" type="button">endpoint check</button>
+      <button id="obs-int" data-obs="interior" type="button">interior check</button>
+    </div>
+    <figcaption>
+      <b>Figure 10 — what the verifier can see.</b>
+      Four routes share an input and an output; one passes through a state that is not
+      physically realisable at all. Under an <span class="mono">endpoint check</span> the
+      verdict panel is identical for all four — the invariant is a function of the
+      endpoints, so it is constant on them. Switch to an
+      <span class="mono">interior check</span> and the routes separate immediately. The
+      opacity is a property of the <em>question</em>, not of the routes.
+    </figcaption>
+  </figure>
+
+  <h2 id="mechanism">The consequence a scientist should hear first</h2>
+
+  <p>
+    An edge in a recovered causal graph names an <em>equivalence class of mechanisms</em>,
+    not a mechanism. That is not a defect of this construction — it is a theorem about
+    what endpoint data determines, and it applies to any provenance record that stores
+    only inputs and outputs.
+  </p>
+
+  <div class="claim">
+    <span class="label">Stated for a catalysis audience</span>
+    <p>
+      You have inlet and outlet composition. Mechanism is not recoverable from them, and
+      no increase in the precision of either recovers it. Every schema that records only
+      endpoints is provably mechanism-blind. If the route is the scientific object —
+      mechanistic enzymology, isotope tracing — this is the wrong instrument, and
+      increasing resolution does not help.
+    </p>
+  </div>
+
+  <p>
+    Measured on four real pathways, the opacity rate is <span class="mono">1.0</span>
+    across 290 multi-path pairs: no endpoint-computed invariant separated any two routes,
+    on any network, ever. The interiors genuinely differ — up to 13 distinct interior
+    paths between one pair of endpoints — so the setup is not empty. The conclusion is
+    just analytic once the invariant is a function of the endpoints.
+  </p>
+
+  <h2 id="virtual">The other direction: interiors that leave the physical domain</h2>
+
+  <p>
+    If the interior is unconstrained, an intermediate need not be physically realisable.
+    A coordinate may be decomposed into components that average to a physical point while
+    individually lying outside the admissible range. These are the <em>virtual</em>
+    intermediates, and the claim is that they are where the speedup lives: restrict a
+    backward completion to physically realisable intermediates and the cost returns to
+    linear.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="virtual" viewBox="0 0 760 340" role="img"
+           aria-label="Physical and virtual decompositions of one coordinate"></svg>
+    </div>
+    <div class="controls">
+      <label>dispersion <input id="disp" type="range" min="0.1" max="6" step="0.1" value="2">
+        <output for="disp"></output></label>
+      <button id="reseed" type="button">resample</button>
+    </div>
+    <figcaption>
+      <b>Figure 11 — the mean recovers what the parts do not.</b>
+      Each row decomposes one physical coordinate into three components whose mean is that
+      coordinate. As dispersion grows, components leave the shaded admissible band while
+      the mean stays put. The fraction of decompositions that are virtual rises toward
+      one — which is the sense in which the physical decompositions are the rare case.
+    </figcaption>
+  </figure>
+
+  <div class="caveat">
+    <strong>This one is a conjecture and is labelled as such.</strong> The claim that
+    admitting virtual intermediates is what converts linear cost into logarithmic has an
+    asserted step: that locating a physically realisable decomposition requires examining
+    a number of cells that grows with the space. That has not been proved, and the
+    validation reports the physical-to-virtual operation ratio <em>falling</em> rather
+    than growing. Presented here as a mechanism with a plausible story, not as a result.
+  </div>
+
+  <h2 id="soundness">The open question, stated precisely</h2>
+
+  <p>
+    The unconditional version of the principle is false, and it should be said plainly:
+    garbage intermediates usually <em>do</em> break things. What makes the snow argument
+    work is that the snow was established by <em>looking</em> — a check that does not
+    route through the origin story and is independently sound. That independence is the
+    hypothesis, and writing it down is the work that remains.
+  </p>
+
+  <div class="claim">
+    <span class="label">The theorem this framework needs and does not yet have</span>
+    <p>
+      Given a verifier <span class="mono">V</span> that accepts on endpoint data alone,
+      and a claim <span class="mono">C</span> the endpoint is supposed to certify, state
+      the conditions on <span class="mono">(V, C)</span> under which
+      <span class="mono">V</span>'s acceptance implies <span class="mono">C</span>
+      irrespective of the interior — <em>and exhibit a class where it does not</em>. That
+      is the difference between analytic continuation through complex intermediates being
+      legitimate, which it is, and any route being fine, which it is not.
+    </p>
+  </div>
+
+  <h3>The lineage this belongs to</h3>
+
+  <p>
+    The idea is not eccentric and has a long pedigree, which is worth naming because it
+    changes how the claim should be read.
+  </p>
+
+  <table>
+    <thead><tr><th>Precedent</th><th>The impossible intermediate</th><th>What made it sound</th></tr></thead>
+    <tbody>
+      <tr><td>Cardano and Bombelli, 16th c.</td>
+          <td>Real roots of a cubic reached only through square roots of negatives</td>
+          <td>The final expression is real and verifiable directly</td></tr>
+      <tr><td>Analytic continuation</td>
+          <td>A path through the complex plane leaving the original domain</td>
+          <td>A uniqueness theorem about analytic functions</td></tr>
+      <tr><td>Path integrals</td>
+          <td>Off-shell histories that violate the classical equations</td>
+          <td>Only endpoint amplitudes are observable</td></tr>
+      <tr><td>This framework</td>
+          <td>Sub-states outside the admissible range whose mean is inside</td>
+          <td><em>Not yet stated.</em> That is the open question above.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>What is claimed here</h2>
+
+  <table>
+    <thead><tr><th>Statement</th><th>Standing</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Endpoint invariants cannot distinguish interiors</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Analytic once the invariant is a function of the endpoints.</td></tr>
+      <tr><td>Opacity rate 1.0 across 290 multi-path pairs</td>
+          <td><span class="tag measured">measured</span></td>
+          <td>Four real pathways; interiors genuinely differ.</td></tr>
+      <tr><td>A recovered edge names an equivalence class of mechanisms</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>The useful reading, and a real limitation of the method.</td></tr>
+      <tr><td>Virtual intermediates dominate as dispersion grows</td>
+          <td><span class="tag measured">measured</span></td>
+          <td>Measure-theoretic and unsurprising.</td></tr>
+      <tr><td>Virtual intermediates are the entire source of the speedup</td>
+          <td><span class="tag open">conjecture</span></td>
+          <td>Key step asserted; validation does not support the growth claim.</td></tr>
+      <tr><td>When an endpoint check remains a sound certificate</td>
+          <td><span class="tag open">open</span></td>
+          <td>The theorem that would convert this from a slogan into a result.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pager">
+    <a href="propagation.html"><span class="dir">back</span>03 · Propagation</a>
+    <a href="runtime.html"><span class="dir">next</span>05 · The graph as runtime</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="opacity.js"></script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6 · Shipping it — tacat primer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="6">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li class="extra"><a href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a href="01-data.html">Facts as data</a></li>
+    <li><a href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a href="03-questions.html">Asking questions</a></li>
+    <li><a href="04-checking.html">Checking the data</a></li>
+    <li><a href="05-serving.html">Serving it</a></li>
+    <li><a class="here" href="06-shipping.html">Shipping it</a></li>
+    <li><a href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+  </ol>
+  <div class="nav-label">Readiness</div>
+  <div class="progress" data-progress></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 6</p>
+<h1>Shipping it</h1>
+<p class="standfirst">
+  Docker and CI look like plumbing. They are the part that turns a claim into evidence — and one of
+  them was the single biggest defect in the first submission.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★ good to know</span>
+  <span class="chip">14 min</span>
+  <span class="chip">Docker · CI · uv</span>
+  <span class="chip trap">one open item</span>
+</div>
+
+<div class="resume" data-resume></div>
+
+<h2 id="works">1. The problem being solved</h2>
+
+<p>
+  "It works on my machine" is a joke in software because it is the default state. A program depends
+  on a specific Python version, twenty libraries each at a specific version, system tools like a
+  Java runtime, files in particular places. Change one and it may break — or worse, work differently.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    A protocol that works in your hands and nowhere else is not a result. The reagent lot, the
+    supplier, the incubator, the water — all of it is part of the method whether or not you wrote it
+    down. Reproducibility means someone else, somewhere else, gets your answer.
+  </p>
+  <p>Everything in this chapter is the software version of writing down the complete method.</p>
+</div>
+
+<h2 id="uv">2. uv and the lock file</h2>
+
+<p>
+  <strong>uv</strong> manages the project's Python dependencies. It was named in the assignment, and
+  it is what the assessor uses in his own published packages.
+</p>
+
+<div class="vs">
+  <div class="side">
+    <h4>pyproject.toml — the catalogue number</h4>
+    <p>What the project <em>needs</em>, loosely: "rdflib version 7 or newer". Enough to order the
+       right thing.</p>
+  </div>
+  <div class="side good">
+    <h4>uv.lock — the lot number</h4>
+    <p>What it was actually <em>built with</em>: rdflib 7.6.0 and every transitive dependency,
+       pinned, with checksums. Enough to reproduce the exact experiment.</p>
+  </div>
+</div>
+
+<p class="small muted">
+  Same catalogue number, different lot, different result is a real phenomenon in both worlds. The
+  lock file is committed for exactly that reason.
+</p>
+
+<h2 id="docker">3. Containers</h2>
+
+<p>
+  A <strong>container</strong> packages the application <em>together with</em> its entire
+  environment — interpreter, libraries, system tools, data files — into one artefact that runs
+  <em>much</em> more reproducibly on any compatible host. Not <em>identically anywhere</em>: it still
+  depends on a compatible CPU architecture and kernel, and on base-image tags being pinned by digest
+  rather than by a name someone can move.
+</p>
+
+<figure class="fig" data-figure="imagecontainer">
+  <figcaption>The <code>Dockerfile</code> is the protocol for making the stock.
+    <code>docker compose</code> is the one-line instruction that grows the culture.</figcaption>
+</figure>
+
+<h2 id="multistage">4. The build has two stages, and the seam is the point</h2>
+
+<p>
+  HermiT is a Java program, so reasoning needs a Java runtime. But the <em>service</em> does not
+  reason — it answers queries from an already-reasoned graph. So why would the shipped image contain
+  Java?
+</p>
+<p>It does not. Press build.</p>
+
+<div class="widget" data-widget="multistage"></div>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    Do the messy prep in the prep room; carry only the purified product into the clean room. The
+    solvents, the column and the rotavap stay behind — they were needed to <em>make</em> the thing,
+    not to <em>use</em> it.
+  </p>
+</div>
+
+<figure class="code">
+  <figcaption>Dockerfile — the two stages, abridged</figcaption>
+  <pre><code data-lang="docker"># ── Stage 1: build. Installs a JVM, runs the reasoner, writes the graph. ──
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+RUN apt-get install -y --no-install-recommends default-jre-headless
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --no-dev
+COPY src/ src/
+RUN uv run --no-dev tacat build \
+    &amp;&amp; test -s /app/data/reactions.ttl        # fail the build if it produced nothing
+
+# ── Stage 2: runtime. No JVM, no reasoner, no build tooling. ──
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS runtime
+RUN useradd --system --uid 1001 tacat            # do not run as root
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/data  /app/data         # ← the reasoned graph, and only that
+USER tacat
+HEALTHCHECK CMD python -c "...urlopen('http://localhost:8000/health')..."
+CMD ["uvicorn", "tacat.api:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+</figure>
+
+<p>Two smaller details worth being able to explain:</p>
+<ul>
+  <li>The container runs as an <strong>unprivileged user</strong>, not root — if the service is ever
+      compromised, the attacker inherits an account that owns almost nothing.</li>
+  <li><code>HEALTHCHECK</code> makes the container test itself on a schedule using
+      <code>/health</code>, so a hung service is <em>marked unhealthy</em> rather than silently
+      accepting connections and answering none.</li>
+</ul>
+
+<div class="box trap">
+  <span class="box-title">Do not overstate what a health check does</span>
+  <p>
+    A Docker <code>HEALTHCHECK</code> sets a <em>status</em> — <code>starting</code>,
+    <code>healthy</code>, <code>unhealthy</code>. <strong>It does not restart anything by itself.</strong>
+    Acting on that status is the job of a restart policy, a Compose dependency, or an orchestrator.
+  </p>
+  <p>
+    Worth getting right because it is the kind of small overclaim an experienced reviewer notices,
+    and the accurate version is no harder to say: <em>&ldquo;the check marks the container unhealthy;
+    something above it has to act on that.&rdquo;</em>
+  </p>
+</div>
+
+<div class="box trap">
+  <span class="box-title">A one-word bug worth knowing about</span>
+  <p>
+    An earlier version ran <code>uv run tacat build</code> in the builder. A bare <code>uv run</code>
+    re-synchronises the environment with the default dependency groups — silently reinstating the
+    <em>dev</em> group excluded three lines earlier. Result: pytest, ruff, mypy and bandit were all
+    copied into the shipped image.
+  </p>
+  <p>The fix is <code>uv run --no-dev</code>. Nothing failed; the image was just quietly wrong.</p>
+</div>
+
+<button class="checkline" data-check="6:multistage" aria-pressed="false">
+  <span class="ct">I can explain why the reasoner runs at build time and the runtime ships no JVM
+  <small>smaller image, no network needed, inferred types materialised, broken reasoning = no image</small></span>
+</button>
+
+<h2 id="ci">5. CI/CD — and why step 5 was blocking</h2>
+
+<p>
+  <strong>CI</strong> means: a server, not your laptop, rebuilds the project from scratch on every
+  change and runs every check. If anything fails, the change is rejected.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    Automated QC on every batch, run by the facility rather than the person who made the batch, with
+    release criteria fixed in advance. The value is not that it catches mistakes you know about — it
+    is that it is <em>independent of you</em>. A check you run when you remember is not a control.
+  </p>
+</div>
+
+<figure class="fig" data-figure="cipipeline">
+  <figcaption>Three of the middle stage's four checks are <strong>data</strong> gates, not code
+    gates. A container image can build perfectly while the graph inside it is wrong.</figcaption>
+</figure>
+
+<figure class="code">
+  <figcaption>.gitlab-ci.yml — the inference gate</figcaption>
+  <pre><code data-lang="python">result = demonstrate_inference()
+assert result["asserted_before"] == [],          "transamination must never be asserted"
+assert len(result["inferred_after"]) == 3,       "expected 3 inferred"
+assert len(result["correctly_excluded"]) == 1,   "the negative control must not be derived"</code></pre>
+</figure>
+
+<p>
+  Note what that asserts: not merely that the reasoner <em>ran</em>, but that it produced exactly the
+  expected result. A defined class that classifies <em>nothing</em> would pass an ordinary
+  consistency check in silence. This is the difference between a gate and a decoration.
+</p>
+
+<h3>Why the image is tagged by commit</h3>
+<p>
+  Images get a tag like <code>:latest</code> — but <code>latest</code> moves. Pulling it today and
+  next month may give different software with no way to tell. So the image is also tagged with the
+  exact commit it was built from. <em>A tag that moves is not a reproducible reference</em> — the
+  same reason you cite a DOI rather than "the current version of the page".
+</p>
+
+<h2 id="blocking">6. Why this was the biggest defect in v0</h2>
+
+<div class="vs">
+  <div class="side bad">
+    <h4>v0 — written</h4>
+    <p>A well-written <code>.gitlab-ci.yml</code> that had never run and could not: the project lived
+       on GitHub inside an unrelated repository. No pipeline, no image, nothing to pull.</p>
+  </div>
+  <div class="side good">
+    <h4>now — evidenced</h4>
+    <p>A green pipeline on a real GitLab instance, with an image in the registry tagged by commit,
+       and the badge linked from the README.</p>
+  </div>
+</div>
+
+<p>
+  Four of five required steps were <em>evidenced</em>. The fifth was <em>written</em>. Those are not
+  the same, and the gap is the whole point of the step: <strong>a CI file that has never executed
+  proves nothing.</strong> A green pipeline is the only thing in the submission that demonstrates
+  the project builds somewhere other than the author's laptop.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">The gate that proves the whole layer</span>
+  <p>
+    Building the graph twice produces byte-identical output, and <strong>a CI job now checks it on
+    every commit.</strong> The chain Owlready2 → HermiT → rdflib serialisation is exactly where a
+    change in set-iteration order could make output vary, and the failure is invisible: the graph
+    stays <em>correct</em> while quietly ceasing to be <em>reproducible</em> — which is the claim
+    this entire container and CI layer exists to support.
+  </p>
+  <p>
+    The <code>reproducible-build</code> job builds twice and compares the bytes;
+    <code>tests/test_reproducibility.py</code> asserts the same thing. If asked <em>"how do you know
+    it is reproducible?"</em> the answer is now <em>"the pipeline fails if it is not"</em> — which is
+    a different kind of answer from <em>"I checked."</em>
+  </p>
+  <p>
+    <strong>Byte equality, not just isomorphism.</strong> Two graphs can carry identical triples in a
+    different order — logically the same, different bytes. A registry tag and a source checksum
+    depend on the bytes, so that is the property gated; the suite checks the weaker semantic form too.
+  </p>
+</div>
+
+<button class="checkline" data-check="6:ci" aria-pressed="false">
+  <span class="ct">I can explain what a green pipeline proves, and name the reproducibility gap
+  <small>data gates vs code gates; the inference gate asserts counts; reproducibility <em>is</em> gated build-to-build — the gap is that nothing diffs a rebuild against the committed artefact, and the base image is not digest-pinned</small></span>
+</button>
+
+<h2 id="say">7. What to be able to say</h2>
+
+<div class="box key">
+  <span class="box-title">The 30-second version</span>
+  <p>
+    <em>"The reasoner runs at image-build time, not at request time. The builder stage installs a
+    JVM, runs HermiT once and writes the reasoned graph; the runtime stage copies that artefact and
+    installs no Java at all — so the container starts with the graph already loaded, needs no
+    network, and answers an inferred type from plain SPARQL. If reasoning fails, the image does not
+    build. CI runs code gates, then data gates — including an assertion that the inference actually
+    fires — and only then builds the image, tagged by commit SHA because a tag that moves is not a
+    reproducible reference."</em>
+  </p>
+</div>
+
+<div class="pager">
+  <a class="prev" href="05-serving.html"><span class="dir">Previous</span><span class="t">← 5 · Serving it</span></a>
+  <a class="next" href="07-biology.html"><span class="dir">Next</span><span class="t">7 · The chemistry →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

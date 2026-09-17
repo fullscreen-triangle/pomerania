@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7 · Chemical identity — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a class="here" href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 7</p>
+<h1>Chemical identity</h1>
+<p class="standfirst">
+  &ldquo;L-glutamate&rdquo; is not one thing. It is a family of closely related species that differ
+  by where a few hydrogen atoms sit, each with its own identifier, and reaction databases use the
+  members of that family precisely. This chapter is the anatomy of the bug that made the first
+  submission unjoinable — and it is a data-modelling problem, not a chemistry one.
+</p>
+
+<h2 id="ph">1. Molecules gain and lose hydrogen depending on where they are</h2>
+
+<p>
+  Certain parts of a molecule can gain or lose a hydrogen <em>ion</em> — a bare proton, H&#8314;.
+  Losing one leaves a negative charge behind; gaining one adds a positive charge. Which happens
+  depends on the acidity of the surroundings.
+</p>
+<p>
+  Every such site flips independently, so one compound exists as several forms at once, in a
+  proportion set by the pH. At the pH inside a cell (about 7.4), a given compound is usually
+  dominated by one form — but it is not the form you would draw on a whiteboard.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Name</th><th>Formula</th><th>Charge</th><th>Which one this is</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>L-glutamic acid</td><td class="mono">C<sub>5</sub>H<sub>9</sub>NO<sub>4</sub></td>
+      <td class="tnum">0</td><td>the neutral form — the textbook drawing</td>
+    </tr>
+    <tr class="right">
+      <td>L-glutamate(1&minus;)</td><td class="mono">C<sub>5</sub>H<sub>8</sub>NO<sub>4</sub></td>
+      <td class="tnum">&minus;1</td><td><strong>the form that actually predominates in a cell</strong></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  One hydrogen apart. Different formula, different charge, different mass — and, crucially,
+  <strong>different identifiers in every chemical database.</strong>
+</p>
+
+<div class="box bridge">
+  <span class="box-title">The exact analogue in your world</span>
+  <p>
+    Unicode normalisation. &ldquo;é&rdquo; can be one code point (U+00E9) or two (U+0065 U+0301).
+    They render identically, they mean the same character to a human, and
+    <code>s1 === s2</code> is <code>false</code>. If one system stores NFC and another stores NFD,
+    every lookup silently misses — no exception, no warning, just nothing found.
+  </p>
+  <p>
+    A <strong>microspecies</strong> is the chemistry version of a normalisation form. Same
+    compound to a human; a different key to a database.
+  </p>
+</div>
+
+<h2 id="species">2. The four relationships you have to keep apart</h2>
+
+<p>
+  Two identifiers can be related in several distinct ways, and they behave differently. A pipeline
+  that assumes one uniform rule will corrupt half its data.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Relationship</th><th>Differ by</th><th>Example from this project</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Conjugate acid / base</strong></td>
+      <td>a hydrogen ion, so charge and formula both change</td>
+      <td>L-glutamic acid <code>16015</code> &harr; L-glutamate(1&minus;) <code>29985</code></td>
+    </tr>
+    <tr>
+      <td><strong>Tautomer</strong></td>
+      <td>where a hydrogen sits <em>within</em> the molecule — same formula, same total charge, different structure, interconverting spontaneously</td>
+      <td>L-cysteine <code>17561</code> &harr; L-cysteine zwitterion <code>35235</code></td>
+    </tr>
+    <tr>
+      <td><strong>Zwitterion</strong></td>
+      <td>a form carrying both a positive and a negative site, net charge 0 — not the same as uncharged</td>
+      <td>L-alanine zwitterion <code>57972</code></td>
+    </tr>
+    <tr>
+      <td><strong>Stereoisomer</strong></td>
+      <td>the same atoms and bonds, mirrored in 3D. Biologically these are <em>different substances</em></td>
+      <td>L-alanine vs D-alanine — the <code>L-</code> prefix is doing real work</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Note the third row especially: a zwitterion has net charge zero <em>and</em> internal charges, so
+  &ldquo;charge = 0&rdquo; does not imply &ldquo;the neutral form&rdquo;. The formulae differ even
+  when the charges match.
+</p>
+
+<h2 id="failure">3. The failure, step by step</h2>
+
+<p>
+  The first submission&rsquo;s reference data cited, for each compound, an identifier
+  <em>and</em> a formula and charge. Its stated method:
+</p>
+
+<blockquote class="muted"><em>&ldquo;Compound identities — ChEBI, resolved via KEGG&rsquo;s <code>conv/chebi</code> cross-reference.&rdquo;</em></blockquote>
+
+<p>
+  <strong>KEGG&rsquo;s mapping returns the neutral parent.</strong> The formulae and charges,
+  however, were taken from the physiological microspecies. So every row paired a neutral-form
+  identifier with anionic-form data — systematically, off by exactly one hydrogen per unit of
+  charge, because a systematic method produced it.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Compound</th><th>ID cited</th><th>What that ID actually is</th><th>What the data described</th></tr>
+  </thead>
+  <tbody>
+    <tr class="wrong">
+      <td>L-aspartate</td><td class="mono">17053</td>
+      <td>L-aspartic acid · C<sub>4</sub>H<sub>7</sub>NO<sub>4</sub> · 0</td>
+      <td class="mono">29991</td>
+    </tr>
+    <tr class="wrong">
+      <td>L-glutamate</td><td class="mono">16015</td>
+      <td>L-glutamic acid · C<sub>5</sub>H<sub>9</sub>NO<sub>4</sub> · 0</td>
+      <td class="mono">29985</td>
+    </tr>
+    <tr class="wrong">
+      <td>3-mercaptopyruvate</td><td class="mono">16208</td>
+      <td>3-mercaptopyruvic acid · C<sub>3</sub>H<sub>4</sub>O<sub>3</sub>S · 0</td>
+      <td class="mono">57678</td>
+    </tr>
+    <tr class="wrong">
+      <td>PLP</td><td class="mono">18405</td>
+      <td>pyridoxal 5&prime;-phosphate · C<sub>8</sub>H<sub>10</sub>NO<sub>6</sub>P · <strong>0</strong></td>
+      <td class="mono">597326</td>
+    </tr>
+    <tr class="wrong">
+      <td>L-alanine</td><td class="mono">16977</td>
+      <td>tautomer of the form Rhea uses</td><td class="mono">57972</td>
+    </tr>
+    <tr class="wrong">
+      <td>L-cysteine</td><td class="mono">17561</td>
+      <td>tautomer of the form Rhea uses</td><td class="mono">35235</td>
+    </tr>
+    <tr class="right">
+      <td>2-oxoglutarate</td><td class="mono">16810</td>
+      <td colspan="2">correct as cited — already a charged microspecies in ChEBI</td>
+    </tr>
+    <tr class="right">
+      <td>pyruvate</td><td class="mono">15361</td>
+      <td colspan="2">correct as cited</td>
+    </tr>
+    <tr class="right">
+      <td>oxaloacetate</td><td class="mono">16452</td>
+      <td colspan="2">correct as cited</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Six of nine wrong; three right by accident, because for those the charged species happens to own
+  the bare name. And Rhea — the database the graph needed to join against — uses the microspecies
+  <strong>exclusively</strong>:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Rhea master</th><th>Its four participants</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">19453</td><td class="mono">57972, 16810, 15361, 29985</td></tr>
+    <tr><td class="mono">21824</td><td class="mono">29991, 16810, 16452, 29985</td></tr>
+    <tr><td class="mono">17441</td><td class="mono">35235, 16810, 57678, 29985</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  None of <code>16977</code>, <code>17053</code>, <code>17561</code>, <code>16015</code> or
+  <code>16208</code> appears anywhere in those lists. A join from the graph to Rhea or UniProt would
+  have matched <strong>nothing</strong>.
+</p>
+
+<div class="box trap">
+  <span class="box-title">Zero rows, HTTP 200, green test suite</span>
+  <p>
+    That is the whole failure. No exception. No validation error. The README claimed
+    interoperability; the tests were green; the thing the claim promised did not work. As the review
+    put it, the worst failure mode available.
+  </p>
+</div>
+
+<h2 id="tests">4. Why the tests could not have caught it</h2>
+
+<p>
+  This is the part worth taking away, because it generalises well beyond chemistry.
+</p>
+
+<p>The suite had two kinds of check. Here is the identifier check:</p>
+
+<pre><code data-lang="python">assert c.chebi and c.chebi.isdigit(), f"{c.key} missing ChEBI"</code></pre>
+
+<p>
+  A <strong>format check, not a correctness check</strong>. <code>"99999999"</code> passes. It
+  confirms the field is populated and shaped like an accession, which tells you nothing about what
+  it points at.
+</p>
+
+<p>And here is the clever one — mass and charge balance:</p>
+
+<pre><code data-lang="python">def test_reaction_is_mass_balanced(rxn):
+    assert sum_formula(rxn.substrates) == sum_formula(rxn.products)</code></pre>
+
+<p>
+  It reads the <code>formula</code> and <code>charge</code> fields. It never dereferences the ChEBI
+  identifier. Because the author used microspecies values <em>consistently</em>, the arithmetic
+  balanced perfectly — so the suite &ldquo;proved&rdquo; mass and charge balance on data that did
+  not belong to the identifiers written beside it.
+</p>
+
+<div class="box key">
+  <span class="box-title">The general principle</span>
+  <p>
+    <strong>A test over locally-consistent data cannot validate an external reference.</strong>
+    Internal consistency and external correctness are independent properties, and checking the
+    first gives you confidence about the second that you have not earned.
+  </p>
+  <p>
+    You have hit this exact shape before: a fixture file that agrees with itself and disagrees with
+    production. A mock whose contract drifted from the real API. A migration test that passes
+    against the test schema. The tests are green <em>because</em> everything they touch was written
+    by the same hand.
+  </p>
+</div>
+
+<p>
+  A test that <em>would</em> have caught it: assert each ChEBI ID appears in the participant list of
+  the corresponding Rhea reaction — or, offline, pin the expected formula and charge <em>per ChEBI
+  ID</em> from a checked-in fixture derived from ChEBI, rather than hand-entering identifier and
+  data together as one row. Note the structural difference: the check has to cross the boundary the
+  claim crosses.
+</p>
+
+<h2 id="unicode">5. Three traps that are pure string handling</h2>
+
+<p>These are recorded inline in <code>reference_data.py</code>, and all three are your territory.</p>
+
+<h3>The tautomer that owns the bare name</h3>
+
+<p>
+  Resolving the string <code>"L-cysteine"</code> in ChEBI lands on <strong>CHEBI:17561</strong> — a
+  tautomer, and <em>not</em> the species these reactions use (CHEBI:35235). The obvious lookup
+  returns the wrong answer confidently.
+</p>
+<p class="muted">
+  Rule: never resolve a chemical from a name string. Names are labels; identifiers are keys.
+</p>
+
+<h3>U+2212 versus U+002D</h3>
+
+<p>
+  ChEBI writes charge suffixes with the <strong>MINUS SIGN</strong> U+2212, while the
+  <code>L-</code> stereochemistry prefix is an ordinary ASCII <strong>HYPHEN-MINUS</strong> U+002D.
+  The same string contains both:
+</p>
+
+<pre><code data-lang="python">"L-glutamate(1−)"
+#  ^ U+002D HYPHEN-MINUS      ^ U+2212 MINUS SIGN</code></pre>
+
+<p>
+  Scrape one source, load a dump from another, join on the name: silent failure. And a well-meaning
+  &ldquo;normalise the dashes&rdquo; pass corrupts the data rather than fixing it, because the
+  character ChEBI uses <em>is</em> U+2212 and matching its own data requires preserving it. The
+  project&rsquo;s linter config carries a targeted <code>RUF001</code> ignore for that one file with
+  the reason written down, rather than letting a linter quietly ASCII-fold it.
+</p>
+
+<h3>Display names diverge from database names</h3>
+
+<p>
+  ChEBI&rsquo;s accepted name and the string Rhea prints differ for three of these participants —
+  <code>CHEBI:57972</code> is <em>L-alanine zwitterion</em> in ChEBI and plain <em>L-alanine</em> in
+  Rhea&rsquo;s equation. UniProt does the same: it <em>displays</em> friendly names while the
+  cross-references underneath are microspecies. That gap between the display string and the key is
+  precisely what produced the original error.
+</p>
+
+<h2 id="cofactor">6. The cofactor has the same problem</h2>
+
+<p>
+  PLP from chapter 6 is not exempt. UniProt&rsquo;s <code>COFACTOR</code> annotation reads:
+</p>
+
+<pre><code data-lang="turtle">COFACTOR: Name=pyridoxal 5'-phosphate; Xref=ChEBI:CHEBI:597326</code></pre>
+
+<p>
+  <strong>CHEBI:597326</strong> is the dianion — charge &minus;2 — not CHEBI:18405, the neutral
+  parent that a search for &ldquo;pyridoxal 5&prime;-phosphate&rdquo; returns first. Same trap, same
+  shape, in the one molecule the project makes a point of modelling carefully.
+</p>
+
+<h2 id="verified">7. The verified table</h2>
+
+<p>
+  Every value below was checked individually against ChEBI, cross-checked against Rhea&rsquo;s
+  participant lists and UniProt&rsquo;s annotations, and is what <code>reference_data.py</code>
+  now contains.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Species</th><th>ChEBI</th><th>Accepted name</th><th>Formula</th><th class="num">Charge</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>L-alanine</td><td class="mono">57972</td><td>L-alanine zwitterion</td><td class="mono">C<sub>3</sub>H<sub>7</sub>NO<sub>2</sub></td><td class="num tnum">0</td></tr>
+    <tr><td>L-aspartate</td><td class="mono">29991</td><td>L-aspartate(1&minus;)</td><td class="mono">C<sub>4</sub>H<sub>6</sub>NO<sub>4</sub></td><td class="num tnum">&minus;1</td></tr>
+    <tr><td>L-cysteine</td><td class="mono">35235</td><td>L-cysteine zwitterion</td><td class="mono">C<sub>3</sub>H<sub>7</sub>NO<sub>2</sub>S</td><td class="num tnum">0</td></tr>
+    <tr><td>2-oxoglutarate</td><td class="mono">16810</td><td>2-oxoglutarate(2&minus;)</td><td class="mono">C<sub>5</sub>H<sub>4</sub>O<sub>5</sub></td><td class="num tnum">&minus;2</td></tr>
+    <tr><td>pyruvate</td><td class="mono">15361</td><td>pyruvate</td><td class="mono">C<sub>3</sub>H<sub>3</sub>O<sub>3</sub></td><td class="num tnum">&minus;1</td></tr>
+    <tr><td>oxaloacetate</td><td class="mono">16452</td><td>oxaloacetate(2&minus;)</td><td class="mono">C<sub>4</sub>H<sub>2</sub>O<sub>5</sub></td><td class="num tnum">&minus;2</td></tr>
+    <tr><td>3-mercaptopyruvate</td><td class="mono">57678</td><td>3-mercaptopyruvate</td><td class="mono">C<sub>3</sub>H<sub>3</sub>O<sub>3</sub>S</td><td class="num tnum">&minus;1</td></tr>
+    <tr><td>L-glutamate</td><td class="mono">29985</td><td>L-glutamate(1&minus;)</td><td class="mono">C<sub>5</sub>H<sub>8</sub>NO<sub>4</sub></td><td class="num tnum">&minus;1</td></tr>
+    <tr><td>PLP</td><td class="mono">597326</td><td>pyridoxal 5&prime;-phosphate(2&minus;)</td><td class="mono">C<sub>8</sub>H<sub>8</sub>NO<sub>6</sub>P</td><td class="num tnum">&minus;2</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>All three reactions still balance on the corrected values:</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Reaction</th><th>Mass</th><th>Charge</th></tr></thead>
+  <tbody>
+    <tr><td>ALT</td><td class="mono">C<sub>8</sub>H<sub>11</sub>NO<sub>7</sub> = C<sub>8</sub>H<sub>11</sub>NO<sub>7</sub> <span class="yes">&#10003;</span></td><td class="tnum">&minus;2 = &minus;2 <span class="yes">&#10003;</span></td></tr>
+    <tr><td>AST</td><td class="mono">C<sub>9</sub>H<sub>10</sub>NO<sub>9</sub> = C<sub>9</sub>H<sub>10</sub>NO<sub>9</sub> <span class="yes">&#10003;</span></td><td class="tnum">&minus;3 = &minus;3 <span class="yes">&#10003;</span></td></tr>
+    <tr><td>CysAT</td><td class="mono">C<sub>8</sub>H<sub>11</sub>NO<sub>7</sub>S = C<sub>8</sub>H<sub>11</sub>NO<sub>7</sub>S <span class="yes">&#10003;</span></td><td class="tnum">&minus;2 = &minus;2 <span class="yes">&#10003;</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ask">
+  <span class="box-title">Note what balance does and does not prove</span>
+  <p>
+    It balanced <em>before</em> the fix too. Balance is a property of the numbers, and the numbers
+    were always the microspecies numbers — only the identifiers were wrong. Balance is a genuinely
+    good invariant to test, and it is orthogonal to the question of whether the identifiers point at
+    the right things. Two independent properties; you need a check for each.
+  </p>
+</div>
+
+<div class="box key">
+  <span class="box-title">Chapter 7 in five lines</span>
+  <ul>
+    <li>One compound exists as several microspecies; each has its own identifier and reaction databases use them precisely.</li>
+    <li>Conjugate pairs, tautomers, zwitterions and stereoisomers are four different relationships — no uniform rule covers them.</li>
+    <li>The wrong microspecies gives zero rows, HTTP 200, and a green suite.</li>
+    <li>A test over locally-consistent data cannot validate an external reference. The check must cross the boundary the claim crosses.</li>
+    <li>Never resolve a chemical from a name string; and do not normalise ChEBI&rsquo;s U+2212 away.</li>
+  </ul>
+</div>
+
+<div class="pager">
+  <a href="06-enzymes.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; 6 &middot; Enzymes from zero</span>
+  </a>
+  <a class="next" href="08-databases.html">
+    <span class="dir">Next</span>
+    <span class="t">8 &middot; The reference databases &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7 · Three verdicts on one run — tacat extension</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="3">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-floor.html">The floor under identity</a></li>
+    <li><a href="02-closure.html">Closure, not confidence</a></li>
+    <li><a href="03-coherence.html">Three sources or none</a></li>
+    <li><a href="04-boundary.html">Where the model stops</a></li>
+    <li><a href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a class="here" href="07-three.html">Three verdicts on one run</a></li>
+    <li><a href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 7 · second series</p>
+<h1>Three verdicts on one run</h1>
+<p class="standfirst">
+  A transaminase screen, twelve hours in, with one plate behaving oddly. This chapter walks the same
+  run past three independent validations that share no subtasks and produce three unrelated answers —
+  and argues that the reason to keep them separate is that the interesting outcome in each is the
+  middle one, which any attempt to merge them destroys first.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ the actual idea</span>
+  <span class="chip">14 min</span>
+  <span class="chip">worked example</span>
+  <span class="chip ask">the one to argue with</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance.</strong> The architecture below is my own unpublished design, unreviewed and
+  unused by anyone else. The screening scenario is constructed to be plausible from public
+  descriptions of transaminase high-throughput work — it is <em>not</em> taken from any real LARA run,
+  and I have no access to one. It is a worked example chosen to make the three verdicts concrete, and
+  the right response to it is to say where a real run would behave differently.
+</div>
+
+<h2 id="scenario">1. The run</h2>
+
+<p>
+  A screen over a mutant library: express, harvest, lyse, assay, evaluate. Twelve hours in, plate 7
+  starts reporting activity values that are low but not flat. Something should decide what happens
+  next. Today that decision is a person looking at a curve.
+</p>
+
+<figure class="code">
+  <figcaption>the state, as three separate systems would each see it</figcaption>
+<pre><code><span class="tok-comment"># plate 7, t = 12h04</span>
+  wells reporting          <span class="tok-num">88</span> / <span class="tok-num">96</span>
+  mean slope vs. plate 1-6 <span class="tok-num">0.31</span>×
+  negative control         clean
+  positive control         <span class="tok-num">0.44</span>× expected
+  lysis timestamp          <span class="tok-num">11</span>m late (arm queued behind plate 6)
+  cofactor lot             PLP batch B, first use this campaign</code></pre>
+</figure>
+
+<p>
+  A single gate must turn that into <em>continue</em> or <em>abort</em>. The three validations do not
+  answer that question. They answer three different ones, and none of them is "continue or abort".
+</p>
+
+<h2 id="three">2. What each one asks</h2>
+
+<div class="ledger">
+  <div class="row">
+    <div class="cell thmc">
+      <span class="k">Necessity — the orchestrator asks</span>
+      <p>Does this plate still bear on the question the campaign is asking? Its subtasks are the
+      <em>claims</em> the screen is trying to support: that a given mutant has improved activity on
+      the target amine.</p>
+    </div>
+    <div class="cell">
+      <span class="k">On this run</span>
+      <p>Plate 7 carries eight of the twelve mutants in the region of the library the campaign
+      actually cares about. Whatever else is true, the claim is not answerable without it.
+      <strong>Verdict: supported — still load-bearing.</strong></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="cell thmc">
+      <span class="k">Sufficiency — the scheduler asks</span>
+      <p>Is this run still converging on completion? Its subtasks are the <em>steps</em> — a wholly
+      different decomposition, in which "mutant 4B" does not appear at all and "read plate 7 at
+      t+30" does.</p>
+    </div>
+    <div class="cell">
+      <span class="k">On this run</span>
+      <p>The 11-minute lysis delay pushed the assay window; slope is degrading faster than the
+      remaining reads can resolve. The measured descent toward the threshold has flattened.
+      <strong>Verdict: stalled — not failed, not converging.</strong></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="cell thmc">
+      <span class="k">Value — purpose asks</span>
+      <p>What here is worth keeping? Its subtasks are the <em>artefacts</em> — lysate aliquots, raw
+      reads, the PLP batch record. A third decomposition again.</p>
+    </div>
+    <div class="cell">
+      <span class="k">On this run</span>
+      <p>The reads are cheap to regenerate if the plate is re-run; the lysate is consumed and is
+      not. The PLP batch-B record is the only observation of a new lot.
+      <strong>Verdict: mixed — keep the lysate record and the batch note, the reads are
+      regenerable.</strong></p>
+    </div>
+  </div>
+</div>
+
+<div class="box key">
+  <span class="box-title">Notice what just happened</span>
+  <p>
+    Three verdicts: <strong>supported</strong>, <strong>stalled</strong>, <strong>partly
+    regenerable</strong>. They do not conflict, because they are not answers to the same question —
+    there is no shared row to disagree on. The plate is simultaneously necessary to the campaign, not
+    converging as scheduled, and holding one irreplaceable artefact. A single gate has to pick one of
+    those to report and discard the other two.
+  </p>
+</div>
+
+<h2 id="nomerge">3. Why merging them is the failure, not the goal</h2>
+
+<p>
+  The natural engineering instinct is to combine three signals into a score and threshold it. That
+  instinct is what <a href="01-floor.html">Chapter 1</a> and <a href="02-closure.html">Chapter 2</a>
+  are both about, arriving from different directions, and it fails here for a reason that is easy to
+  state:
+</p>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Each verdict is three-valued, and the middle value is the informative one</span>
+    <span class="thm-src">design consequence of the floor result, Ch. 1 §2</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      Because no finite process closes, every validation needs a third outcome that is neither
+      success nor failure: <em>inconclusive</em> for necessity, <em>stalled</em> for sufficiency,
+      <em>regenerable</em> for value. That third outcome is not a degenerate case to be minimised —
+      it is where the residual lives, and it is the only one that tells you what to do next.
+    </p>
+    <p class="small muted" style="margin-top:0.6rem">
+      A merged score maps the three middles onto one number and they annihilate: <em>stalled</em>
+      pulls it down, <em>supported</em> pulls it up, and the result is a middling number that reads as
+      "marginal" — which is exactly the reading that loses the actionable content of all three.
+    </p>
+  </div>
+</div>
+
+<p>
+  Concretely, on plate 7, each middle verdict implies a <em>different</em> intervention, and they are
+  not alternatives — all three are correct simultaneously:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Verdict</th><th>What it says to do</th><th>What is lost if merged</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>supported</code> (necessity)</td>
+      <td>Do not drop these mutants from the campaign — re-plan around them.</td>
+      <td>An abort decision silently narrows the library and nobody records that it did.</td>
+    </tr>
+    <tr>
+      <td><code>stalled</code> (sufficiency)</td>
+      <td>The current schedule cannot finish this plate. Re-queue it, do not extend it.</td>
+      <td>"Marginal" reads as "keep going", which spends another three hours proving it.</td>
+    </tr>
+    <tr>
+      <td><code>regenerable</code> (value)</td>
+      <td>Discard the reads freely; preserve the lysate aliquot and the batch-B record.</td>
+      <td>A blanket discard destroys the only observation of the new cofactor lot.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box trap">
+  <span class="box-title">The design constraint that follows, and it is an unusual one</span>
+  <p>
+    If the three ever agree systematically, the architecture is wrong — it would mean they are not
+    independent measurements but one measurement reported three times, and two of the three could be
+    deleted. <strong>Convergence is the falsification condition, not the success condition.</strong>
+    I know of no other part of the design where the thing that would look like validation is in fact
+    the disproof, and it is the claim I would most want tested by someone who has built a scheduler.
+    <a href="08-os.html#experiment">Chapter 8 §4</a> states the experiment.
+  </p>
+</div>
+
+<h2 id="modification">4. Back to the footnote</h2>
+
+<p>
+  <a href="06-lara.html#footnote">Chapter 6 §4</a> quoted CoRDI 2023 footnote 2: <em>"Modification of
+  a running process is currently under development."</em> The plate-7 walk-through is what that
+  problem looks like with the three questions kept apart.
+</p>
+
+<p>
+  "Can this running process be modified?" has no single answer. What a modification needs to know is:
+  which completed work is still load-bearing under the new plan (necessity), whether the modified plan
+  can still finish from the current state (sufficiency), and which already-produced material survives
+  the change (value). Those are the three decompositions. A system that keeps them separate can
+  answer a modification request with three facts instead of one verdict — and three facts are what a
+  person deciding whether to accept the modification actually needs.
+</p>
+
+<figure class="code">
+  <figcaption>what a modification request would return, rather than a boolean</figcaption>
+<pre><code><span class="tok-fn">modify</span>(run=<span class="tok-string">"campaign-3"</span>, change=<span class="tok-string">"add 30-min read at t+14h, plate 7 only"</span>)
+
+  necessity    <span class="tok-kw">supported</span>     8 of 12 target mutants unaffected by the change
+  sufficiency  <span class="tok-kw">stalled</span>       arm contention at t+14h; descent does not resume
+  value        <span class="tok-kw">keep</span>          lysate aliquot consumed either way — preserve record
+
+  <span class="tok-comment"># no single verdict is returned, and that is the design.</span>
+  <span class="tok-comment"># the operator sees three independent facts and decides.</span></code></pre>
+</figure>
+
+<h2 id="tacat">5. The connection back to this submission</h2>
+
+<p>
+  This is not a detour from the tacat work. It is the same argument one layer up.
+</p>
+
+<p>
+  <a href="01-floor.html#observed">Chapter 1 §1</a> recorded G10: nine competency questions, a SHACL
+  shape and a type test, all green over a graph in which every external identifier had been replaced
+  with a fabrication. Three gates, one answer each, all the same answer, all wrong. The reason they
+  were blind was not that they were badly written — it was that they were all asking a variant of the
+  same question, and no gate asked whether anything outside the graph answered to the identifier.
+</p>
+
+<div class="box key">
+  <span class="box-title">The same shape at both scales</span>
+  <p>
+    A knowledge graph and a robot run fail the same way: several checks that look independent turn out
+    to measure one thing, so a defect orthogonal to that thing passes every one of them. The response
+    in <a href="01-floor.html#proposal">Chapter 1 §4</a> was to add a check that leaves the graph and
+    to <em>record what was not compared</em> rather than issue a certificate. The response here is the
+    same move applied to execution: three measurements that are constructed to be independent, and a
+    residual recorded in each rather than a single verdict.
+  </p>
+</div>
+
+<p>
+  <code>tacat:notCompared</code> from Chapter 1 and the three middle verdicts here are the same
+  object: a statement of what the system did not establish, carried alongside what it did. That is the
+  one idea running through all eight chapters.
+</p>
+
+<h2 id="honest">6. What this does not establish</h2>
+
+<div class="box ask">
+  <span class="box-title">Be able to say this out loud</span>
+  <ul>
+    <li>
+      <strong>The example is constructed.</strong> I have never seen a LARA run. Plate 7 is built to
+      make the three verdicts legible, which means it is built to make my case — the honest test is
+      whether a real run produces three genuinely different decompositions, and I cannot run that
+      test.
+    </li>
+    <li>
+      <strong>Three verdicts are harder to act on than one.</strong> That is a real cost and not a
+      presentational one. An operator at 2 a.m. wants "continue or abort". The defence is that the
+      single answer was never available — it was manufactured by discarding two of three facts — but a
+      system that is right and unusable has lost to one that is approximate and used.
+    </li>
+    <li>
+      <strong>The independence claim is untested.</strong> Everything above depends on the three
+      decompositions being genuinely different partitions. Nothing I have built demonstrates that yet.
+      It is stated as an experiment in <a href="08-os.html#experiment">Chapter 8 §4</a> rather than
+      claimed as a result.
+    </li>
+  </ul>
+</div>
+
+<div class="pagenav">
+  <a href="06-lara.html"><span class="dir">Back</span>6 · The same three parts</a>
+  <span class="spacer"></span>
+  <a href="08-os.html"><span class="dir">Next</span>8 · What exists, and what does not</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

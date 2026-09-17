@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2 · Closure, not confidence — tacat extension</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="2">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-floor.html">The floor under identity</a></li>
+    <li><a class="here" href="02-closure.html">Closure, not confidence</a></li>
+    <li><a href="03-coherence.html">Three sources or none</a></li>
+    <li><a href="04-boundary.html">Where the model stops</a></li>
+    <li><a href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a href="07-three.html">Three verdicts on one run</a></li>
+    <li><a href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 2</p>
+<h1>Closure, not confidence</h1>
+<p class="standfirst">
+  "The suite is green" is a stopping rule, and it is the wrong one. There is a strictly stronger
+  criterion — stop when no further check available to you could change the answer — and it is
+  decidable, cheap, and directly applicable to a curation pipeline that must tell a biochemist when a
+  fact is settled.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ strongest transfer</span>
+  <span class="chip">14 min</span>
+  <span class="chip">RATIONALE §4 · "everything fails green"</span>
+  <span class="chip ask">this is the one to lead with</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance.</strong> This chapter rests on unpublished single-author work
+  (<em>Semantic Causal Propagation</em>, §8). It has not been peer-reviewed. The closure criterion
+  below is independent of the recognition/search identity in the same paper — it is provable from the
+  floor and the catalyst algebra alone — so it survives even if that identity is rejected. Stated
+  here because it is the one place where knowing which wall is load-bearing matters.
+</div>
+
+<h2 id="problem">1. The problem, in this repository's own words</h2>
+
+<p>
+  <code>RATIONALE.md</code> §4 names the through-line of the whole submission:
+</p>
+
+<blockquote class="box">
+  <span class="box-title">RATIONALE.md §4</span>
+  <p>
+    "If the exercise has one idea, it is that <strong>everything here fails green</strong>." Wrong
+    ChEBI microspecies → federated join returns zero rows, no error. Identifier stored as
+    <code>xsd:string</code> → same. Defined class that classifies nothing → passes an OWL consistency
+    check. <code>sh:minCounts</code> typo → constrains nothing, reports no violations.
+  </p>
+</blockquote>
+
+<p>
+  Every one of those is the same structural fact: <strong>a green suite is evidence that the checks
+  you wrote passed, and nothing more</strong>. It says nothing about the checks you did not write,
+  and the checks you did not write are exactly where the error is — because if you had thought of
+  the check, you would have thought of the error.
+</p>
+
+<div class="box trap">
+  <span class="box-title">The sharpest instance</span>
+  <p>
+    <code>RATIONALE.md</code> §4 on v0's balance tests: they were "an original idea nobody asked for,
+    they passed, and they were <strong>structurally incapable</strong> of detecting the error
+    actually present" — because they read local <code>formula</code>/<code>charge</code> fields and
+    never dereferenced the identifier. <em>The confidence was highest exactly where the error
+    lived.</em> That sentence is a description of a confidence threshold failing, and it is what the
+    closure theorem formalises.
+  </p>
+</div>
+
+<h2 id="theorem">2. Closure</h2>
+
+<p>
+  The search calculus models an inquiry as a walk through a graph of claims, where each step is a
+  <strong>catalyst</strong> — any operation that resolves something: a database query, a file scan, a
+  reasoner run, a human check. Two claims are in the same <em>equivalence class</em> when no test
+  available at the endpoints distinguishes them.
+</p>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Definition · Closure</span>
+    <span class="thm-src">Semantic Causal Propagation, Def. 8.2</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      A search is <strong>closed</strong> when, for every catalyst available but not yet invoked,
+      extending the search by that catalyst cannot add a new equivalence class: every further
+      admissible result terminates in a class already reached.
+    </p>
+  </div>
+</div>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Thm · Closure is strictly stronger than a threshold</span>
+    <span class="thm-src">Semantic Causal Propagation, Thm 8.3</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      There exist process graphs and thresholds θ such that a result satisfies the confidence
+      criterion while the search is <em>not</em> closed — a further, uninvoked catalyst reaches a
+      structurally distinct class.
+    </p>
+    <p class="small muted" style="margin-top:0.6rem">
+      The construction is uncomfortably realistic: two disjoint, internally dense clusters, each
+      reachable by one catalyst. Propagate via the first alone and terminal confidence is maximal,
+      <em>because a claim's alignment to itself is always at the floor</em>. The second catalyst,
+      never invoked, reaches an entirely different answer. High confidence, wrong result, threshold
+      structurally unable to notice.
+    </p>
+  </div>
+</div>
+
+<div class="box key">
+  <span class="box-title">The one-sentence version</span>
+  <p>
+    A single source reports high confidence <strong>because it is internally self-consistent</strong>
+    — which is exactly what a single source always is. Confidence measures agreement <em>within</em>
+    what you consulted. Closure measures whether there is anything left to consult that could
+    disagree.
+  </p>
+</div>
+
+<h2 id="picture">3. The picture</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 720 260" role="img" aria-labelledby="fig2title fig2desc">
+  <title id="fig2title">Confidence versus closure on a two-cluster process graph</title>
+  <desc id="fig2desc">Left panel: one catalyst reaches cluster A, reporting full confidence.
+  Right panel: a second uninvoked catalyst reaches cluster B, a structurally distinct answer.</desc>
+
+  <!-- left panel -->
+  <rect x="6" y="6" width="344" height="248" rx="10" class="fig-su fig-str-b" stroke-width="1"/>
+  <text x="22" y="30" class="fig-label fig-t">Threshold says: done</text>
+  <text x="22" y="48" class="fig-small fig-m">one catalyst invoked · confidence maximal</text>
+
+  <circle cx="60" cy="150" r="16" class="fig-s2 fig-str-m" stroke-width="1.5"/>
+  <text x="60" y="154" class="fig-mono fig-t" text-anchor="middle">seed</text>
+
+  <line x1="78" y1="150" x2="140" y2="150" class="fig-str-a" stroke-width="2"/>
+  <polygon points="140,150 132,146 132,154" class="fig-a"/>
+  <text x="109" y="141" class="fig-small fig-a" text-anchor="middle">γ&#8321;</text>
+
+  <circle cx="196" cy="150" r="34" class="fig-sf fig-str-a" stroke-width="2"/>
+  <text x="196" y="147" class="fig-label fig-a" text-anchor="middle">A</text>
+  <text x="196" y="163" class="fig-small fig-m" text-anchor="middle">dense</text>
+
+  <circle cx="176" cy="132" r="3" class="fig-a"/><circle cx="214" cy="136" r="3" class="fig-a"/>
+  <circle cx="184" cy="168" r="3" class="fig-a"/><circle cx="212" cy="164" r="3" class="fig-a"/>
+
+  <text x="196" y="216" class="fig-small fig-ok" text-anchor="middle">internally consistent → confidence 1.0</text>
+  <text x="196" y="234" class="fig-small fig-m" text-anchor="middle">nothing here can disagree with itself</text>
+
+  <!-- right panel -->
+  <rect x="370" y="6" width="344" height="248" rx="10" class="fig-su fig-str-b" stroke-width="1"/>
+  <text x="386" y="30" class="fig-label fig-t">Closure says: not done</text>
+  <text x="386" y="48" class="fig-small fig-m">γ&#8322; available, never invoked</text>
+
+  <circle cx="424" cy="150" r="16" class="fig-s2 fig-str-m" stroke-width="1.5"/>
+  <text x="424" y="154" class="fig-mono fig-t" text-anchor="middle">seed</text>
+
+  <line x1="442" y1="140" x2="496" y2="112" class="fig-str-a" stroke-width="2"/>
+  <polygon points="496,112 488,111 491,118" class="fig-a"/>
+  <line x1="442" y1="162" x2="496" y2="196" class="fig-str-no" stroke-width="2" stroke-dasharray="5 3"/>
+  <polygon points="496,196 488,190 487,197" class="fig-no"/>
+  <text x="466" y="120" class="fig-small fig-a" text-anchor="middle">γ&#8321;</text>
+  <text x="470" y="196" class="fig-small fig-no" text-anchor="middle">γ&#8322;</text>
+
+  <circle cx="552" cy="100" r="30" class="fig-sf fig-str-a" stroke-width="2"/>
+  <text x="552" y="105" class="fig-label fig-a" text-anchor="middle">A</text>
+
+  <circle cx="552" cy="204" r="30" class="fig-su fig-str-no" stroke-width="2"/>
+  <text x="552" y="209" class="fig-label fig-no" text-anchor="middle">B</text>
+
+  <text x="640" y="100" class="fig-small fig-m">class 1</text>
+  <text x="640" y="204" class="fig-small fig-no">class 2</text>
+  <text x="552" y="248" class="fig-small fig-no" text-anchor="middle">a second class exists → not closed</text>
+</svg>
+<figcaption>
+  Thm 8.3, drawn. The left panel is what a confidence threshold sees: one path, one answer, perfect
+  internal agreement. The right panel is the same graph with the uninvoked catalyst drawn in. Nothing
+  about the left panel is <em>wrong</em> — it is simply not evidence of what it is taken to be
+  evidence of.
+</figcaption>
+</figure>
+
+<h2 id="dichotomy">4. Two ways to finish, and one of them is "decline"</h2>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Thm · Convergent closure or honest decline</span>
+    <span class="thm-src">Semantic Causal Propagation, Thm 8.5</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      Every search over a finite catalyst registry terminates in exactly one of two states:
+      <strong>convergent closure</strong> — the reachable set stabilises to a single equivalence
+      class, which is the answer; or <strong>contested closure</strong> — it stabilises with more than
+      one class, and the correct output is <em>decline</em>, reported together with the distinct
+      classes found.
+    </p>
+  </div>
+</div>
+
+<p>
+  Decline is not failure. It is the outcome that says <em>the sources disagree, and here is
+  where</em> — which for a curation pipeline is often the most valuable thing it can produce, because
+  it localises exactly the fact that needs a human.
+</p>
+
+<div class="vs">
+  <div class="side bad">
+    <h4>Threshold pipeline</h4>
+    <p>Consults ChEBI. Gets an answer. Confidence high. Emits it.</p>
+    <p>If UniProt would have disagreed, nobody finds out. The disagreement is not <em>recorded as
+    absent</em> — it is simply never generated.</p>
+  </div>
+  <div class="side good">
+    <h4>Closure pipeline</h4>
+    <p>Consults ChEBI, UniProt, Rhea. Two agree, one differs. Reachable set has two classes.</p>
+    <p>Emits <strong>decline</strong> with both classes and their sources. A curator sees a specific
+    conflict, not a silent choice.</p>
+  </div>
+</div>
+
+<h2 id="proposal">5. What this proposes building</h2>
+
+<h3>5.1 A closure report beside the test report</h3>
+
+<p>
+  The competency-question suite currently answers "did the checks pass?". A closure report answers
+  the different question "is there a check we have not run that could change an answer?" — over the
+  registry of authorities the project already federates against.
+</p>
+
+<figure class="code">
+  <figcaption>proposed: <code>tacat closure</code> — a fourth CLI verb beside build · infer · serve · questions</figcaption>
+<pre><code>$ tacat closure
+
+  entity CHEBI:29985  (L-glutamate)
+    ChEBI      formula C5H8NO4  charge -1   <span class="tok-comment">→ class 1</span>
+    Rhea       formula C5H8NO4  charge -1   <span class="tok-comment">→ class 1</span>
+    UniProt    <span class="tok-comment">(not consulted — no catalyst registered)</span>
+    <span class="tok-kw">status</span>: <span class="tok-string">CLOSED</span> over registered catalysts (1 class)
+
+  entity CHEBI:597326 (PLP)
+    ChEBI      cofactor annotation           <span class="tok-comment">→ class 1</span>
+    UniProt    up:Cofactor_Annotation        <span class="tok-comment">→ class 1</span>
+    <span class="tok-kw">status</span>: <span class="tok-string">CLOSED</span> (2 classes agreeing → 1)
+
+  reaction RHEA:19453 (ALT)
+    Rhea       master, undirected            <span class="tok-comment">→ class 1</span>
+    UniProt    P24298 left-to-right          <span class="tok-comment">→ class 1</span>
+    UniProt    P0A959 right-to-left          <span class="tok-comment">→ class 2</span>
+    <span class="tok-kw">status</span>: <span class="tok-no">CONTESTED</span> (2 classes) — direction is organism-dependent
+             <span class="tok-comment">this is not an error; it is the finding</span></code></pre>
+</figure>
+
+<div class="box key">
+  <span class="box-title">Why the last block is the whole argument</span>
+  <p>
+    That contested result is <strong>already documented in this repository</strong> —
+    <code>RATIONALE.md</code> §3.2 and <code>IMPLEMENTATION_REPORT.md</code> §4 record that
+    <em>E. coli</em> AlaA carries the same Rhea master as human ALT1 with
+    <code>PhysiologicalDirection=right-to-left</code>. It was found by a human reading UniProt
+    carefully. A closure check <em>generates that finding mechanically</em>, and would have found it
+    without anyone thinking to look — which is the difference between a fact the project knows and a
+    gate the project runs.
+  </p>
+</div>
+
+<h3>5.2 Wiring it to the existing federated layer</h3>
+
+<p>
+  This is cheaper than it looks, because the parts exist. <code>queries/federated.py</code> already
+  constructs and runs joins against Rhea and UniProt, with a cache and two network-marked tests.
+  Closure needs three additions on top of that:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Piece</th><th>What it is</th><th>Exists?</th></tr></thead>
+  <tbody>
+    <tr><td>Catalyst registry</td><td>Named authorities with a fetch function each</td><td>Partly — <code>federated.py</code> hard-codes two endpoints</td></tr>
+    <tr><td>Equivalence test</td><td>When do two answers count as the same class? For a chemical entity: formula + charge. For a reaction: participant ID set.</td><td>No — this is the design work</td></tr>
+    <tr><td>Report + exit code</td><td>Contested → non-zero, artefact written</td><td>No — but mirrors the existing <code>questions</code> verb</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The equivalence test is where the judgement lives, and it should be explicit and small. Two answers
+  are in the same class when the fields the project claims to care about agree — which forces the
+  project to say which fields those are. That is the same discipline as
+  <code>tacat:notCompared</code> in Chapter 1, arrived at from the other direction.
+</p>
+
+<h2 id="honest">6. What this does not fix</h2>
+
+<div class="box ask">
+  <span class="box-title">Be able to say this out loud</span>
+  <ul>
+    <li>
+      <strong>Closure is relative to a registry.</strong> Thm 8.5's termination guarantee holds over
+      a <em>fixed, finite</em> set of catalysts. Adding an authority re-opens the question. So
+      "closed" always means "closed over these three sources on this date" — which is exactly why the
+      report must name them, and why it is a dated artefact rather than a boolean.
+    </li>
+    <li>
+      <strong>The equivalence test is a modelling choice, not a derivation.</strong> The theorem says
+      closure is decidable <em>given</em> a notion of "materially different"; it does not supply one.
+      Choosing formula-plus-charge for a chemical entity is a defensible judgement that could be
+      wrong — stereochemistry is deliberately excluded and that exclusion should be recorded.
+    </li>
+    <li>
+      <strong>It adds a failure mode: contested results need a human.</strong> A pipeline that can
+      emit <em>decline</em> needs somewhere for decline to go. For a three-reaction demo that is a
+      report; for a real curation flow it is a queue, and the queue is the expensive part. Naming
+      that cost is part of proposing the thing.
+    </li>
+  </ul>
+</div>
+
+<div class="pagenav">
+  <a href="01-floor.html"><span class="dir">Back</span>1 · The floor under identity</a>
+  <span class="spacer"></span>
+  <a href="03-coherence.html"><span class="dir">Next</span>3 · Three sources or none</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The graph as runtime — execution as propagation</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html" aria-current="page">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">05 · The graph as runtime</p>
+  <h1>The graph that models the chemistry is the thing that runs the experiment.</h1>
+
+  <p class="lede">
+    A conventional runtime executes a program: an ordered sequence whose control flow is
+    knowable in advance and whose termination is a verdict. This one discards all three
+    commitments. The unit of work is a <em class="term">node</em> — a subtask fused with
+    the code that realises it. Modules read values, transform them internally, and emit
+    new ones. An edge exists because a value <em>actually propagated</em> along it.
+  </p>
+
+  <div class="claim">
+    <span class="label">The consequence that matters</span>
+    <p>
+      Edges are a <b>product</b> of a run, not an <b>input</b> to it. The nodes are the
+      durable objects — what <em>can</em> be computed, catalogued and imported. The
+      trajectory is what <em>was</em> computed, and it cannot be stored as a schedule
+      because it does not exist until the run produces it.
+    </p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="run" viewBox="0 0 760 420" role="img"
+           aria-label="Values propagating across a node graph, edges appearing as they are used"></svg>
+    </div>
+    <div class="controls">
+      <button id="step" type="button">step</button>
+      <button id="play" type="button">run</button>
+      <button id="rerun" type="button">re-run (new seed)</button>
+      <label>anomaly rate <input id="anom" type="range" min="0" max="0.5" step="0.05" value="0.15">
+        <output for="anom"></output></label>
+    </div>
+    <figcaption>
+      <b>Figure 12 — the trajectory is emergent.</b>
+      Grey nodes are the catalogue: everything that <em>could</em> be computed. Press
+      <span class="kbd">step</span> and watch edges appear only where a value was read and
+      a new one emitted. Raise the anomaly rate: a chunk that raises does not halt the
+      run — the error becomes a <em>value</em> on the node, coloured red, and propagation
+      continues past it. Press <span class="kbd">re-run</span> and the node set is
+      identical while the trajectory differs.
+    </figcaption>
+  </figure>
+
+  <h2>The runtime judges nothing</h2>
+
+  <p>
+    There is no exit code, and the reason is structural rather than stylistic. An exit
+    code is a verdict, and to issue one the issuer must compare an achieved state against
+    an expected one. The runtime holds no expectation. It executes every chunk bundled on
+    a node and reports what happened.
+  </p>
+
+  <table>
+    <thead><tr><th>Conventional runtime</th><th>This runtime</th></tr></thead>
+    <tbody>
+      <tr><td>Exit code: success or a taxonomy of failure</td>
+          <td>No verdict — meaning belongs to the consumer</td></tr>
+      <tr><td>An exception halts the process</td>
+          <td>An exception becomes a value on the node; the run continues</td></tr>
+      <tr><td>Same inputs must give the same output</td>
+          <td>Runs are not expected to be bit-identical</td></tr>
+      <tr><td>Control flow is a plan fixed before the first instruction</td>
+          <td>The trajectory is the set of nodes across which information propagated</td></tr>
+      <tr><td>Reproducibility is a property of the result</td>
+          <td>Reproducibility is relocated to the protocol</td></tr>
+    </tbody>
+  </table>
+
+  <div class="claim">
+    <span class="label">Why this is right for laboratory work</span>
+    <p>
+      This is the correct model for computation organised as <em>experiment</em> rather
+      than as <em>procedure</em>. Results are meaningful only to their consumers. Runs are
+      not expected to be bit-identical, because instruments are not. Anomalies are
+      recorded rather than raised. And what should be reproducible is the protocol, not
+      the number that came out of it.
+    </p>
+  </div>
+
+  <h2>Reproducibility as a fingerprint of the protocol</h2>
+
+  <p>
+    The provenance fingerprint hashes the subtask identity, the sorted chunk names and
+    the edits — and <b>deliberately excludes the values</b>. Two runs of the same protocol
+    that produce different measurements have the same fingerprint. Two runs that produce
+    the same number by different protocols do not.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="fingerprint" viewBox="0 0 760 300" role="img"
+           aria-label="Protocol fingerprints stable across varying measurements"></svg>
+    </div>
+    <div class="controls">
+      <label>measurement spread <input id="spread" type="range" min="0" max="12" step="0.5" value="4">
+        <output for="spread"></output></label>
+      <button id="editproto" type="button">edit the protocol</button>
+    </div>
+    <figcaption>
+      <b>Figure 13 — what stays fixed and what does not.</b>
+      Three setups, each run many times. The scatter is the measured values; the
+      monospaced string is the fingerprint. Increase the spread and the values move while
+      the fingerprints do not. Press <span class="kbd">edit the protocol</span> and the
+      fingerprint changes even though the values need not.
+    </figcaption>
+  </figure>
+
+  <h2>Resolution: one computation, addressable at any depth</h2>
+
+  <p>
+    Nodes carry hierarchical addresses, so the same computation can be expressed coarsely
+    — import a standard setup and touch nothing — or with step-by-step control. Editing at
+    depth <span class="mono">k</span> touches exactly the subtree under that prefix and
+    nothing else.
+  </p>
+
+  <p>
+    That is what lets different experts work at different depths in different regions
+    while the whole remains one addressable object: a chemist wants one knob, a method
+    developer wants every knob, and today those are different tools.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="address" viewBox="0 0 760 340" role="img"
+           aria-label="Hierarchical addresses and the blast radius of an edit"></svg>
+    </div>
+    <div class="controls">
+      <label>edit depth <input id="depth" type="range" min="1" max="4" step="1" value="2">
+        <output for="depth"></output></label>
+      <label>branching <input id="branch" type="range" min="2" max="4" step="1" value="3">
+        <output for="branch"></output></label>
+    </div>
+    <figcaption>
+      <b>Figure 14 — the blast radius of an edit.</b>
+      Editing at a shallow address changes a whole standard setup; editing deep changes
+      one step. The affected count is exactly
+      <span class="mono">b<sup>D−k</sup></span> — highlighted live — which is what makes
+      "coarse import" and "surgical control" the same mechanism at two depths rather than
+      two different tools.
+    </figcaption>
+  </figure>
+
+  <h2 id="demo">What actually runs</h2>
+
+  <p>
+    This is implemented, not proposed. Four domain-specific languages compile and execute
+    against the runtime, each with a real tokenizer, parser and evaluator rather than a
+    configuration format:
+  </p>
+
+  <table>
+    <thead><tr><th>Language</th><th>What it expresses</th><th>Backend</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">.sbs</td><td>Circuits, nodes, edges, perturbations over a network</td>
+          <td>Compiles to GLSL; solves on the GPU, with a CPU fallback</td></tr>
+      <tr><td class="mono">.hj</td><td>Accountability — what a claim rests on</td>
+          <td>Lexer, parser, accountability pass, exact interpreter</td></tr>
+      <tr><td class="mono">.ss</td><td>Instrument acquisition and staged analysis</td>
+          <td>Compiles a stage, executes it against a capability layer</td></tr>
+      <tr><td class="mono">.grf</td><td>Orchestration across modules</td>
+          <td>Own parser, typechecker, interpreter</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    The composition mechanism is one line: a module's output is keyed
+    <span class="mono">fact:&lt;module&gt;#&lt;chunk&gt;</span>, so several modules can
+    write different facts to the same node without collision. That is what lets one
+    catalytic state simultaneously hold reaction chemistry, a circuit result and a
+    spectroscopic acquisition.
+  </p>
+
+  <div class="caveat">
+    <strong>What does not run.</strong> The composition described above runs in the
+    terminal today; it is not yet wired into the browser page that shows the four
+    languages side by side. The tabs there demonstrate each language independently on its
+    own subject matter — an electron-transport circuit, an accountability example, a
+    tryptic digest — rather than jointly on one catalytic cycle. Saying so is cheaper than
+    being caught by it.
+  </div>
+
+  <h2>What is claimed here</h2>
+
+  <table>
+    <thead><tr><th>Statement</th><th>Standing</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Edges are induced by a run, not stored</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>True by the definition of the edge relation; the design consequence is the
+              content.</td></tr>
+      <tr><td>The runtime cannot emit an exit code</td>
+          <td><span class="tag open">design</span></td>
+          <td>Stated as a theorem, but it follows from a vocabulary chosen to exclude
+              comparison. Honestly a design principle. A module <em>can</em> be
+              designated adjudicator.</td></tr>
+      <tr><td>An error does not halt the run</td>
+          <td><span class="tag measured">measured</span></td>
+          <td>Against a halt-on-error comparator, which is the control that gives this
+              content.</td></tr>
+      <tr><td>Editing at depth <span class="mono">k</span> touches
+              <span class="mono">b<sup>D−k</sup></span> leaves</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Elementary combinatorics on a uniform tree.</td></tr>
+      <tr><td>The trajectory cannot be known before the run</td>
+          <td><span class="tag refuted">overstated</span></td>
+          <td>For deterministic chunks the recursion is simulable in advance — the
+              validation itself pre-computes many trajectories. The claim holds only
+              under genuine in-chunk non-determinism, which is where it belongs.</td></tr>
+      <tr><td>Four languages compile and execute against this runtime</td>
+          <td><span class="tag measured">implemented</span></td>
+          <td>Real parsers and evaluators, in the browser.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pager">
+    <a href="opacity.html"><span class="dir">back</span>04 · Path opacity</a>
+    <a href="lara.html"><span class="dir">next</span>What this means for LARA</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="runtime.js"></script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propagation — the graph is recovered, not asserted</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html" aria-current="page">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">03 · Propagation</p>
+  <h1>The causal graph is already there. You do not have to assert it.</h1>
+
+  <p class="lede">
+    A causal knowledge graph over a biochemical network is normally built by asserting
+    edges: a curator reads a paper, a text-mining pipeline extracts a relation, a
+    statistical test rejects a null. The graph becomes a database of claims, and its
+    quality is the quality of its claims. For a system that admits a steady-state
+    description, none of that is necessary — the graph is the fixed point of a
+    propagation the system already defines, and its edges are
+    <em>recovered</em> rather than recorded.
+  </p>
+
+  <h2 id="circuit">A metabolic network at steady state is a circuit</h2>
+
+  <p>
+    The correspondence is exact, not a metaphor. Chemical potentials
+    <span class="mono">μᵢ = μᵢ° + RT ln cᵢ</span> are node voltages. Conductances
+    <span class="mono">Gᵢⱼ = kᵢⱼcᵢ/RT</span> are edge admittances. Fluxes
+    <span class="mono">Jᵢⱼ = Gᵢⱼ(μᵢ − μⱼ)</span> are branch currents. Kirchhoff's current
+    law holds exactly when mass is conserved, and the voltage law is the Wegscheider
+    condition.
+  </p>
+
+  <div class="caveat">
+    <strong>The step a chemist will press on first.</strong> That flux law is neither
+    mass-action nor Michaelis–Menten. It is a near-equilibrium linearisation, and
+    <span class="mono">k<sub>cat</sub></span> is being used as a first-order constant with
+    no enzyme concentration and no <span class="mono">K<sub>M</sub></span>. Where the
+    network sits far from equilibrium the correspondence degrades, and nothing here
+    establishes how fast. This is the assumption to attack.
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="circuit" viewBox="0 0 760 400" role="img"
+           aria-label="A metabolic network read as a resistive circuit"></svg>
+    </div>
+    <div class="controls">
+      <label>substrate pool <input id="c0" type="range" min="-1" max="1.6" step="0.05" value="0">
+        <output for="c0"></output></label>
+      <label>enzyme activity <input id="k1" type="range" min="0.1" max="3" step="0.05" value="1">
+        <output for="k1"></output></label>
+      <button id="showG" data-layer="flux" aria-pressed="true" type="button">fluxes</button>
+      <button id="showP" data-layer="potential" type="button">potentials</button>
+      <button id="showC" data-layer="graph" type="button">recovered graph</button>
+    </div>
+    <figcaption>
+      <b>Figure 8 — one description, three readings.</b>
+      The same network shown as potentials, as fluxes, and as the causal graph those
+      fluxes induce. Nothing is asserted between views: the edge set in the third panel is
+      computed from the second. Change the substrate pool or the enzyme activity and watch
+      the graph change — that is the sense in which it is <em>recovered</em>.
+      Edges below the contact floor are pruned, which is why the graph is sparse rather
+      than complete.
+    </figcaption>
+  </figure>
+
+  <h2>One map, two arguments</h2>
+
+  <div class="claim">
+    <span class="label">The identification</span>
+    <p>
+      The propagation operator that carries a marking through the network is the same map
+      whether the system is at rest or driven. Evaluated at the trivial process it is a
+      graph; evaluated at a driven process it is a propagation. <b>The circuit and the
+      graph are not two objects.</b> There is no translation step to get wrong, and no
+      synchronisation problem between a stored graph and a live model — because there is
+      no stored graph.
+    </p>
+  </div>
+
+  <p>
+    This is the point that matters for infrastructure rather than for chemistry. A
+    curated graph and a running model drift apart, and keeping them aligned is
+    permanent work. If the graph <em>is</em> the model at a particular argument, the
+    drift cannot occur.
+  </p>
+
+  <h2 id="oxphos">Where this failed, and what the failure taught</h2>
+
+  <p>
+    Each species is assigned a point in a three-axis coordinate — throughput, capacity,
+    potential — each normalised by a network extremum. On glycolysis, the citric acid
+    cycle and EGFR–MAPK the three axes carry independent information. On oxidative
+    phosphorylation they do not.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="degen" viewBox="0 0 760 320" role="img"
+           aria-label="Coordinate degeneracy across four pathways"></svg>
+    </div>
+    <div class="controls">
+      <button id="p-gly" data-path="glycolysis" aria-pressed="true" type="button">glycolysis</button>
+      <button id="p-tca" data-path="tca" type="button">TCA</button>
+      <button id="p-egfr" data-path="egfr" type="button">EGFR–MAPK</button>
+      <button id="p-ox" data-path="oxphos" type="button">oxphos</button>
+    </div>
+    <figcaption>
+      <b>Figure 9 — a measured failure, reported against interest.</b>
+      Each bar is how well one axis is predicted by the other two. On oxidative
+      phosphorylation two of three axes reach
+      <span class="mono">R² = 0.9999999999</span> — a nominally three-dimensional address
+      collapsing to about one. The cause was diagnosed from the data rather than guessed:
+      water sits at bulk concentration, giving a
+      <span class="mono">concentration dominance ratio of 18 333</span> against 1.5 to 42
+      on the other three networks. Dividing by a network extremum is fragile exactly when
+      one species carries that extremum by orders of magnitude.
+    </figcaption>
+  </figure>
+
+  <div class="claim">
+    <span class="label">What was done about it</span>
+    <p>
+      The result was not dropped and the normalisation was not quietly changed. It became
+      a named limitation with a usage rule: <em>compute the axis regressions per network,
+      and distrust the address wherever one axis is recoverable from the others.</em> A
+      rank or logarithmic normalisation would probably behave better; that has not been
+      established, so it is not used.
+    </p>
+  </div>
+
+  <h2>What a reasoner buys, measured</h2>
+
+  <p>
+    A companion measurement is worth stating because it cuts against the framework's own
+    interest. Over the full approved reaction set, plain SPARQL against a public endpoint
+    and a description-logic reasoner return the <b>identical 75 reactions</b> — the
+    reasoner derives nothing a four-way join could not.
+  </p>
+
+  <table>
+    <thead><tr><th>Route</th><th>Answer</th><th>Materialise</th><th>Per query</th></tr></thead>
+    <tbody>
+      <tr><td>SPARQL, no reasoner</td><td class="num">75</td><td class="num">—</td><td class="num">19.69 s</td></tr>
+      <tr><td>HermiT, OWL 2 DL</td><td class="num">75</td><td class="num">80.54 s</td><td class="num">0.0 s</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Break-even is about four queries. But the honest reading is sharper than “the reasoner
+    is unnecessary”: the defining pattern uses only existentials, subsumption and a value
+    restriction, which is the first-order-rewritable fragment. <b>The ontology is doing
+    query-shaped work on a description-logic engine.</b> That points at an
+    ontology-based data access system, not at abandoning the ontology.
+  </p>
+
+  <div class="caveat">
+    <strong>And the qualification that guts it further.</strong> The loader asserted the
+    class memberships, so <em>neither</em> engine did the taxonomic work. The reasoning
+    was performed by hand and cached as five constants — a cache with no invalidation,
+    which goes stale silently if the source ontology reorganises. Where a reasoner
+    genuinely cannot be replaced by a query: reachability over a derived edge,
+    consistency, class-level subsumption, and closure through existential restrictions.
+  </div>
+
+  <h2>What is claimed here</h2>
+
+  <table>
+    <thead><tr><th>Statement</th><th>Standing</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>KCL corresponds to mass conservation</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Given the flux law. The flux law itself is the assumption.</td></tr>
+      <tr><td>The graph is a function of the kinetic description</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>So it introduces no new facts — only a different presentation.</td></tr>
+      <tr><td>Coordinates are invariant under relabelling</td>
+          <td><span class="tag measured">measured</span></td>
+          <td>Deviation 0.0 across four pathways, against a data-permutation control
+              moving the map by 0.80–1.41. The control is what gives this content.</td></tr>
+      <tr><td>Three axes carry independent information</td>
+          <td><span class="tag refuted">refuted</span></td>
+          <td>On oxphos. Diagnosed, named, and turned into a usage rule.</td></tr>
+      <tr><td>SPARQL and the reasoner agree on the headline question</td>
+          <td><span class="tag measured">measured</span></td>
+          <td>Identical answer sets. Predictable in hindsight from the fragment.</td></tr>
+      <tr><td>The graph is more accurate than curation</td>
+          <td><span class="tag refuted">not claimed</span></td>
+          <td>Where the kinetic parameters are wrong, the graph is wrong, and no internal
+              check detects it — internal consistency survives consistent error.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pager">
+    <a href="floor.html"><span class="dir">back</span>02 · The floor</a>
+    <a href="opacity.html"><span class="dir">next</span>04 · Path opacity</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="propagation.js"></script>
+</body>
+</html>

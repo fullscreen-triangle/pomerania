@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4 · SHACL &amp; validation — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a class="here" href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 4</p>
+<h1>SHACL &amp; validation</h1>
+<p class="standfirst">
+  SHACL is the constraint layer you were expecting OWL to be — closed-world, rejects bad data,
+  produces an error report naming the offending node. It maps almost one-to-one onto JSON Schema.
+  The reason it exists as a <em>separate</em> standard, rather than as a feature of OWL, is the
+  point of this chapter.
+</p>
+
+<h2 id="why">1. Why a second standard was necessary</h2>
+
+<p>
+  Recall from chapter 3: OWL is open-world, so a missing value is unknown rather than wrong, and a
+  reasoner only ever adds facts. That makes &ldquo;this field is required&rdquo; literally
+  inexpressible. Every practical RDF deployment needs that check anyway, so for roughly a decade
+  people misused OWL for it and got quietly wrong results. SHACL was standardised in 2017 to do the
+  job properly.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th></th><th>OWL</th><th>SHACL</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>World assumption</td><td>open</td><td>closed</td></tr>
+    <tr><td>Job</td><td>derive new facts</td><td>report violations</td></tr>
+    <tr><td>Missing required value</td><td>unknown — no complaint</td><td><strong>violation</strong></td></tr>
+    <tr><td>Output</td><td>more triples</td><td>a validation report</td></tr>
+    <tr><td>Can it reject input?</td><td>only if logically contradictory</td><td>yes, that is the entire purpose</td></tr>
+    <tr><td>Written in</td><td>description logic</td><td>RDF — the shapes are themselves a graph</td></tr>
+    <tr><td>You know it as</td><td>&mdash;</td><td>JSON Schema / Zod / <code>CHECK</code> constraints</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box key">
+  <span class="box-title">The example that settles it</span>
+  <p>
+    Take a dataset with <code>owl:maxCardinality 1</code> on <code>dcterms:license</code>, and two
+    licences asserted — CC-BY and CC0.
+  </p>
+  <p>
+    <strong>OWL does not complain.</strong> Under an open world with no unique-name assumption, the
+    consistent reading is that the two IRIs must denote the same thing, so the reasoner infers
+    <code>owl:sameAs</code> between them — silently declaring CC-BY and CC0 to be the same licence,
+    and propagating that everywhere.
+  </p>
+  <p>
+    <strong>SHACL reports a violation.</strong> Same data, opposite outcome. This is the standard
+    expert/novice discriminator in the field, and it is worth being able to state it cold.
+  </p>
+</div>
+
+<h2 id="shapes">2. Shapes are RDF, and read like a schema</h2>
+
+<p>
+  A SHACL shape declares a <em>target</em> (which nodes it applies to) and a set of
+  <em>constraints</em>. Here is the real shape guarding the bridge node from chapter 1, lightly
+  trimmed:
+</p>
+
+<pre><code data-lang="turtle">tacat:ReactionParticipantShape
+    a sh:NodeShape ;
+    sh:targetClass tacat:ReactionParticipant ;
+
+    sh:nodeKind sh:IRI ;
+    sh:message "Participant bridge nodes must be IRIs, not blank nodes."@en ;
+
+    sh:property [
+        sh:path     tacat:participatingEntity ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message  "Each participant must reference exactly one chemical entity, by IRI."@en ;
+    ] ;
+
+    sh:property [
+        sh:path     tacat:participantRole ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in       ( tacat:Reactant tacat:Product ) ;
+        sh:message  "Role must be exactly one of tacat:Reactant or tacat:Product."@en ;
+    ] ;
+
+    sh:property [
+        sh:path         tacat:stoichiometricCoefficient ;
+        sh:minCount     1 ;
+        sh:maxCount     1 ;
+        sh:datatype     xsd:decimal ;
+        sh:minExclusive 0 ;
+        sh:message      "Exactly one positive stoichiometric coefficient is required."@en ;
+    ] .</code></pre>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">The same thing in Zod</span>
+<pre><code data-lang="json">z.object({
+  participatingEntity: z.string().url(),
+  participantRole: z.enum(['Reactant','Product']),
+  stoichiometricCoefficient: z.number().positive()
+})</code></pre>
+    <p>Identical intent. <code>minCount</code>/<code>maxCount</code> are required-and-single,
+       <code>sh:in</code> is an enum, <code>sh:datatype</code> is the type.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">What differs</span>
+    <p><code>sh:targetClass</code> — the shape finds its own subjects by querying the graph, rather
+       than being applied to a value you hand it.</p>
+    <p><code>sh:nodeKind sh:IRI</code> — no JSON equivalent, because JSON has no notion of a node
+       versus a string. This is the constraint that enforces &ldquo;no blank nodes&rdquo;.</p>
+    <p>The shapes are RDF, so you can query your validation rules with SPARQL.</p>
+  </div>
+</div>
+
+<h3>The constraint vocabulary, in one table</h3>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>SHACL</th><th>Means</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">sh:targetClass</td><td>apply this shape to every instance of a class</td></tr>
+    <tr><td class="mono">sh:path</td><td>which predicate this property constraint is about</td></tr>
+    <tr><td class="mono">sh:minCount / sh:maxCount</td><td>cardinality — <code>1</code>/<code>1</code> is &ldquo;required, single&rdquo;</td></tr>
+    <tr><td class="mono">sh:datatype</td><td>literal type, e.g. <code>xsd:decimal</code></td></tr>
+    <tr><td class="mono">sh:nodeKind</td><td><code>sh:IRI</code>, <code>sh:Literal</code>, <code>sh:BlankNode</code></td></tr>
+    <tr><td class="mono">sh:in</td><td>enum — value must be from this list</td></tr>
+    <tr><td class="mono">sh:pattern</td><td>regex, on literals only</td></tr>
+    <tr><td class="mono">sh:minExclusive</td><td>numeric bound</td></tr>
+    <tr><td class="mono">sh:class</td><td>the value must be an instance of a given class</td></tr>
+    <tr><td class="mono">sh:message</td><td>the human-readable error text</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="reuse">3. The shape that makes a README claim executable</h2>
+
+<p>
+  Chapter 1 said &ldquo;reuse identifiers, don&rsquo;t mint them&rdquo; is the community rule. A
+  README can claim that; a shape can <em>enforce</em> it:
+</p>
+
+<pre><code data-lang="turtle">sh:property [
+    sh:path                rdf:type ;
+    sh:qualifiedValueShape [ sh:nodeKind sh:IRI ;
+                             sh:pattern  "^http://purl\\.obolibrary\\.org/obo/CHEBI_[0-9]+$" ] ;
+    sh:qualifiedMinCount   1 ;
+    sh:qualifiedMaxCount   1 ;
+    sh:message "Every chemical entity must be an instance of exactly one ChEBI class."@en ;
+] ;</code></pre>
+
+<p>
+  Mint a local <code>tacat:Water</code> with no ChEBI anchor and the build fails. Note what the path
+  is: <code>rdf:type</code>. The identifier is not a separate property at all — the node <em>is</em>
+  an instance of the ChEBI class, and that single triple is both the join and the thing validated.
+</p>
+
+<div class="box trap">
+  <span class="box-title">This is the second version, and the first one&rsquo;s reasoning was wrong</span>
+  <p>
+    The identifier used to be carried twice: as an IRI so joins would work, and as an
+    <code>xsd:string</code> copy, justified by &ldquo;a regex cannot be run against a node&rdquo;.
+    <strong>That premise is false.</strong> <code>sh:pattern</code> matches the lexical form of the
+    value node, and for an IRI the lexical form is the IRI string — which is exactly what the shape
+    above relies on. The literal copy was never buying anything, and it was deleted.
+  </p>
+</div>
+
+<div class="box trap">
+  <span class="box-title">And here is the limit of what a shape can prove</span>
+  <p>
+    That regex confirms the identifier is <strong>well-formed</strong>. It cannot confirm the
+    identifier is <strong>correct</strong> — <code>CHEBI_99999999</code> passes cleanly. Checking
+    the shape of an external reference tells you nothing about whether it points at the right thing,
+    or at anything.
+  </p>
+  <p>
+    That gap is exactly where the first submission&rsquo;s error lived, and
+    <a href="07-identity.html">chapter 7</a> is the full anatomy of it.
+  </p>
+</div>
+
+<h2 id="negative">4. Negative fixtures: testing the tests</h2>
+
+<p>
+  A validation suite that only ever sees valid data proves nothing — a shapes file that constrains
+  nothing at all would pass every run of it. So the project ships <strong>twelve</strong>
+  deliberately broken fixtures and asserts that each one <em>fails</em>. One parametrised test
+  carries all twelve; it asserts non-conformance only, not the text of the report:
+</p>
+
+<pre><code data-lang="python">@pytest.mark.parametrize(("bad_graph", "why"), BAD_CASES, ids=[...])
+def test_shapes_reject_bad_data(bad_graph, why, shapes):
+    conforms, _, _ = validate(bad_graph, shacl_graph=shapes)
+    assert not conforms, f"shapes failed to catch it: {why}"</code></pre>
+
+<p class="small">
+  The twelve cases are <code>no_role</code>, <code>blank_node</code>, <code>minted_chemical</code>,
+  <code>negative_coefficient</code>, <code>sbo_enzyme_as_role</code>, <code>string_licence</code>,
+  <code>chebi_twin_alongside_correct</code>, <code>invented_obo_ec</code>,
+  <code>malformed_ec</code>, <code>rhea_curie</code>, <code>malformed_sbo</code> and
+  <code>sbo_enzyme_as_role_type</code>. The <code>why</code> string is the failure message pytest
+  prints if the assert trips — it is not matched against the SHACL report.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">Mutation testing, essentially</span>
+  <p>
+    You break the input on purpose and assert the guard catches it. Same instinct as writing a test
+    that your auth middleware returns 401 — testing only the happy path tells you the middleware
+    runs, not that it does anything.
+  </p>
+</div>
+
+<h2 id="metashacl">5. <code>--metashacl</code>: validating the validator</h2>
+
+<p>
+  Here is the failure mode that gets its own flag. SHACL shapes are RDF, and RDF accepts any
+  predicate on any subject without complaint. So a typo in a constraint name:
+</p>
+
+<pre><code data-lang="turtle">sh:minCounts 1 ;    # &lt;- should be sh:minCount</code></pre>
+
+<p>
+  &hellip;is not an error. It is a triple with an unrecognised predicate, which the validator ignores.
+  The shape is now <strong>weaker than you think</strong>, the suite is green, and nothing indicates
+  that a constraint silently evaporated.
+</p>
+<p>
+  <code>pyshacl --metashacl</code> validates the shapes graph against SHACL&rsquo;s own shapes-of-shapes
+  definition, so the typo fails loudly. The project runs it that way in CI. Given the theme of this
+  domain, running SHACL without <code>--metashacl</code> would be an odd omission — a silent-failure
+  guard that itself fails silently.
+</p>
+
+<h2 id="both">6. Both, running as CI gates</h2>
+
+<p>
+  OWL and SHACL are not alternatives, and the project uses each for what it is good at:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Question</th><th>Answered by</th></tr></thead>
+  <tbody>
+    <tr><td>Is this reaction a transamination?</td><td>OWL — computed from structure</td></tr>
+    <tr><td>Are these axioms mutually satisfiable?</td><td>OWL — consistency check</td></tr>
+    <tr><td>Does every participant have a coefficient?</td><td>SHACL</td></tr>
+    <tr><td>Is every chemical anchored on a ChEBI PURL?</td><td>SHACL</td></tr>
+    <tr><td>Are the bridge nodes IRIs rather than blank nodes?</td><td>SHACL</td></tr>
+    <tr><td>Does the dataset description declare a licence and a generating activity?</td><td>SHACL</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Both run in the <code>verify</code> stage, before the container image is allowed to build. That
+  ordering is the design: <strong>a container image can build perfectly while the graph inside it
+  is wrong</strong>, so the data gates come first and the image is a downstream artefact of them
+  passing.
+</p>
+
+<div class="box ask">
+  <span class="box-title">Two notes on scope</span>
+  <p>
+    <strong>Validation is observable at runtime, not only in CI.</strong>
+    <code>GET /validation</code> returns the SHACL report for the graph being served, and the
+    validation logic sits in <code>src/tacat/validation.py</code> rather than in the HTTP layer —
+    conformance is a property of the data, and it was in the endpoint only because that is where it
+    happened to be needed. It also makes the OWL-versus-SHACL argument demonstrable live rather than
+    a paragraph in a design document.
+  </p>
+  <p>
+    <strong>Not a large generated profile.</strong> DCAT-AP&rsquo;s own shapes file is 2,217 lines
+    of generated constraints. This one is 168 lines, hand-written, with an <code>sh:message</code> on
+    every constraint — because a machine-generated default message is useless to whoever has to fix
+    the data at 11pm.
+  </p>
+</div>
+
+<div class="box key">
+  <span class="box-title">Chapter 4 in four lines</span>
+  <ul>
+    <li>SHACL is closed-world validation; it is the layer OWL structurally cannot provide.</li>
+    <li>Shapes are RDF and map cleanly onto JSON Schema, plus <code>sh:nodeKind</code> and <code>sh:targetClass</code>.</li>
+    <li>Negative fixtures test the guard; <code>--metashacl</code> tests the guard&rsquo;s own spelling.</li>
+    <li>Well-formed is not correct. A regex on an external identifier proves nothing about what it points at.</li>
+  </ul>
+</div>
+
+<div class="pager">
+  <a href="03-owl.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; 3 &middot; OWL &amp; inference</span>
+  </a>
+  <a class="next" href="05-stack.html">
+    <span class="dir">Next</span>
+    <span class="t">5 &middot; Stores &amp; the stack &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

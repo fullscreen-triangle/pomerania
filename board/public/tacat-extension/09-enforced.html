@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9 · Enforced, or merely represented — tacat extension</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="4">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-floor.html">The floor under identity</a></li>
+    <li><a href="02-closure.html">Closure, not confidence</a></li>
+    <li><a href="03-coherence.html">Three sources or none</a></li>
+    <li><a href="04-boundary.html">Where the model stops</a></li>
+    <li><a href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a href="07-three.html">Three verdicts on one run</a></li>
+    <li><a href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a class="here" href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 9 · second series</p>
+<h1>Enforced, or merely represented</h1>
+<p class="standfirst">
+  <a href="01-floor.html">Chapter 1</a> argues that a floor must exist. This chapter argues something
+  stronger and more useful: that a floor which no machine checks is not a floor. It is a field. The
+  distinction is the single most transferable thing I have, because it is the one question that
+  separates the parts of my own work that survived scrutiny from the parts that did not.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ strongest transfer</span>
+  <span class="chip">10 min</span>
+  <span class="chip">seven independent instances</span>
+  <span class="chip trap">applied to my own work first</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance.</strong> Same hobby project as Chapters 6–8: single developer, no users, no
+  peer review. What is different about this chapter is that the two tests in §1 were applied to
+  <em>my own</em> modules before they were offered to anyone else, and §4 records what they found —
+  including three cases where the answer was that a module fails its own standard. Those are not
+  hypotheticals; they are named.
+</div>
+
+<h2 id="tests">1. Two questions worth asking of any system</h2>
+
+<p>
+  Both are cheap, both are answerable by reading code rather than documentation, and both routinely
+  return an uncomfortable answer.
+</p>
+
+<div class="vs">
+  <div class="side good">
+    <h4>Test 1 · Enforced, or represented?</h4>
+    <p>Does a machine <strong>reject</strong> a program that violates the discipline — or is the
+    discipline a field that is stored, passed through, and never consulted?</p>
+    <p>A type checker that refuses to compile is enforcement. A JSON key named
+    <code>"floor"</code> that nothing reads is representation wearing enforcement's clothes.</p>
+  </div>
+  <div class="side good">
+    <h4>Test 2 · Measured, or synthesised?</h4>
+    <p>Did data actually enter the calculation — or is the reported "validation" an analytic
+    identity, computed from the same formulas it claims to confirm?</p>
+    <p>A check that cannot fail is not a check. If the only way to make it fail is to change the
+    formula it is testing, it is a restatement.</p>
+  </div>
+</div>
+
+<div class="box key">
+  <span class="box-title">Why these two and not others</span>
+  <p>
+    Because they are the two ways a system can appear to have a property it does not have, and they
+    are <em>independent</em>. A discipline can be genuinely enforced yet validated only against
+    itself; a validation can be genuinely empirical while the discipline it validates is decorative.
+    Passing one says nothing about the other. Almost everything I have written passes at most one.
+  </p>
+</div>
+
+<h2 id="unsayable">2. The strongest form: making the wrong program unsayable</h2>
+
+<p>
+  Enforcement has a weak form and a strong form, and the difference matters more than I expected when
+  I started noticing it.
+</p>
+
+<p>
+  The <strong>weak form</strong> is a checker that runs and rejects. Something is submitted, something
+  examines it, a verdict comes back. This is good, and it is what most static analysis is.
+</p>
+
+<p>
+  The <strong>strong form</strong> is a structure in which the violating program cannot be expressed
+  at all — there is no checker because there is nothing to check. I have arrived at this three times
+  from unrelated directions, which is why I now think it is a design move rather than a coincidence:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Where</th><th>The violation that becomes unsayable</th><th>How</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A diagnostic grammar</td>
+      <td>A conclusion asserted without the evidence that would license it</td>
+      <td>The production rule has no form in which the conclusion appears alone. There is no invalid
+      parse to reject, because there is no invalid parse.</td>
+    </tr>
+    <tr>
+      <td>A scheduler's dispatch seam</td>
+      <td>An observation leaking into the control path</td>
+      <td>The dispatch callback's return type is a bare number. There is no channel through which a
+      payload could travel, so there is nothing to sanitise.</td>
+    </tr>
+    <tr>
+      <td>A multi-repository pipeline</td>
+      <td>Composing two stages whose environments are incompatible</td>
+      <td>One container per repository. The wrong composition has no address space in which to be
+      written. A boundary with no faithful encoding is <em>correct information</em>, not a bug.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box key">
+  <span class="box-title">The transferable form of it</span>
+  <p>
+    When a rule matters, try to spend the design effort on making its violation inexpressible rather
+    than on detecting it. Detection is a runtime cost you pay forever and a coverage question you can
+    never fully close; inexpressibility is paid once, at the point where the type, the grammar
+    production, or the process boundary is chosen. The three cases above cost nothing extra at
+    runtime, and none of them can be circumvented by a caller who forgets to call the checker.
+  </p>
+</div>
+
+<h2 id="failed">3. The check that failed, and why it is the best evidence here</h2>
+
+<p>
+  Test 2 has a corollary that took me a long time to act on: <strong>a validation suite that has
+  never rejected anything is indistinguishable from a validation suite that cannot.</strong> The only
+  way to tell them apart is to find a case where the suite refused to certify something — and the
+  most useful such case is one where the thing it refused to certify was <em>mine</em>.
+</p>
+
+<p>
+  One of the modules states a theorem about the optimal utilisation of a compute slot. The original
+  form maximised a ratio: total progress divided by tick, cost and a strictly convex utilisation
+  penalty. A numerical check was written against it. The check <strong>failed</strong>, and the reason
+  it failed was not a bug in the check:
+</p>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">What the failing check established</span>
+    <span class="thm-src">recorded in the results file, not only in prose</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      With the numerator constant in the variable being optimised and the denominator strictly
+      convex, the ratio is strictly <em>decreasing</em>. Its maximum is therefore at the boundary, and
+      the first-order condition has no interior root at all. The original proof's assertion of a
+      "strictly concave numerator" was wrong — <strong>the numerator was constant</strong>.
+    </p>
+    <p class="small muted" style="margin-top:0.6rem">
+      The theorem was rewritten to a net-yield objective — a strictly concave benefit term minus a
+      strictly convex cost term — which does have a unique interior maximiser at the point where the
+      marginal benefit and marginal cost balance. The correction was then propagated into the
+      implementing code, so the code and the paper now state the same theorem.
+    </p>
+  </div>
+</div>
+
+<p>
+  The failure is preserved in the machine-readable results alongside the passing checks, in a field
+  that records what the earlier form was and why it broke, rather than being quietly deleted once
+  fixed. The project's own gloss on this is the sentence I would defend in an interview:
+</p>
+
+<div class="box key">
+  <span class="box-title">Stated by the system about itself</span>
+  <p>
+    <em>"We report this because it illustrates the intended use of the validation suite: a machine
+    check that refuses to certify a false claim is doing its job."</em>
+  </p>
+</div>
+
+<p>
+  The same discipline appears in a second form, which is the one I would actually recommend copying:
+  <strong>negative controls in the test suite</strong>. Rather than asserting only that a conforming
+  implementation passes, the suite constructs three deliberately <em>violating</em> implementations —
+  one that reads without advancing its counter, one whose history line decreases, one that constructs
+  and commits in the same instant — and asserts that each is <strong>detected</strong>. The header
+  states the reasoning outright: a pass on the conforming runtime is meaningful only because
+  purpose-built violating runtimes are caught.
+</p>
+
+<div class="box trap">
+  <span class="box-title">The direct application to this repository</span>
+  <p>
+    <a href="01-floor.html#observed">G10 is a negative control</a> — and it is the only one in the
+    submission. Somebody deliberately broke every external identifier and re-ran the gates to see
+    whether anything noticed. Nothing did. That experiment is worth more than the nine passing
+    competency questions combined, because it is the only evidence in the repository about what the
+    gates <em>cannot</em> see. The proposal that follows from this chapter is not a new gate: it is
+    that <strong>every gate worth having should ship with the corruption that it catches</strong>,
+    committed beside it and run in CI, so that "the suite is green" carries information.
+  </p>
+</div>
+
+<h2 id="tally">4. Applying both tests to my own work</h2>
+
+<p>
+  Twenty artefacts, read over the last several days with these two questions held fixed. The result is
+  not flattering and that is the point of including it.
+</p>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">20</span><span class="l">artefacts examined</span></div>
+  <div class="bignum"><span class="v">7</span><span class="l">enforce rather than represent</span></div>
+  <div class="bignum"><span class="v">1</span><span class="l">passes the measured test outright</span></div>
+  <div class="bignum"><span class="v">5</span><span class="l">report a synthesised validation</span></div>
+</div>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Verdict</th><th>What was found</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="fig-ok"><strong>enforced</strong></td>
+      <td>Seven modules reject violating input structurally rather than storing a field: a type
+      checker where an unfloored value is not typeable; a grammar with no unsupported-conclusion
+      production; a dispatch seam with no payload channel; a container boundary with no shared
+      address space; a test suite with negative controls; and two theorem-backed interfaces that
+      restrict what a caller may say rather than validating what it did say.</td>
+    </tr>
+    <tr>
+      <td class="fig-no"><strong>represented only</strong></td>
+      <td>One module accepts the floor as a caller-supplied field and never checks it — the caller
+      can assert any value including a nonsensical one. In another, the function that was supposed to
+      perform the action is <strong>dead code</strong>, and a sibling function fabricates agreement
+      between three sources that were never independently consulted. That is the same common-mode
+      failure as G10, committed by me, in a module written to demonstrate the fix for it.</td>
+    </tr>
+    <tr>
+      <td class="fig-no"><strong>synthesised validation</strong></td>
+      <td>Five separate "validation" sections compute their confirmation from the same formulas they
+      claim to confirm. They cannot fail. I did not notice this while writing any of them; I noticed
+      it only when I applied the same test to all of them at once.</td>
+    </tr>
+    <tr>
+      <td class="fig-ok"><strong>measured</strong></td>
+      <td>One artefact passes outright, and it passes twice — once because its equivalence check
+      brute-forces a small case in which the three criteria demonstrably select <em>different</em>
+      sets, so their agreement at the optimum is a finding rather than a restatement; and once
+      because of the failed check in §3.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ask">
+  <span class="box-title">The honest reading of that table</span>
+  <p>
+    One in twenty. If the argument of this chapter is right, then by its own standard most of my own
+    work does not meet it — and the parts that do are the recent ones, written after I started asking.
+    I would rather state that than present the seven enforcing modules without the denominator. The
+    reason the chapter is still worth reading is that the test is transferable even though my hit rate
+    is poor: it costs a few minutes per artefact and it found five defects in work I believed was
+    sound.
+  </p>
+</div>
+
+<h2 id="limits">5. Where this argument is weak</h2>
+
+<div class="vs">
+  <div class="side bad">
+    <h4>Objections I cannot answer</h4>
+    <p><strong>Enforcement can be theatre too.</strong> A type that makes one violation unsayable
+    often leaves a neighbouring one wide open, and the confidence from the first can mask the second.
+    "Unsayable" is always relative to a specific violation, never general.</p>
+    <p><strong>The measured/synthesised test has no formal statement.</strong> I apply it by reading
+    and judging. Two people could disagree about a given case and I have no procedure for settling it.</p>
+    <p><strong>One brute-forced case is not a proof.</strong> The artefact I called "measured" checks
+    its equivalence at four tasks and four slots. That is a genuine check of a general claim at a
+    single small instance — worth saying as "checked at n=4", not as "verified".</p>
+  </div>
+  <div class="side good">
+    <h4>What survives them</h4>
+    <p>The negative-control proposal in §3 does not depend on any of this being right. Shipping the
+    corruption beside the gate is ordinary engineering with an ordinary justification, and G10 already
+    demonstrates its value in this repository specifically.</p>
+    <p>The distinction in §1 is useful even if my classifications are wrong, because it is a question
+    to ask rather than a verdict to accept. Its value showed up as five defects found, not as a
+    taxonomy.</p>
+  </div>
+</div>
+
+<h2 id="ask">6. What I would actually propose from this</h2>
+
+<div class="box key">
+  <span class="box-title">One change, small, and independently justified</span>
+  <p>
+    For each automated gate in the submission, commit the input that the gate is supposed to reject,
+    and assert in CI that it <strong>is</strong> rejected. G10 already exists as a one-off script; the
+    proposal is to make it a permanent test rather than a finding in a document. The cost is roughly
+    an hour. The benefit is that from then on, a green suite means "the gates caught the things we
+    know they should catch", which is a different and much stronger statement than "nothing we tried
+    happened to fail".
+  </p>
+</div>
+
+<p>
+  This is the same move as every other proposal in the first series, pointed at the test suite rather
+  than at the graph: <a href="index.html#thread">compare against something you do not own</a>. A gate
+  checked only against inputs it was designed to pass is checking itself.
+</p>
+
+<div class="pagenav">
+  <a href="08-os.html"><span class="dir">Back</span>8 · What exists, and what does not</a>
+  <span class="spacer"></span>
+  <a href="index.html"><span class="dir">Return</span>Start here</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

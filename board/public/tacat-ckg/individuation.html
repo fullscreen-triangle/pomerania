@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Individuation — the medium is a vertex</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html" aria-current="page">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">01 · Individuation</p>
+  <h1>A part is fixed as the complement of everything it is not.</h1>
+
+  <p class="lede">
+    Nothing in a space is distinguished in advance. To pick out a part you must either
+    point at something already distinguished — which begs the question — or say what the
+    part is <em>not</em>. Individuation by negation is the only route that does not
+    regress, and it has a consequence: every part carries a boundary, and the boundary
+    has weight.
+  </p>
+
+  <h2>Put the surroundings in the graph</h2>
+
+  <p>
+    The move that makes this computable is small. Take the contact graph of a
+    system — atoms, residues, species as vertices; contacts as weighted edges — and add
+    one distinguished vertex <span class="mono">m</span>, the <em class="term">medium</em>,
+    adjacent to everything. The medium is what the system is told apart <em>from</em>:
+    the solution, the bath, the surroundings.
+  </p>
+
+  <p>
+    Now “the identity of <span class="mono">v</span>” has a definition rather than a
+    convention. It is the minimum cut separating <span class="mono">v</span> from
+    <span class="mono">m</span> — the cheapest way to sever that part from its
+    surroundings. Two numbers fall out: the weight of that cut, and the size of the
+    minimising side.
+  </p>
+
+  <div class="claim">
+    <span class="label">Why a vertex and not an attribute</span>
+    <p>
+      Conventionally the solvent is a property attached to a reaction record. As a vertex
+      it participates in the structure, so questions about it become computations rather
+      than lookups. Without a fixed second terminal, “the minimum cut of <span class="mono">v</span>”
+      is not even well posed.
+    </p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="cut" viewBox="0 0 760 400" role="img"
+           aria-label="Interactive minimum cut against the medium vertex"></svg>
+    </div>
+    <div class="controls">
+      <label>medium coupling <input id="mw" type="range" min="0.2" max="6" step="0.1" value="1.0">
+        <output for="mw"></output></label>
+      <label>host contact <input id="hw" type="range" min="0.2" max="6" step="0.1" value="3.0">
+        <output for="hw"></output></label>
+      <button id="reset" type="button">reset</button>
+    </div>
+    <figcaption>
+      <b>Figure 1 — identity as a minimum cut.</b>
+      The grey vertex is the medium, adjacent to every atom. Drag the sliders to change
+      how strongly the highlighted water is held by the solution
+      (<span class="mono">medium coupling</span>) versus by the protein
+      (<span class="mono">host contact</span>). The cut is recomputed exactly by
+      enumeration over every source-side subset — the highlighted edges are the cut, and
+      the verdict beneath is the classification that follows. Note that the verdict
+      changes at the crossing, and that nothing about the water itself changed: only its
+      relation to the two things it sits between.
+    </figcaption>
+  </figure>
+
+  <h2 id="solvent">Consequence: solvent role is computed, not annotated</h2>
+
+  <p>
+    A solvent molecule is <b>structural</b> when the protein holds it more tightly than
+    the solution does — when its cut against the host clears the cut against the
+    medium — and <b>bulk</b> otherwise. That is the ordinary chemical criterion. The
+    point is not that it is novel; the point is that the framework can now
+    <em>compute</em> it, so “what is the role of the solvent in this reaction?” has an
+    answer of the form
+  </p>
+
+  <blockquote>
+    structural, because ρ<sub>str</sub> = 1.48 × 10⁻³ ≥ w(·, m) = 3.70 × 10⁻⁴
+    <cite>measured, medium-vertex validation, exp01</cite>
+  </blockquote>
+
+  <p>
+    derived from the graph, with no curator supplying it and no controlled-vocabulary
+    term recording it. An ordered active-site water and a bulk water stop being two
+    instances of one class and become different <em>kinds</em> of object.
+  </p>
+
+  <div class="caveat">
+    <strong>Where this reads backwards, and why.</strong> The theorem says that making a
+    solvent species <em>more</em> abundant makes its bound instances <em>more</em>
+    readily structural. On first encounter that is the wrong way round. The resolution is
+    that the comparison is about <em>discriminability</em>, not about binding: against a
+    more abundant background, an individually held instance stands out further. A reader
+    who rejects that reading should reject the naming, not the mathematics —
+    and the naming is fair to criticise.
+  </div>
+
+  <h2 id="direction">Consequence: direction belongs to the medium</h2>
+
+  <p>
+    A residue chain and its reverse commit identical total boundary. Same cuts, same
+    count, same committed edges — summation is commutative. So <em>the cut structure
+    alone cannot orient a process</em>. Whatever makes a reaction run one way is not in
+    the reaction.
+  </p>
+
+  <p>
+    What orients it is which end the medium holds depleted. Define the medium bias as the
+    cost of individuating the products minus the cost of individuating the reactants, and
+    a trichotomy follows immediately: forward-irreversible, reverse-irreversible, or
+    undirected in this medium.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="dir" viewBox="0 0 760 260" role="img"
+           aria-label="Medium bias determines reaction direction"></svg>
+    </div>
+    <div class="controls">
+      <label>reactant pool <input id="cr" type="range" min="-7" max="-1" step="0.1" value="-4">
+        <output for="cr"></output></label>
+      <label>product pool <input id="cp" type="range" min="-7" max="-1" step="0.1" value="-4">
+        <output for="cp"></output></label>
+      <button id="ecoli" type="button">E. coli-like</button>
+      <button id="human" type="button">human-like</button>
+    </div>
+    <figcaption>
+      <b>Figure 2 — one identifier, two directions.</b>
+      Sliders set log₁₀ ambient occupancy of each pool. The bar is the medium bias; the
+      band around zero is the floor, inside which the reaction is undirected. This is why
+      a single Rhea master identifier can name a reaction that runs one way in one
+      organism and the other way in another <em>without the identifier being wrong</em> —
+      the identifier names the chain, and the direction was never a property of the chain.
+    </figcaption>
+  </figure>
+
+  <h2 id="cofactor">Consequence: two views disagree about the cofactor, structurally</h2>
+
+  <p>
+    Take the transaminases. In the <b>signature view</b> — the one a reaction database
+    records — a participant is an entity bearing a role in the net transformation.
+    Pyridoxal phosphate is regenerated: modified in the first half-reaction, restored in
+    the second. Its net coefficient is zero, it bears no net role, and including it would
+    unbalance the equation. Rhea accordingly records four participants for each of the
+    three reactions, and none of them is PLP.
+  </p>
+
+  <p>
+    In the <b>cut-chain view</b> — the one a mechanism needs — a process is a sequence of
+    individuations. PLP carries the amino group between the half-reactions. Delete it and
+    the mechanism is gone, because the two halves connect through it and through nothing
+    else.
+  </p>
+
+  <div class="claim">
+    <span class="label">The finding</span>
+    <p>
+      The two verdicts are about different predicates: <em>bears a net role in the
+      transformation</em> and <em>is individuated in the process</em>. The first is false
+      of PLP; the second is true. This is not an incompleteness of either view. It is a
+      representational partition — and it is why a single ontology cannot answer both
+      question groups.
+    </p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="cofactor" viewBox="0 0 760 300" role="img"
+           aria-label="Signature view and cut-chain view of a transamination"></svg>
+    </div>
+    <div class="controls">
+      <button id="v-sig" data-view="sig" aria-pressed="true" type="button">signature view</button>
+      <button id="v-chain" data-view="chain" type="button">cut-chain view</button>
+      <button id="v-both" data-view="both" type="button">overlay</button>
+    </div>
+    <figcaption>
+      <b>Figure 3 — the same reaction under two readings.</b>
+      Switch views to see which entities are visible to each. PLP appears only in the
+      chain; the four Rhea participants appear in both. The overlay shows the
+      disagreement isolated to the carrier.
+      <b>The control matters:</b> the two views were also shown to <em>agree</em> about
+      2-oxoglutarate. Without that, the disagreement could be explained by the views
+      simply never agreeing about anything.
+    </figcaption>
+  </figure>
+
+  <p>
+    The practical reading: the recommendation of <em>linked micro-ontologies</em> is not
+    a workaround for insufficient effort at unification. It is the empirical shadow of a
+    partition that is there in the structure, and this gives a mechanism for it.
+  </p>
+
+  <h2>What is claimed here</h2>
+
+  <table>
+    <thead><tr><th>Statement</th><th>Standing</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Selector-free individuation determines a part as a complement</td>
+          <td><span class="tag open">argued</span></td>
+          <td>Stated as a theorem; the proof is a regress argument in ordinary language,
+              and the space of rules is not formalised. Fair to press on.</td></tr>
+      <tr><td>Every realisable separator has positive weight</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Given that a finite observer cuts along whole cells. See
+              <a href="floor.html">the floor</a>.</td></tr>
+      <tr><td>A chain and its reverse commit identical boundary</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Commutativity of summation. Trivial, and load-bearing: it is what forces
+              direction to come from outside.</td></tr>
+      <tr><td>Solvent role is decidable at the floor</td>
+          <td><span class="tag proved">proved</span> <span class="tag measured">measured</span></td>
+          <td>Re-verified under four unrelated weight functions sharing only
+              monotonicity and floor-boundedness.</td></tr>
+      <tr><td>The cofactor disagreement is structural, not accidental</td>
+          <td><span class="tag proved">proved</span> <span class="tag measured">measured</span></td>
+          <td>With an agreement control on 2-oxoglutarate.</td></tr>
+      <tr><td>The medium bias is a free energy</td>
+          <td><span class="tag refuted">not claimed</span></td>
+          <td>It is a difference of individuation costs. Connecting it to Δ<sub>r</sub>G′
+              would be a substantial and falsifiable next step; it is not taken.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="caveat">
+    <strong>The open question a chemist will ask first.</strong> Component-contribution
+    methods already compute physiological directionality from ambient concentrations,
+    quantitatively, against measured metabolite pools. What does the medium bias do that
+    those do not? The honest answer today: it is a coarser, unit-free version carrying a
+    resolution floor, which makes it a <em>representational</em> claim rather than a
+    thermodynamic advance. That is a real limitation and it is not hidden.
+  </div>
+
+  <div class="pager">
+    <a href="index.html"><span class="dir">back</span>Overview</a>
+    <a href="floor.html"><span class="dir">next</span>02 · The floor</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="individuation.js"></script>
+</body>
+</html>

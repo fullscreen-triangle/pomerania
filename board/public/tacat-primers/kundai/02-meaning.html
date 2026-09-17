@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2 · Meaning &amp; inference — tacat primer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="2">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li class="extra"><a href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a href="01-data.html">Facts as data</a></li>
+    <li><a class="here" href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a href="03-questions.html">Asking questions</a></li>
+    <li><a href="04-checking.html">Checking the data</a></li>
+    <li><a href="05-serving.html">Serving it</a></li>
+    <li><a href="06-shipping.html">Shipping it</a></li>
+    <li><a href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+  </ol>
+  <div class="nav-label">Readiness</div>
+  <div class="progress" data-progress></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 2 · the centrepiece</p>
+<h1>Meaning &amp; inference</h1>
+<p class="standfirst">
+  The one thing in the submission a well-built database could not do. This is where the questions
+  will concentrate.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ the centrepiece</span>
+  <span class="chip">20 min</span>
+  <span class="chip ask">certain to be asked</span>
+  <span class="chip">1 thing to play with</span>
+</div>
+
+<div class="resume" data-resume></div>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">0</span><span class="l">reactions asserted as transaminations</span></div>
+  <div class="bignum"><span class="v">3</span><span class="l">derived by HermiT</span></div>
+  <div class="bignum"><span class="v">2 of 4</span><span class="l">role-slots the control can fill at all</span></div>
+</div>
+
+<h2 id="ontology">1. What an "ontology" actually is</h2>
+
+<p>
+  The word sounds philosophical. In practice it is a <strong>vocabulary with rules a machine can
+  compute over</strong>. Three levels:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Level</th><th>Gives you</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A vocabulary</strong></td><td>Agreed names. No rules.</td>
+        <td>"we all call it <code>hasParticipant</code>"</td></tr>
+    <tr><td><strong>A schema</strong> (RDFS)</td><td>Names + hierarchy + simple typing.</td>
+        <td>"every <code>Cofactor</code> is a <code>ChemicalEntity</code>"</td></tr>
+    <tr class="hl"><td><strong>An ontology</strong> (OWL)</td>
+        <td>Plus <em>logical statements a reasoner can draw conclusions from</em>.</td>
+        <td>"anything with <em>these four features</em> <strong>is</strong> a transamination"</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The jump to the third row is where this project lives, and it is the difference between describing
+  your data and <em>deriving</em> facts about it.
+</p>
+
+<h2 id="tbox">2. Classes and individuals</h2>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    <strong>"Alanine transaminase" as a classification</strong> — an EC entry, a catalytic activity
+    you can look up — is a <strong>class</strong>. It has no concentration and no location.
+  </p>
+  <p>
+    <strong>The purified protein in the tube in your −80</strong> is an <strong>individual</strong>.
+    It has a concentration, it was purified on a Tuesday, and it belongs to that class.
+  </p>
+  <p>
+    Species vs specimen. Ontologists call the class layer the <strong>T-Box</strong> and the
+    individual layer the <strong>A-Box</strong>.
+  </p>
+</div>
+
+<div class="vs">
+  <div class="side">
+    <h4>classes here</h4>
+    <p><code>BiochemicalReaction</code> · <code>ChemicalEntity</code> · <code>AminoAcid</code> ·
+       <code>TwoOxoAcid</code> · <code>Enzyme</code> · <code>ReactionParticipant</code> ·
+       <code>TransaminationReaction</code></p>
+  </div>
+  <div class="side">
+    <h4>individuals here</h4>
+    <p><code>REACT_0000002</code> (the specific ALT reaction) · <code>CHEBI_29985</code>
+       (L-glutamate) · <code>EC_2_6_1_2</code> · <code>PART_0000002_01</code></p>
+  </div>
+</div>
+
+<p>
+  Note <code>AminoAcid</code> and <code>TwoOxoAcid</code> are classes, and every chemical individual
+  is assigned to one when the graph is built. That assignment is what the reasoner uses in §6 — it
+  is doing real work, not decorating.
+</p>
+
+<h2 id="nary">3. Why a triple cannot hold a participant</h2>
+
+<p>The obvious model is a property per role — and it was what v0 did:</p>
+
+<figure class="code">
+  <figcaption>the obvious model</figcaption>
+  <pre><code data-lang="turtle">REACT_0000002  hasSubstrate  CHEBI_57972 ;   # L-alanine
+               hasSubstrate  CHEBI_16810 ;   # 2-oxoglutarate
+               hasProduct    CHEBI_15361 ;   # pyruvate
+               hasProduct    CHEBI_29985 .   # L-glutamate</code></pre>
+</figure>
+
+<p>
+  Now express <strong>2 H₂O</strong>. Where does the coefficient go? A triple has three slots and
+  all three are occupied. There is nowhere to put a fourth piece of information about
+  <em>that particular participation</em>.
+</p>
+<p>
+  You could invent <code>hasSubstrateWithCoefficient2</code> — then one property per possible
+  coefficient, none comparable to the others. This is not a stylistic problem; it is a hard limit of
+  a three-slot statement.
+</p>
+
+<figure class="fig" data-figure="nary">
+  <figcaption>Give the <em>participation</em> its own identity, and role and coefficient have
+    somewhere to live.</figcaption>
+</figure>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    It is a <strong>join table</strong> — what any relational database uses for a many-to-many
+    relationship with extra columns. It is also what both major biochemistry standards do:
+    <strong>BioPAX</strong> calls it <code>Stoichiometry</code> (its own documentation says
+    "n-ary bridge"), <strong>SBML</strong> calls it <code>SpeciesReference</code>. W3C published it
+    as a recommended pattern.
+  </p>
+</div>
+
+<div class="box ask">
+  <span class="box-title">They might ask: NFDI4Cat's own Reac4Cat does this differently</span>
+  <p>
+    True, and knowing it is the point. Reac4Cat uses a BFO-style <em>role</em> pattern with
+    educt-mixture and product-component-set groupings, not an n-ary node with a coefficient.
+  </p>
+  <p>
+    The answer: <em>"I used the W3C n-ary pattern because it carries stoichiometry, which the role
+    pattern does not; I know Reac4Cat took the role route, and if the requirement were alignment
+    with their upper-ontology commitments rather than inspectable coefficients, I would switch."</em>
+  </p>
+</div>
+
+<button class="checkline" data-check="2:nary" aria-pressed="false">
+  <span class="ct">I can explain why participation needs a bridge node
+  <small>a triple has three slots; BioPAX/SBML precedent; the Reac4Cat trade-off</small></span>
+</button>
+
+<h2 id="necessary">4. Necessary vs sufficient — the core idea</h2>
+
+<p>
+  The single most important concept here. It is not a computing idea at all; it is a logic idea you
+  already use.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    <em>"All serine proteases have a Ser–His–Asp catalytic triad."</em><br>
+    A <strong>necessary</strong> condition. It lets you check a known serine protease. It does not
+    let you look at an unknown protein and conclude anything.
+  </p>
+  <p>
+    <em>"Any hydrolase with that triad, arranged like this, attacking a peptide bond,
+    <strong>is</strong> a serine protease."</em><br>
+    <strong>Necessary and sufficient.</strong> Now it works both ways — take an unclassified
+    protein, check the conditions, <em>derive</em> the classification.
+  </p>
+</div>
+
+<figure class="fig" data-figure="necsuf">
+  <figcaption>In OWL these are two different statements. The whole difference between v0 and the
+    current submission is which one was used.</figcaption>
+</figure>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th>Necessary only</th><th>Necessary + sufficient</th></tr></thead>
+  <tbody>
+    <tr><td>In OWL</td><td><code>subClassOf</code></td><td><code>equivalentClass</code></td></tr>
+    <tr><td>In Owlready2</td><td><code>class T(Reaction):</code></td><td><code>equivalent_to = [...]</code></td></tr>
+    <tr><td>A reasoner can</td><td>check consistency</td><td><strong>classify unseen instances</strong></td></tr>
+    <tr><td>Membership comes from</td><td><span class="no">you, asserting it</span></td><td><span class="yes">the data itself</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="vs">
+  <div class="side bad">
+    <h4>v0 — a plain subclass</h4>
+    <pre><code data-lang="python">class Transamination(Reaction):
+    """..."""
+
+# graph.py:94 — where membership
+# actually came from:
+g.add((rxn_uri, RDF.type,
+       TA.Transamination))</code></pre>
+    <p class="small">A loop wrote that triple. The reviewer's verdict: <em>delete the ontology file
+      and every query returns identical results.</em></p>
+  </div>
+  <div class="side good">
+    <h4>now — a defined class</h4>
+    <pre><code data-lang="python">class TransaminationReaction(
+        BiochemicalReaction):
+
+    equivalent_to = [ ... ]
+
+# nothing asserts the type.
+# HermiT derives it.</code></pre>
+    <p class="small">Membership is computed from the structure of the data.</p>
+  </div>
+</div>
+
+<figure class="code">
+  <figcaption>src/tacat/ontology/schema.py — the real thing</figcaption>
+  <pre><code data-lang="python">equivalent_to = [
+    BiochemicalReaction
+    &amp; hasParticipant.some(
+        ReactionParticipant &amp; participatingEntity.some(AminoAcid)  &amp; participantRole.value(reactant)
+    )
+    &amp; hasParticipant.some(
+        ReactionParticipant &amp; participatingEntity.some(TwoOxoAcid) &amp; participantRole.value(reactant)
+    )
+    &amp; hasParticipant.some(
+        ReactionParticipant &amp; participatingEntity.some(TwoOxoAcid) &amp; participantRole.value(product)
+    )
+    &amp; hasParticipant.some(
+        ReactionParticipant &amp; participatingEntity.some(AminoAcid)  &amp; participantRole.value(product)
+    )
+]</code></pre>
+</figure>
+
+<blockquote>
+  <p>
+    A transamination reaction is <em>any biochemical reaction that</em> —<br>
+    consumes an amino acid, <em>and</em> consumes a 2-oxo acid, <em>and</em><br>
+    produces a 2-oxo acid, <em>and</em> produces an amino acid.
+  </p>
+</blockquote>
+
+<p>
+  That is the net-reaction pattern of a transamination, written as logic. The amino group moves from donor to
+  acceptor, so each class appears on both sides in opposite roles. <code>.some(...)</code> means
+  "has at least one participant such that…".
+</p>
+
+<h2 id="try">5. Try it</h2>
+
+<p>
+  The four switches below <em>are</em> the four conjuncts. Nothing here is a lookup table — the
+  verdict is computed the same way HermiT computes it.
+</p>
+
+<div class="widget" data-widget="classifier"></div>
+
+<div class="box key">
+  <span class="box-title">Why it is written over classes and roles, never molecules</span>
+  <p>
+    The definition never mentions L-alanine, or 2-oxoglutarate, or any ChEBI identifier. Only
+    <code>AminoAcid</code>, <code>TwoOxoAcid</code>, <code>Reactant</code>, <code>Product</code>.
+  </p>
+  <p>
+    Written as "has CHEBI_57972 as a reactant", it would classify exactly the three reactions it was
+    reverse-engineered from — an enumeration wearing a definition's clothes. Written over classes,
+    it generalises to transaminations the model has never seen.
+    <strong>This is the sentence to say in the presentation.</strong>
+  </p>
+</div>
+
+<button class="checkline" data-check="2:defined" aria-pressed="false">
+  <span class="ct">I can explain necessary vs sufficient, and why the definition uses classes not molecules
+  <small>serine protease analogy; subClassOf vs equivalentClass; generalisation</small></span>
+</button>
+
+<h2 id="reasoner">6. What a reasoner actually does</h2>
+
+<p>
+  A <strong>reasoner</strong> reads logical statements and works out everything else that must be
+  true. This project uses <strong>HermiT</strong>, driven from Python by <strong>Owlready2</strong>.
+  HermiT is written in Java — which is why the build needs a JVM, a detail that matters in
+  <a href="06-shipping.html">Chapter 6</a>.
+</p>
+
+<figure class="code">
+  <figcaption>real output</figcaption>
+  <pre><code data-lang="bash">$ tacat infer
+
+  Asserted as transamination before reasoning:
+    (none - nothing was asserted)
+
+  Inferred by HermiT after reasoning:
+    + alanine transaminase reaction
+    + aspartate transaminase reaction
+    + cysteine transaminase reaction
+
+  Not derived (roles do not match the definition):
+    - glutamate dehydrogenase reaction (negative control, partial)</code></pre>
+</figure>
+
+<div class="box bridge">
+  <span class="box-title">A fair analogy, and its limit</span>
+  <p>
+    It resembles submitting an uncharacterised sequence and getting a family assignment back. But
+    BLAST answers by <em>similarity</em> — statistical, and it can be wrong. A reasoner answers by
+    <em>deduction</em>: if the premises hold, the conclusion is guaranteed. It cannot be a bit right.
+  </p>
+</div>
+
+<div class="box ask">
+  <span class="box-title">Where the reasoner's premises come from — and it is a fair question</span>
+  <p>
+    HermiT concluded that three reactions are transaminations because their participants are
+    <code>AminoAcid</code> and <code>TwoOxoAcid</code>. So: <strong>how does it know 2-oxoglutarate
+    is a 2-oxo acid?</strong>
+  </p>
+  <p>
+    Because a person put it in a list. <code>population.py</code> types each entity by membership of
+    <code>TWO_OXO_ACIDS</code> or <code>AMINO_ACIDS</code> in <code>reference_data.py</code>. There is
+    no <code>owl:imports</code> of ChEBI. <strong>The premises are hand-asserted, and they are exactly
+    the two predicates the conclusion tests.</strong>
+  </p>
+  <p>
+    <strong>The answer:</strong> <em>"They come from a curated list, not from ChEBI — so the
+    inference is one assertion removed from its premises. Importing ChEBI would fix it and would also
+    pull forty thousand classes into a three-reaction demo; the honest middle is a SHACL check that
+    the asserted type agrees with ChEBI's own hierarchy, fetched at build time."</em>
+  </p>
+</div>
+
+<h2 id="openworld">7. The open-world assumption</h2>
+
+<figure class="fig" data-figure="openclosed">
+  <figcaption>You use both readings every day and never confuse them, because they answer different
+    questions. <a href="04-checking.html">Chapter 4</a> is the closed-world half.</figcaption>
+</figure>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    You did not assay for catalase, so you have no catalase result. That is not a negative result,
+    and you would never write "this strain lacks catalase" on that basis. Absence of evidence is not
+    evidence of absence — the open-world assumption is that instinct, formalised.
+  </p>
+</div>
+
+<div class="box trap">
+  <span class="box-title">Precision matters here — an expert will probe it</span>
+  <p>
+    HermiT did <strong>not</strong> prove glutamate dehydrogenase is not a transamination. It
+    <em>failed to derive</em> that it is one. Under an open world those are different statements.
+  </p>
+  <p>
+    The code computes the excluded set as a subtraction, which is a closed-world reading of an
+    open-world result. Say it precisely: <em>"HermiT did not derive it, because the roles are
+    wrong"</em> — not <em>"HermiT proved it isn't one."</em>
+  </p>
+</div>
+
+<h2 id="control">8. The negative control</h2>
+
+<p>
+  You need no explanation of why a control matters. What is worth knowing is why <em>this</em> one is
+  well chosen.
+</p>
+<p>
+  A defined class recognising exactly the three things you built it for proves nothing — you could
+  have written "a transamination is one of these three" for identical output. The control is what
+  distinguishes a definition from a list.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th>The three transaminations</th><th>The control (GDH), as shipped</th></tr></thead>
+  <tbody>
+    <tr><td>participants modelled</td><td><strong>4</strong></td><td><strong>2</strong></td></tr>
+    <tr><td>L-glutamate — an <code>AminoAcid</code></td><td><strong>product</strong></td><td><strong>reactant</strong></td></tr>
+    <tr><td>2-oxoglutarate — a <code>TwoOxoAcid</code></td><td><strong>reactant</strong></td><td><strong>product</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  It contains <em>both headline molecules</em> — the two you would name if asked what these reactions
+  are about — with their roles reversed. It is not derived. Any definition keyed on which molecules
+  are present would have swallowed it whole.
+</p>
+
+<div class="box trap">
+  <span class="box-title">Say this before he constructs it — the shipped control is weaker than it looks</span>
+  <p>
+    Only <strong>two</strong> of glutamate dehydrogenase's six species are modelled: L-glutamate in,
+    2-oxoglutarate out. The redox cofactors were left out. With two participants it cannot fill four
+    role-slots, so the reasoner excludes it on <strong>arity</strong> — before role is ever consulted.
+  </p>
+  <p>
+    <strong>The role discrimination is real; this control does not demonstrate it.</strong> A
+    four-participant reaction with the roles reversed <em>is</em> refused — that is the control it
+    should have been. Concede the difference yourself: "my control fails on the count before the roles
+    matter, and I would replace it with the four-participant one."
+  </p>
+</div>
+<p class="small muted">
+  Scroll back to <a href="#try">the classifier</a>, load the control, and flip the two red switches —
+  a real non-transaminase becomes one the moment its roles change.
+</p>
+
+<h2 id="buildtime">9. Why the reasoning happens at build time</h2>
+
+<p>
+  Reasoning is slow and needs Java. So it runs <strong>once, when the container image is built</strong>,
+  and the conclusions are written into the data file.
+</p>
+<p>
+  That is why <code>data/reactions.ttl</code> contains <code>a tacat:TransaminationReaction</code>
+  even though nothing asserted it. The running service answers "which reactions are
+  transaminations?" by plain lookup, with no reasoner and no JVM anywhere near it.
+</p>
+
+<div class="box trap">
+  <span class="box-title">A detail worth knowing, because it nearly went wrong</span>
+  <p>
+    Owlready2 files reasoner output into a <em>separate internal ontology</em>. The natural call —
+    <code>onto.save()</code> — would have written a perfectly valid file with <strong>none of the
+    inferred types in it</strong>. The graph would have looked fine and the entire inference would
+    have silently evaporated. The code serialises the whole <em>world</em> instead.
+  </p>
+  <p class="small">Same silent-failure pattern as Chapter 1's string-vs-IRI bug, different costume.</p>
+</div>
+
+<h2 id="say">10. What to be able to say</h2>
+
+<div class="box key">
+  <span class="box-title">The 30-second version</span>
+  <p>
+    <em>"<code>TransaminationReaction</code> is a defined class — necessary and sufficient conditions
+    — expressed over chemical classes and participant roles rather than over specific molecules. No
+    reaction is ever asserted to be one; HermiT derives all three at build time. And there is a
+    negative control: glutamate dehydrogenase contains both headline molecules with the roles
+    reversed, and is correctly not derived, because the definition discriminates on role rather than
+    on molecular presence."</em>
+  </p>
+</div>
+
+<button class="checkline" data-check="2:control" aria-pressed="false">
+  <span class="ct">I can explain the negative control and say the open-world caveat precisely
+  <small>"not derived" ≠ "proved not to be"; why GDH is the hard negative</small></span>
+</button>
+
+<div class="pager">
+  <a class="prev" href="01-data.html"><span class="dir">Previous</span><span class="t">← 1 · Facts as data</span></a>
+  <a class="next" href="03-questions.html"><span class="dir">Next</span><span class="t">3 · Asking questions →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

@@ -171,7 +171,9 @@ export default function LandingGraph() {
           .attr("opacity", 0);
       })
       .on("click", (_e, d) => {
-        if (d.route) navigate(d.route);
+        if (!d.route) return;
+        if (d.external) window.location.href = d.route;
+        else navigate(d.route);
       });
 
     const sim = d3

@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7 · The chemistry — tacat primer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="7">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li class="extra"><a href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a href="01-data.html">Facts as data</a></li>
+    <li><a href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a href="03-questions.html">Asking questions</a></li>
+    <li><a href="04-checking.html">Checking the data</a></li>
+    <li><a href="05-serving.html">Serving it</a></li>
+    <li><a href="06-shipping.html">Shipping it</a></li>
+    <li><a class="here" href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+  </ol>
+  <div class="nav-label">Readiness</div>
+  <div class="progress" data-progress></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 7 · home ground</p>
+<h1>The chemistry</h1>
+<p class="standfirst">
+  The inverse of the other chapters. You know the content; what this adds is <em>why each piece of
+  chemistry forced a modelling decision</em> — and which ones nobody else competing will have got
+  right.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ your advantage</span>
+  <span class="chip">15 min</span>
+  <span class="chip">2 things to click</span>
+  <span class="chip ask">the best 30 seconds you have</span>
+</div>
+
+<div class="resume" data-resume></div>
+
+<h2 id="reactions">1. The three reactions</h2>
+
+<p>
+  Three PLP-dependent aminotransferases, each moving an amino group from an L-amino-acid donor onto
+  the <strong>shared acceptor 2-oxoglutarate</strong>, yielding L-glutamate and the corresponding
+  2-oxo acid.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>EC</th><th>Enzyme</th><th>Rhea master</th><th>Reaction</th></tr></thead>
+  <tbody>
+    <tr><td>2.6.1.1</td><td>aspartate transaminase</td><td>21824</td>
+        <td>L-aspartate + 2-oxoglutarate ⇌ oxaloacetate + L-glutamate</td></tr>
+    <tr><td>2.6.1.2</td><td>alanine transaminase</td><td>19453</td>
+        <td>L-alanine + 2-oxoglutarate ⇌ pyruvate + L-glutamate</td></tr>
+    <tr><td>2.6.1.3</td><td>cysteine transaminase</td><td>17441</td>
+        <td>L-cysteine + 2-oxoglutarate ⇌ 2-oxo-3-sulfanylpropanoate + L-glutamate</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The shared acceptor is what makes a cross-cutting question possible at all. It also makes
+  "substrate specificity" a question about the <em>amino donor</em> rather than the substrate set as
+  a whole — which is why CQ03 reads the way it does.
+</p>
+
+<div class="box key">
+  <span class="box-title">Why the choice of enzyme is not incidental</span>
+  <p>
+    LARA — the assessor's lab-automation platform — describes its purpose as <em>"fully automatized
+    transaminase high throughput protein screening."</em> These are not three arbitrary reactions
+    from BRENDA; they are what his robots screen.
+  </p>
+  <p>
+    Transaminases make <strong>chiral amines</strong>, which is what pharma wants them for, and the
+    reversibility that makes them synthetically awkward is precisely the reversibility that makes
+    direction modelling non-trivial. <strong>The chemistry and the modelling difficulty are the same
+    fact.</strong> That connection is free to make and almost nobody else will make it.
+  </p>
+</div>
+
+<div class="box trap">
+  <span class="box-title">And the one that follows from it — the definition cannot classify his enzyme</span>
+  <p>
+    The transaminases LARA screens are <strong>ω-transaminases</strong> — amine transaminases. They
+    run <em>amine + keto acid → ketone + amino acid</em>. There is no amino-acid donor and no
+    2-oxo-acid product, so <strong>two of the four conjuncts fail</strong> and the reasoner does not
+    classify them.
+  </p>
+  <p>
+    The three shipped reactions are α-transaminations, so the model fits what it models. What
+    overclaims is the class <em>name</em>. <strong>Answer with the fix, not an apology:</strong>
+    "α-transamination is what I defined. A hierarchy is the fix — α and ω as siblings under a parent
+    requiring only the amino-group transfer — not a wider definition."
+  </p>
+  <p class="small muted">
+    This is the most likely hard question in the whole project, precisely because the chapter above
+    is right that these are his daily subject matter.
+  </p>
+</div>
+
+
+<h2 id="microspecies">2. Chemical identity is harder than it looks</h2>
+
+<p>
+  You know L-glutamate at pH 7.4 is not glutamic acid. What is worth knowing is that
+  <strong>ChEBI encodes that distinction as separate entries</strong>, and Rhea uses the microspecies
+  exclusively.
+</p>
+
+<div class="widget" data-widget="microspecies"></div>
+
+<h3>The root cause is more interesting than the error</h3>
+
+<p>
+  v0 did not guess these. Its own documentation states the method: <em>"ChEBI, resolved via KEGG's
+  <code>conv/chebi</code> cross-reference."</em> <strong>KEGG's mapping returns the neutral
+  parent.</strong>
+</p>
+<p>
+  That is the better story: not "I typed the wrong number" but "a defensible automated cross-
+  reference introduced a systematic bias, and only checking against the primary source caught it."
+  Worse, v0's own formula and charge fields were <em>already</em> the correct microspecies values —
+  so its balance tests passed on data that did not belong to the identifiers printed beside it.
+</p>
+
+<div class="box trap">
+  <span class="box-title">Trap 1 — never resolve a ChEBI identifier from a name</span>
+  <p>
+    The bare accepted name <strong>"L-cysteine" belongs to CHEBI:17561</strong> — a
+    <em>tautomer</em>, not the species these reactions use (35235). Searching by name gives a
+    confident, well-formed, wrong answer.
+  </p>
+</div>
+
+<div class="box trap">
+  <span class="box-title">Trap 2 — ChEBI's names differ from what Rhea prints</span>
+  <p>
+    ChEBI says <em>L-alanine zwitterion</em>; Rhea's equation says <em>L-alanine</em>. Three of nine
+    diverge. The project records both in a <code>NAME_DIVERGENCES</code> table rather than silently
+    picking one.
+  </p>
+</div>
+
+<div class="box trap">
+  <span class="box-title">Trap 3 — the character that breaks joins</span>
+  <p>
+    ChEBI's charge suffixes use <strong>U+2212 MINUS SIGN</strong> (−) while the <code>L-</code>
+    prefix is an ASCII hyphen (-). <em>The same string contains both.</em> A naive join between
+    scraped text and a database dump fails silently, and the two characters are visually almost
+    identical. The linter is configured to stop "correcting" it, with a comment explaining why.
+  </p>
+</div>
+
+<button class="checkline" data-check="7:chebi" aria-pressed="false">
+  <span class="ct">I can explain the microspecies issue and its systematic root cause
+  <small>KEGG conv/chebi returns the neutral parent; off by one H per unit charge; three traps</small></span>
+</button>
+
+<h2 id="plp">3. PLP — the detail that proves the domain knowledge</h2>
+
+<p>
+  You know this cold. What matters is why it is <em>the single most diagnostic decision in the
+  submission</em>.
+</p>
+
+<figure class="fig" data-figure="plp">
+  <figcaption>An enzyme-bound cofactor, regenerated within the catalytic cycle. In the resting
+    enzyme it forms an internal aldimine with an active-site lysine; during catalysis it forms an
+    external aldimine with the substrate. It does not balance into the equation.</figcaption>
+</figure>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">4</span><span class="l">participants in each Rhea equation</span></div>
+  <div class="bignum"><span class="v">0</span><span class="l">of which are PLP</span></div>
+  <div class="bignum"><span class="v">597326</span><span class="l">the ChEBI UniProt cites — the dianion</span></div>
+</div>
+
+<figure class="code">
+  <figcaption>src/tacat/ontology/schema.py — where the chemistry lands in the model. The docstring
+    is expanded here: the shipped one describes the lysine linkage as simply persisting through
+    turnover, which is the resting state only — the internal/external aldimine wording below is the
+    accurate version and the one to say out loud.</figcaption>
+  <pre><code data-lang="python">class hasCofactor(ObjectProperty):
+    """Link an *enzyme* to a cofactor.
+
+    Deliberately domained on Enzyme, not on BiochemicalReaction: pyridoxal
+    5'-phosphate is an enzyme-bound cofactor that cycles PLP -> PMP -> PLP
+    and is regenerated. In the resting enzyme it sits as an internal aldimine
+    with an active-site lysine; during catalysis that linkage is displaced and
+    it forms an external aldimine with the substrate. It is not consumed and
+    does not balance into the equation, which is why Rhea's equations for all
+    three reactions have exactly four participants and none of them is PLP.
+    """
+    domain = [Enzyme]
+    range  = [ChemicalEntity]</code></pre>
+</figure>
+
+<div class="box key">
+  <span class="box-title">Why this is the diagnostic detail</span>
+  <p>
+    Model PLP as a fourth substrate and <strong>every check still passes</strong>: the graph
+    validates, the shapes are satisfied, the queries run, the container builds. The only thing wrong
+    is that the stoichiometry is a lie — and no amount of software engineering will surface it.
+  </p>
+  <p>
+    It is the error a biochemist spots instantly and a software engineer never would. There is a
+    test, <code>test_plp_is_not_a_reaction_participant</code>, asserting it never appears as one.
+    Note also that CQ04 answers mechanism and cofactor <em>together</em> — because PLP hangs off the
+    enzyme precisely <em>because</em> the mechanism is ping-pong bi-bi. The two facts are one fact.
+  </p>
+</div>
+
+<button class="checkline" data-check="7:plp" aria-pressed="false">
+  <span class="ct">I can explain the PLP placement and why it is the diagnostic decision
+  <small>prosthetic group, regenerated, four participants, COFACTOR on the protein, CHEBI:597326</small></span>
+</button>
+
+<h2 id="direction">4. Direction: substrate and product are roles</h2>
+
+<p>
+  L-glutamate is a product in all three transaminations and a substrate in glutamate dehydrogenase.
+  So "is L-glutamate a substrate?" has no answer — it depends on the reaction and the direction.
+</p>
+<p>
+  That is why participation had to become a node with a role on it, and it is what makes the
+  CQ05/CQ06 pair possible. But the sharpest evidence is external. Switch organism:
+</p>
+
+<div class="widget" data-widget="direction-flip"></div>
+
+<div class="box key">
+  <span class="box-title">The best thirty seconds available in the presentation</span>
+  <p>
+    Same reaction. Same identifier. Opposite roles. That is not a modelling opinion — it is an
+    annotated fact in UniProt with experimental evidence, and it proves the role model answers a real
+    question rather than a manufactured one.
+  </p>
+</div>
+
+<h3>Rhea's four identifiers</h3>
+
+<p>
+  Rhea mints four IDs per reaction at consecutive offsets: an <strong>undirected master</strong>,
+  then left-to-right, right-to-left, and bidirectional children. UniProt's <code>Reaction=</code>
+  line always cites the <em>master</em>; <code>PhysiologicalDirection=</code> cites a <em>child</em>.
+  Treating them as interchangeable mixes "this reaction" with "this reaction, in this direction".
+  The project anchors on masters and carries the children explicitly.
+</p>
+
+<div class="box ask">
+  <span class="box-title">The counter-argument to be ready for</span>
+  <p>
+    If the master is undirected, is it right for the graph to say a reaction <strong>produces</strong>
+    L-glutamate? Arguably it should only say the reactions <strong>share</strong> it.
+  </p>
+  <p>
+    Checked against the live endpoint: RHEA:19453 <em>does</em> carry <code>19453_L</code> and
+    <code>19453_R</code> sides and a canonically written equation. So the master is undirected about
+    <em>physiological</em> direction — that is what the children are for — while still having a left
+    and a right. Assigning roles per the written orientation is consistent with it, and CQ06 is
+    worded <em>"in the left-to-right orientation"</em> for exactly this reason.
+  </p>
+  <p>
+    The residual is real and worth conceding, and it survived the move to <code>rdf:type</code>:
+    our reaction is an <em>instance</em> of the undirected master class, and it carries roles in an
+    orientation that class does not itself assert. The honest answer is the paragraph above, not a
+    retreat.
+  </p>
+</div>
+
+<button class="checkline" data-check="7:direction" aria-pressed="false">
+  <span class="ct">I can tell the E. coli AlaA story and handle the undirected-master objection
+  <small>same master, PhysiologicalDirection right-to-left; sides exist; the orientation residual</small></span>
+</button>
+
+<h2 id="control">5. The negative control, chosen chemically</h2>
+
+<p>
+  Glutamate dehydrogenase (EC 1.4.1.2):
+  <code>L-glutamate + H₂O + NAD⁺ ⇌ 2-oxoglutarate + NH₄⁺ + NADH</code>.
+</p>
+<p>
+  Chosen because it is the <em>hardest</em> available negative. It contains both headline molecules
+  of all three transaminations, roles exactly reversed, and it is a real enzyme doing real chemistry
+  on the same metabolites — not a strawman. A definition keyed on molecular content would classify
+  it; a definition keyed on roles does not.
+</p>
+<p class="small muted">
+  Choosing it required knowing the metabolism, not the software.
+  <a href="02-meaning.html#try">The classifier in Chapter 2</a> lets you watch it fail and then pass.
+</p>
+
+<h2 id="limits">6. One place where the data and the model disagree</h2>
+
+<div class="box trap">
+  <span class="box-title">Know this before you are asked</span>
+  <p>
+    <code>reference_data.py</code> records — correctly — that in mammals
+    <strong>EC 2.6.1.3 is not a distinct gene product</strong>: it is a secondary activity of
+    <strong>GOT1 (P17174)</strong>, the same protein carrying EC 2.6.1.1. Three reactions, two
+    proteins.
+  </p>
+  <p>
+    The ontology nevertheless mints three separate <code>Enzyme</code> individuals, keyed on EC
+    number. So the data layer knows something the model does not express.
+  </p>
+  <p>
+    Raise it yourself — it shows you can see the seam between "what my source data knows" and "what
+    my model can say", which is the same skill the whole exercise tests.
+  </p>
+</div>
+
+<h2 id="say">7. What to be able to say</h2>
+
+<div class="box key">
+  <span class="box-title">The 30-second version</span>
+  <p>
+    <em>"Two chemical decisions drove the model. PLP hangs off the enzyme, not the reaction, because
+    it is a prosthetic group that cycles PLP→PMP→PLP bound to an active-site lysine — which is why
+    Rhea's equations have four participants and UniProt records it as a COFACTOR on the protein.
+    Modelling it as a fourth substrate would validate perfectly and be chemically false. And
+    substrate versus product is a role in a direction, not a property of a molecule —
+    E. coli AlaA carries the same Rhea master as human ALT1 but runs right-to-left, consuming the
+    glutamate ALT1 produces. That is why participation is an n-ary node carrying a role."</em>
+  </p>
+</div>
+
+<div class="pager">
+  <a class="prev" href="06-shipping.html"><span class="dir">Previous</span><span class="t">← 6 · Shipping it</span></a>
+  <a class="next" href="08-defending.html"><span class="dir">Next</span><span class="t">8 · Defending it →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

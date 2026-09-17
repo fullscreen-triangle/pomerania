@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Federated querying — a plan language, not a query language</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html" aria-current="page">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">07 · Federated querying</p>
+  <h1>A language that closes the seam by refusing to be a query language at all.</h1>
+
+  <p class="lede">
+    A biological question spanning more than one public database is today answered by a
+    script: a host-language program that interpolates identifiers into query strings,
+    sends them, parses what returns, and interpolates again. The host language knows
+    nothing about the data and the query language knows nothing about control flow —
+    and <b>every failure mode of federated retrieval lives in the seam between them.</b>
+  </p>
+
+  <h2>The observation the design rests on</h2>
+
+  <p>
+    The databases a biologist must cross — a reaction knowledge base with a SPARQL
+    endpoint, a protein resource exposing both SPARQL and REST, a pathway resource
+    exposing only flat-file REST, an ontology available as a downloadable artefact —
+    <b>do not share a query model, and no amount of engineering will give them one.</b>
+  </p>
+
+  <div class="claim">
+    <span class="label">But they do share a result model</span>
+    <p>
+      Finite sets of identifiers carrying attributes. So a language whose terms denote
+      <em>result sets</em>, and whose operators denote <em>instructions on what to do with
+      a result</em>, is portable across backends in a way that a language whose terms
+      denote graph patterns can never be. That object is a <b>plan language</b> —
+      and queries are its leaves, never written by the user.
+    </p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="seam" viewBox="0 0 760 380" role="img"
+           aria-label="A script across four heterogeneous backends versus a plan language"></svg>
+    </div>
+    <div class="controls">
+      <button id="v-script" data-fed="script" aria-pressed="true" type="button">today: a script</button>
+      <button id="v-plan"   data-fed="plan" type="button">a plan language</button>
+    </div>
+    <figcaption>
+      <b>Figure 23 — where the failures live.</b>
+      In the first view the host language and each query language meet at a seam, and every
+      seam is a place where an identifier is interpolated, a response is parsed, and a
+      failure has no typed representation. In the second, the plan denotes result sets and
+      each backend is a triple — endpoint, capability set, extraction function — so the
+      seam disappears into the source model.
+    </figcaption>
+  </figure>
+
+  <h2 id="capability">Compilability decided before any request is issued</h2>
+
+  <p>
+    A backend is characterised by what it <em>can</em> answer. Lowering a plan step is
+    total exactly on the steps whose required capabilities are contained in the source's
+    declared set — so a plan admits a <b>static capability check that decides
+    compilability before any request goes out</b>.
+  </p>
+
+  <div class="claim">
+    <span class="label">What that converts</span>
+    <p>
+      A whole class of runtime failures becomes compile-time diagnostics. You learn that
+      a plan cannot be served — and <em>which capability is missing from which source</em> —
+      without touching the network, waiting on a timeout, or half-populating a result set.
+    </p>
+  </div>
+
+  <h2 id="verdicts">Six verdicts, not a boolean</h2>
+
+  <p>
+    Conventional query interfaces return rows. A plan executor returns one of six
+    distinguishable verdicts, and the theorem is that <b>any interface returning rows
+    alone conflates at least two of them</b> — the same argument as elsewhere in this
+    work, in a new setting.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="verdicts" viewBox="0 0 760 340" role="img"
+           aria-label="Six verdicts collapsing to rows-or-nothing"></svg>
+    </div>
+    <div class="controls">
+      <button id="w-six"  data-verdict="six" aria-pressed="true" type="button">six verdicts</button>
+      <button id="w-rows" data-verdict="rows" type="button">rows alone</button>
+    </div>
+    <figcaption>
+      <b>Figure 24 — what an empty result set fails to say.</b>
+      Switch to <span class="mono">rows alone</span> and watch six distinguishable
+      situations collapse into two indistinguishable buckets. A curator needs the
+      distinction; a row-returning interface has already destroyed it by the time anyone
+      can act.
+    </figcaption>
+  </figure>
+
+  <h3 id="starve">The verdict that only exists in federation</h3>
+
+  <div class="claim">
+    <span class="label">Starvation</span>
+    <p>
+      A step that failed <em>because an earlier step under-retrieved</em>. It is reachable
+      only in the federated setting — a single database cannot produce it — and the paper
+      argues it is the <b>characteristic failure of federation rather than an exotic
+      case</b>. Today it is invisible: the second query simply returns fewer rows, and
+      nothing says why.
+    </p>
+  </div>
+
+  <h2 id="translation">Identifier translation — where the real losses are</h2>
+
+  <p>
+    This is the part that will be familiar from practice. Cross-namespace maps are
+    <b>partial</b>, <b>non-injective</b> and <b>non-confluent</b>. Three results follow.
+  </p>
+
+  <table>
+    <thead><tr><th>Result</th><th>What it means at the bench</th></tr></thead>
+    <tbody>
+      <tr><td>Exact composition laws for retention</td>
+          <td>You can compute what fraction of a set survives a translation chain, in
+              advance, from the maps themselves.</td></tr>
+      <tr><td><b>Translation loss is not recoverable by reordering</b></td>
+          <td>Rearranging which namespace you cross first does not buy the loss back. It
+              is not an optimisation problem.</td></tr>
+      <tr><td><b>Two plans differing only in translation route may return different
+              sets — without either being wrong</b></td>
+          <td>Two pipelines crossing the same three databases by different routes
+              legitimately disagree. Today that reads as a bug in one of them.</td></tr>
+    </tbody>
+  </table>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="routes" viewBox="0 0 760 380" role="img"
+           aria-label="Two translation routes across four namespaces, with retention"></svg>
+    </div>
+    <div class="controls">
+      <label>map coverage <input id="cov" type="range" min="0.4" max="1" step="0.01" value="0.82">
+        <output for="cov"></output></label>
+      <button id="r-both" data-route="both" aria-pressed="true" type="button">both routes</button>
+      <button id="r-a" data-route="a" type="button">route A</button>
+      <button id="r-b" data-route="b" type="button">route B</button>
+    </div>
+    <figcaption>
+      <b>Figure 25 — same endpoints, different route, different answer.</b>
+      Two paths from a chemical identifier to a pathway identifier. Retention multiplies
+      along each hop, and because the maps are non-confluent the two routes do not land on
+      the same set. Neither is wrong. Lower the coverage and watch the disagreement widen
+      while both routes remain individually valid.
+    </figcaption>
+  </figure>
+
+  <div class="caveat">
+    <strong>The consequence for reproducibility.</strong> If two plans can legitimately
+    disagree because they crossed namespaces differently, then a result is not reproducible
+    without <em>its translation route</em>. That is a provenance requirement no current
+    federated pipeline records, and it follows from the mathematics rather than from
+    engineering sloppiness.
+  </div>
+
+  <h2>How this connects</h2>
+
+  <p>
+    The same discipline appears three times in this work, which is the argument for it
+    being structural rather than stylistic:
+  </p>
+
+  <table>
+    <thead><tr><th>Setting</th><th>Capability</th><th>Refusal</th></tr></thead>
+    <tbody>
+      <tr><td>Public databases (here)</td>
+          <td>what a backend can answer</td>
+          <td>static check before any request</td></tr>
+      <tr><td><a href="languages.html#federation">Chemical file formats</a></td>
+          <td>what a format can state</td>
+          <td>refuse before opening the record</td></tr>
+      <tr><td><a href="opacity.html">Endpoint-checked computation</a></td>
+          <td>what an invariant can see</td>
+          <td>an edge names a class, not a mechanism</td></tr>
+    </tbody>
+  </table>
+
+  <h2>What is claimed here</h2>
+
+  <table>
+    <thead><tr><th>Statement</th><th>Standing</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Lowering is total exactly on capability-contained steps</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>The source model is a triple: endpoint, capability set, extraction
+              function.</td></tr>
+      <tr><td>A plan's compilability is statically decidable</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Before any request is issued.</td></tr>
+      <tr><td>Six verdicts are pairwise distinguishable; rows alone conflate two</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>One bit is provably insufficient.</td></tr>
+      <tr><td>Starvation is reachable, and characteristic of federation</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>A single database cannot produce it.</td></tr>
+      <tr><td>Retention composition laws</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Exact, from the maps themselves.</td></tr>
+      <tr><td>Translation loss is not recoverable by reordering</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Not an optimisation problem.</td></tr>
+      <tr><td>Route-dependent results, neither wrong</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Non-confluence of cross-namespace maps.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pager">
+    <a href="opacity.html"><span class="dir">back</span>04 · Path opacity</a>
+    <a href="languages.html"><span class="dir">next</span>The languages</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="federation.js"></script>
+</body>
+</html>

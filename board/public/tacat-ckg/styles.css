@@ -1,0 +1,383 @@
+/* ============================================================================
+   The Causal Knowledge Graph — presentation stylesheet
+   One object, several readings. Dark, typographic, print-survivable.
+   ========================================================================= */
+
+:root {
+  --bg:        #0b0d10;
+  --bg-raised: #121519;
+  --bg-sunken: #08090b;
+  --line:      #232a33;
+  --line-soft: #1a2027;
+
+  --ink:       #e8eaed;
+  --ink-dim:   #a8b0ba;
+  --ink-faint: #6b7683;
+
+  --accent:      #6ea8fe;
+  --accent-dim:  #3d6ea8;
+  --warm:        #f0a860;
+  --good:        #6ecf9a;
+  --bad:         #e8746a;
+  --medium:      #b48ee8;
+
+  --mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+
+  --measure: 34rem;
+  --wide: 60rem;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+.wrap {
+  max-width: var(--wide);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.measure { max-width: var(--measure); }
+
+header.site {
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-sunken);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+
+header.site .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+.brand strong { color: var(--ink); font-weight: 600; }
+
+nav.top { display: flex; gap: 1.1rem; flex-wrap: wrap; }
+nav.top a {
+  font-size: 0.82rem;
+  color: var(--ink-dim);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+}
+nav.top a:hover { color: var(--accent); border-bottom-color: var(--accent-dim); }
+nav.top a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+main { padding: 3rem 0 6rem; }
+
+/* ------------------------------------------------------------ typography */
+
+h1 {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.12;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem;
+}
+
+h2 {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin: 3.5rem 0 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 2rem 0 0.6rem;
+  color: var(--ink);
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.8rem;
+}
+
+.lede {
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: var(--ink-dim);
+  max-width: var(--measure);
+}
+
+p { max-width: var(--measure); }
+.wide p, p.wide { max-width: var(--wide); }
+
+a { color: var(--accent); text-decoration-color: var(--accent-dim); text-underline-offset: 2px; }
+a:hover { color: #9cc4ff; }
+
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+code { background: var(--bg-raised); padding: 0.1em 0.35em; border-radius: 3px; color: var(--warm); }
+
+em.term {
+  font-style: normal;
+  border-bottom: 1px dotted var(--ink-faint);
+  cursor: help;
+}
+
+blockquote {
+  margin: 1.5rem 0;
+  padding: 0.2rem 0 0.2rem 1.2rem;
+  border-left: 2px solid var(--accent-dim);
+  color: var(--ink-dim);
+  font-family: var(--serif);
+  font-size: 1.08rem;
+  max-width: var(--measure);
+}
+blockquote cite {
+  display: block;
+  margin-top: 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-style: normal;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------- callouts */
+
+.claim {
+  background: linear-gradient(180deg, rgba(110,168,254,0.07), rgba(110,168,254,0.02));
+  border: 1px solid var(--accent-dim);
+  border-radius: 6px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.8rem 0;
+  max-width: var(--measure);
+}
+.claim .label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.claim p { margin: 0; max-width: none; }
+
+.caveat {
+  border-left: 2px solid var(--warm);
+  background: rgba(240,168,96,0.05);
+  padding: 0.9rem 1.1rem;
+  margin: 1.5rem 0;
+  max-width: var(--measure);
+  font-size: 0.94rem;
+  color: var(--ink-dim);
+}
+.caveat strong { color: var(--warm); }
+
+.aside {
+  font-size: 0.9rem;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--line-soft);
+  padding-top: 0.8rem;
+  margin: 1.5rem 0;
+  max-width: var(--measure);
+}
+
+/* ---------------------------------------------------------------- figure */
+
+figure.fig {
+  margin: 2.2rem 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+figure.fig .fig-body { padding: 1.2rem; }
+figure.fig svg { display: block; width: 100%; height: auto; }
+figcaption {
+  border-top: 1px solid var(--line);
+  padding: 0.85rem 1.2rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--ink-faint);
+  background: var(--bg-sunken);
+}
+figcaption b { color: var(--ink-dim); font-weight: 600; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  align-items: center;
+  padding: 0.9rem 1.2rem;
+  border-top: 1px solid var(--line-soft);
+  background: rgba(0,0,0,0.2);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+.controls label { display: flex; align-items: center; gap: 0.5rem; color: var(--ink-dim); }
+.controls input[type="range"] { width: 130px; accent-color: var(--accent); }
+.controls output { color: var(--warm); min-width: 3.4em; display: inline-block; }
+.controls button {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  background: var(--bg-raised);
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+.controls button:hover { border-color: var(--accent-dim); color: var(--accent); }
+.controls button[aria-pressed="true"] { background: var(--accent-dim); color: #fff; border-color: var(--accent); }
+
+/* ----------------------------------------------------------------- cards */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+a.card {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1.1rem 1.2rem;
+  background: var(--bg-raised);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s, transform .15s;
+}
+a.card:hover { border-color: var(--accent-dim); transform: translateY(-2px); }
+a.card .n {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+a.card h3 { margin: 0.4rem 0 0.4rem; font-size: 1.02rem; }
+a.card p { margin: 0; font-size: 0.88rem; color: var(--ink-faint); max-width: none; }
+
+/* ----------------------------------------------------------------- table */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1.5rem 0;
+}
+th, td {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+th {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border-bottom-color: var(--line);
+}
+td.num { font-family: var(--mono); color: var(--warm); white-space: nowrap; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+/* ------------------------------------------------------------- footer nav */
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+.pager a { text-decoration: none; }
+.pager .dir { display: block; font-family: var(--mono); font-size: 0.68rem; color: var(--ink-faint); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* --------------------------------------------------------------- svg bits */
+
+.svg-label { font-family: var(--mono); font-size: 11px; fill: var(--ink-dim); }
+.svg-label-sm { font-family: var(--mono); font-size: 9.5px; fill: var(--ink-faint); }
+.svg-title { font-family: var(--mono); font-size: 10px; fill: var(--ink-faint); letter-spacing: 0.08em; text-transform: uppercase; }
+.svg-axis { stroke: var(--line); stroke-width: 1; }
+.svg-grid { stroke: var(--line-soft); stroke-width: 1; }
+.draggable { cursor: grab; }
+.draggable:active { cursor: grabbing; }
+
+/* ------------------------------------------------------------------ misc */
+
+hr.rule { border: 0; border-top: 1px solid var(--line); margin: 3rem 0; }
+
+.kbd {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  color: var(--ink-dim);
+  background: var(--bg-raised);
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  padding: 0.15em 0.5em;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+  color: var(--ink-faint);
+  margin-right: 0.3rem;
+}
+.tag.proved { border-color: #2d5a41; color: var(--good); }
+.tag.measured { border-color: #4a5a2d; color: #b8cf6e; }
+.tag.open { border-color: #5a4a2d; color: var(--warm); }
+.tag.refuted { border-color: #5a2d2d; color: var(--bad); }
+
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .controls { gap: 0.8rem; }
+}
+
+@media print {
+  body { background: #fff; color: #000; }
+  header.site, .controls, .pager { display: none; }
+  figure.fig { break-inside: avoid; border-color: #ccc; }
+}

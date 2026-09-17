@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1 · The floor under identity — tacat extension</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="1">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a class="here" href="01-floor.html">The floor under identity</a></li>
+    <li><a href="02-closure.html">Closure, not confidence</a></li>
+    <li><a href="03-coherence.html">Three sources or none</a></li>
+    <li><a href="04-boundary.html">Where the model stops</a></li>
+    <li><a href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a href="07-three.html">Three verdicts on one run</a></li>
+    <li><a href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 1</p>
+<h1>The floor under identity</h1>
+<p class="standfirst">
+  G10 found that every external identifier in the graph could be replaced with a fabricated one and
+  all nine competency questions still passed. That is not a testing oversight. It is a predictable
+  consequence of treating identity as a value rather than as a cost, and there is a theorem that says
+  so in advance.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ load-bearing</span>
+  <span class="chip">12 min</span>
+  <span class="chip">G10 · v0's error class</span>
+  <span class="chip trap">this is the one that already bit</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance.</strong> This chapter rests on unpublished single-author work
+  (<em>On the Necessary Substructures of Finite Contact Graphs</em>; <em>The Minimum Analytic Finite
+  Graph</em>). It has not been peer-reviewed and nobody else has checked it. Every engineering claim
+  below is stated so that it stands on its own: if you reject the theory entirely, the proposed gate
+  is still a gate, and the argument for it is still an argument. The theorem is offered as the reason
+  the gate is <em>the right shape</em>, not as evidence that it works.
+</div>
+
+<h2 id="observed">1. What was actually observed</h2>
+
+<p>
+  From <code>GAPS_2.md</code> G10 — a deliberate reproduction of the v0 defect. All fifteen
+  <code>skos:exactMatch</code> links in the serialised graph were repointed at a ChEBI identifier
+  that does not exist, and every automated gate was re-run:
+</p>
+
+<figure class="code">
+  <figcaption>GAPS_2.md §G10 — verified 27 July 2026</figcaption>
+<pre><code><span class="tok-comment">Corrupted 15 skos:exactMatch links -&gt; nonexistent CHEBI_99999999</span>
+
+  CQ01: PASS   CQ04: PASS   CQ07: PASS
+  CQ02: PASS   CQ05: PASS   CQ08: PASS
+  CQ03: PASS   CQ06: PASS   CQ09: PASS
+
+  <span class="tok-string">9/9 competency questions still pass with every external identifier wrong.</span>
+
+  SHACL over fully corrupted identifiers: conforms=<span class="tok-kw">True</span>
+  <span class="tok-string">'link object is a URIRef'</span> test:         passes=<span class="tok-kw">True</span></code></pre>
+</figure>
+
+<p>
+  Three independent gates, all green, all blind. And they are blind for three different reasons,
+  which is what makes this a class of failure rather than a bug:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Gate</th><th>What it checks</th><th>Why it misses</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Competency questions</td>
+      <td>Labels match expected labels</td>
+      <td>Label and identifier come from the same <code>reference_data.py</code> row — a common-mode failure. Both are wrong together.</td>
+    </tr>
+    <tr>
+      <td>SHACL shape</td>
+      <td>The PURL has the right <em>shape</em></td>
+      <td><code>CHEBI_99999999</code> is perfectly well-formed. Shape is not reference.</td>
+    </tr>
+    <tr>
+      <td><code>URIRef</code> test</td>
+      <td>The link object has the right <em>type</em></td>
+      <td>Added in G0 to fix string-vs-IRI. A fabricated IRI is still an IRI.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box trap">
+  <span class="box-title">The shape of the failure</span>
+  <p>
+    Each gate checks a <em>local</em> property of the link — its spelling, its type, its agreement
+    with a label drawn from the same source. No gate checks the one thing that makes an identifier an
+    identifier: that <strong>something outside this graph answers to it</strong>. That is not an
+    accident of which tests were written. It is what happens when identity is modelled as a value a
+    triple carries rather than as a relation to something the project does not own.
+  </p>
+</div>
+
+<p>
+  There is a name worth having for the state G10 revealed, because the ordinary words are all wrong
+  for it. The system was not <em>mistaken</em> — a mistaken system holds a false belief, and this one
+  held no belief about denotation at all. It was not <em>uncertain</em> — uncertainty is a quantity a
+  system can report, and nothing here had a channel to report it on. The accurate description is
+  <strong>epistemic blindness</strong>: a condition in which a system lacks the apparatus to represent
+  a question, and therefore cannot distinguish between having answered it and never having asked.
+</p>
+
+<div class="box key">
+  <span class="box-title">Why the word earns its place</span>
+  <p>
+    Blindness is not a low confidence score; it is the <em>absence of the axis</em> along which
+    confidence would be measured. This matters practically, because the two conditions have opposite
+    remedies. Uncertainty is reduced by gathering more of the same kind of evidence — more tests, more
+    rows, tighter thresholds. Blindness is not reduced by any of that: running the nine competency
+    questions a thousand more times over the corrupted graph returns nine thousand passes. It is
+    remedied only by adding an instrument that can see the missing axis, which in G10's case means
+    comparing against the authority itself. Every proposal in this series is an instrument for one
+    such axis, and <a href="09-enforced.html#failed">Chapter 9 §3</a> argues that the corruption run
+    which exposed this one should be a permanent test rather than a finding in a document.
+  </p>
+</div>
+
+<h2 id="theorem">2. The theorem that predicts it</h2>
+
+<p>
+  The individuation papers begin from a premise about wholes rather than about graphs: a
+  <strong>non-completable</strong> medium is one no finite process exhausts. Not "infinite" in any
+  cardinality sense — an order condition only, that there is no terminal stage. ChEBI is
+  non-completable in exactly this sense: there is always another release, another cross-reference,
+  another isobaric species not yet distinguished.
+</p>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Floor from non-completability</span>
+    <span class="thm-src">Contact Graphs, Thm 2.6 · Minimum Analytic Finite Graph, Thm 3.1</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      Let the medium be non-completable and let <em>v</em> be a proper part of it. Then the
+      identification of <em>v</em> cannot be completed at any finite stage, and its identification
+      residual is strictly positive: ρ(<em>v</em>) &gt; 0.
+    </p>
+    <p class="small muted" style="margin-top:0.6rem">
+      Proof sketch: suppose the identification were complete. Completion means every part of the
+      medium has been brought to bear in distinguishing <em>v</em> from the rest — so the comparison
+      exhausts the medium. That contradicts non-completability, which guarantees a further stage
+      containing something not yet consulted. Hence the residual never reaches zero.
+    </p>
+  </div>
+</div>
+
+<p>
+  The corollary is the part that matters here. Because no identification completes, the boundary
+  content separating any one thing from the rest is bounded below by a positive constant β — the
+  <strong>floor</strong>. And a floor that is positive means:
+</p>
+
+<div class="box key">
+  <span class="box-title">Identity is a region, never a point</span>
+  <p>
+    An identifier does not <em>denote a point</em>. It names a cut of positive weight — the region of
+    boundary by which a thing is told from everything else. Two consequences follow immediately, and
+    both are already visible in this repository: a graph can carry a well-formed identifier that
+    denotes nothing, because well-formedness is a property of the <em>string</em> and denotation is a
+    property of the <em>cut</em>; and no amount of internal checking closes that gap, because the cut
+    is against material the graph does not contain.
+  </p>
+</div>
+
+<h2 id="whyfits">3. Why this is the right diagnosis and not a retrofit</h2>
+
+<p>
+  A theory that merely re-describes a bug you already found is worth nothing. The test is whether it
+  predicts something you did <em>not</em> already know. Three checks:
+</p>
+
+<div class="ledger">
+  <div class="row">
+    <div class="cell thmc">
+      <span class="k">Theorem says</span>
+      <p>Measurement is <em>reshuffling</em>: it conserves the medium, so it tightens a thing's
+      boundary from outside but never delivers its interior. Adding checks reduces exterior ambiguity
+      and cannot reach identity.</p>
+    </div>
+    <div class="cell">
+      <span class="k">Repository shows</span>
+      <p>G0 added the <code>URIRef</code> test; G2 added the SHACL PURL shape. Both tightened the
+      boundary. Neither could detect a wrong-but-well-formed identifier — the interior was never
+      touched. <strong>Predicted, not observed after the fact.</strong></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="cell thmc">
+      <span class="k">Theorem says</span>
+      <p>Individuation is by <em>negation</em>: a thing is fixed only as the complement of what it is
+      not. Any determination that names a distinguished member regresses.</p>
+    </div>
+    <div class="cell">
+      <span class="k">Repository shows</span>
+      <p><code>RATIONALE.md</code> §3.2 — typing molecules as substrates or products "is wrong before
+      it starts", because <em>E. coli</em> AlaA carries the same Rhea master as human ALT1 with roles
+      reversed. Roles are relational, not intrinsic. That is negation, arrived at from the chemistry.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="cell thmc">
+      <span class="k">Theorem says</span>
+      <p>Point-identity is refuted two independent ways: resolution never saturates, and independent
+      lines of measurement never become redundant.</p>
+    </div>
+    <div class="cell">
+      <span class="k">Repository shows</span>
+      <p>ChEBI microspecies. <code>L-glutamate(1−)</code> ≠ <code>L-glutamic acid</code>; the
+      distinction only exists because someone built an instrument fine enough to need it. Each
+      generation of resolving power splits an identifier that used to be one thing.</p>
+    </div>
+  </div>
+</div>
+
+<div class="box bridge">
+  <span class="box-title">The strongest form of the argument</span>
+  <p>
+    If a chemical identity were a point, one sufficiently precise instrument would fix it
+    permanently, and no finer one would ever be wanted. The existence of mass spectrometry, then
+    high-resolution MS, then ion mobility — each generation distinguishing species the last could
+    not — is standing evidence that identity is a region. <strong>You cannot both believe that
+    analytical chemistry has a future and believe that an identifier denotes a point.</strong>
+  </p>
+</div>
+
+<h2 id="proposal">4. What this proposes building</h2>
+
+<p>
+  G10 was closed by adding CQ10 and CQ11 — competency questions that project the ChEBI and Rhea
+  PURLs themselves, so label and identifier must agree. That was the right immediate fix and it is
+  already in the repository. What the theorem adds is the observation that <strong>CQ10 still
+  compares the graph against itself</strong>: the expected set is duplicated from
+  <code>reference_data.py</code>, so a wrong identifier entered consistently in both places passes.
+  <code>GAPS_2.md</code> says this explicitly — "the second place is a review checkpoint" — and a
+  review checkpoint is a human, not a gate.
+</p>
+
+<h3>4.1 A dereference gate</h3>
+
+<p>
+  The missing gate is the one that leaves the graph. For every <code>skos:exactMatch</code> object,
+  fetch the identifier from its authority and assert that what comes back agrees with what we
+  claim locally — not that <em>something</em> comes back.
+</p>
+
+<figure class="code">
+  <figcaption>proposed: a new <code>denotation</code> module beside the existing <code>validation.py</code> — sketch</figcaption>
+<pre><code><span class="tok-kw">def</span> <span class="tok-fn">check_denotation</span>(entity: ChemicalEntity) -&gt; DenotationResult:
+    <span class="tok-string">"""Assert that the authority agrees with our local claim.
+
+    The point is not that the PURL resolves — a 200 proves only that
+    *something* is there. It is that the *formula and charge* the
+    authority reports match the ones reference_data.py records. That
+    is the one comparison a fabricated or neutral-parent identifier
+    cannot survive.
+    """</span>
+    doc = fetch_ttl(<span class="tok-fn">chebi_purl</span>(entity.chebi_id))
+    <span class="tok-kw">return</span> <span class="tok-fn">DenotationResult</span>(
+        resolves=doc <span class="tok-kw">is not</span> <span class="tok-kw">None</span>,
+        formula_agrees=doc.formula == entity.formula,
+        charge_agrees=doc.charge == entity.charge,
+    )</code></pre>
+</figure>
+
+<p>
+  Run in CI as a <strong>network-marked, non-blocking</strong> job — the same category as the two
+  existing live federated tests. Non-blocking matters: an outage at ChEBI must not fail an unrelated
+  merge request. But it produces an artefact, and a red artefact is loud in a way a passing suite is
+  not.
+</p>
+
+<div class="box trap">
+  <span class="box-title">Why this catches exactly v0's error and CQ10 does not</span>
+  <p>
+    v0's failure was <em>systematic</em>: <code>reference.py</code> resolved ChEBI via KEGG's
+    <code>conv/chebi</code> cross-reference, and that mapping returns the <strong>neutral
+    parent</strong>. Every identifier was off by exactly one hydrogen per unit of charge — internally
+    consistent, uniformly wrong. A label oracle cannot see it. CQ10 cannot see it, because the
+    expected PURLs would have been copied from the same wrong source. A formula-and-charge comparison
+    against ChEBI itself sees it on the first entity: <code>CHEBI:16015</code> reports
+    <code>C5H9NO4</code> charge 0, while the graph claims charge −1.
+  </p>
+</div>
+
+<h3>4.2 Recording the floor rather than pretending to close it</h3>
+
+<p>
+  The theorem says the gate above cannot be completed either — dereferencing checks the boundary
+  against one authority at one moment, and the medium keeps growing. The honest response is not to
+  add gates until the residual looks like zero; it is to <strong>record the residual as a
+  first-class property of the dataset</strong>.
+</p>
+
+<figure class="code">
+  <figcaption>proposed addition to <code>data/dataset.ttl</code></figcaption>
+<pre><code><span class="tok-iri">&lt;https://w3id.org/bitspark/tacat/dataset&gt;</span>
+    <span class="tok-kw">a</span> <span class="tok-iri">dcat:Dataset</span> ;
+    <span class="tok-comment"># What was checked, against what, when. Not a quality score —</span>
+    <span class="tok-comment"># a statement of which comparisons were performed and which</span>
+    <span class="tok-comment"># were not, so a consumer can see the boundary of the claim.</span>
+    <span class="tok-iri">tacat:identityEvidence</span> [
+        <span class="tok-iri">tacat:authority</span>      <span class="tok-iri">&lt;https://www.ebi.ac.uk/chebi/&gt;</span> ;
+        <span class="tok-iri">tacat:comparedFields</span>  <span class="tok-string">"formula"</span>, <span class="tok-string">"charge"</span> ;
+        <span class="tok-iri">tacat:checkedOn</span>       <span class="tok-string">"2026-07-28"</span>^^<span class="tok-iri">xsd:date</span> ;
+        <span class="tok-iri">tacat:entitiesChecked</span> <span class="tok-num">9</span> ;
+        <span class="tok-iri">tacat:notCompared</span>     <span class="tok-string">"stereochemistry, protonation state at pH != 7.3"</span> ;
+    ] .</code></pre>
+</figure>
+
+<p>
+  <code>tacat:notCompared</code> is the unusual field and it is the one the theorem argues for. A
+  dataset that states what it did <em>not</em> check is making a stronger claim than one that reports
+  a green tick, because it has drawn a boundary a reader can test.
+</p>
+
+<h2 id="honest">5. What this does not fix</h2>
+
+<div class="box ask">
+  <span class="box-title">Be able to say this out loud</span>
+  <ul>
+    <li>
+      <strong>A dereference gate is still a boundary check.</strong> It compares two sources; it does
+      not establish that either is right. If ChEBI itself carries a wrong formula, both agree and both
+      are wrong. The theorem says this is not fixable, only bounded — which is why the proposal is a
+      recorded residual and not a certificate.
+    </li>
+    <li>
+      <strong>It introduces a network dependency into the definition of correctness.</strong> That is
+      a real cost. The mitigation — non-blocking, cached, artefact-producing — is a compromise, and
+      the alternative (vendoring a ChEBI snapshot and checking against that) trades freshness for
+      determinism. Both are defensible; the choice should be recorded in <code>DECISIONS.md</code>
+      rather than made silently.
+    </li>
+    <li>
+      <strong>The theory is unpublished.</strong> The gate stands without it. If someone asks "why
+      should I believe your floor theorem?", the answer is that you need not — the deliberate
+      corruption in G10 is the empirical case, and it is reproducible in this repository today.
+    </li>
+  </ul>
+</div>
+
+<div class="pagenav">
+  <a href="index.html"><span class="dir">Back</span>Start here</a>
+  <span class="spacer"></span>
+  <a href="02-closure.html"><span class="dir">Next</span>2 · Closure, not confidence</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

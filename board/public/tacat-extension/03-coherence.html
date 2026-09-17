@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 · Three sources or none — tacat extension</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="3">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-floor.html">The floor under identity</a></li>
+    <li><a href="02-closure.html">Closure, not confidence</a></li>
+    <li><a class="here" href="03-coherence.html">Three sources or none</a></li>
+    <li><a href="04-boundary.html">Where the model stops</a></li>
+    <li><a href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a href="07-three.html">Three verdicts on one run</a></li>
+    <li><a href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 3</p>
+<h1>Three sources or none</h1>
+<p class="standfirst">
+  Every curated fact in this repository was verified against a primary database by a human. That work
+  is genuine and it does not re-run. There is a theorem about how many independent sources a claim
+  needs before it survives one of them being wrong — the answer is three, not two — and it converts
+  provenance from a record into a check.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★ high value</span>
+  <span class="chip">11 min</span>
+  <span class="chip">PLAN §3 · human verification</span>
+  <span class="chip trap">cheap to check, expensive to skip</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance.</strong> This chapter rests on unpublished single-author work
+  (<em>Semantic Causal Propagation</em>, §7). It has not been peer-reviewed. The coherence result
+  below is a claim about <em>robustness under source failure</em>, not about truth — a coherent
+  triangle of sources can be uniformly wrong, and the chapter says so in §5. Read the theorem as
+  setting a floor on how little evidence is enough, never a ceiling on how much is needed.
+</div>
+
+<h2 id="problem">1. The problem</h2>
+
+<p>
+  <code>GAPS_2.md</code> G10 makes an observation about the human verification behind
+  <code>reference_data.py</code> that is easy to read past:
+</p>
+
+<blockquote class="box">
+  <span class="box-title">GAPS_2.md §G10</span>
+  <p>
+    "What defends against it today is human verification — every identifier checked individually
+    against its primary database, recorded in <code>PLAN.md</code> §3, with the three
+    counterintuitive cases documented inline. That work was done and is genuine. <strong>It is not a
+    gate: it does not re-run, and it cannot fail a pipeline.</strong>"
+  </p>
+</blockquote>
+
+<p>
+  There is a second problem underneath it. Even where verification <em>was</em> done, the record does
+  not say how many <em>independent</em> sources agreed. Nine ChEBI identifiers were checked against
+  ChEBI. That is one source checked once — and a source checked against itself is exactly the
+  self-consistent single cluster from Chapter 2.
+</p>
+
+<div class="box trap">
+  <span class="box-title">Where this already nearly went wrong</span>
+  <p>
+    v0's identifiers came from one systematic method: ChEBI resolved via KEGG's <code>conv/chebi</code>
+    cross-reference. One source, one method, uniformly applied — and uniformly wrong, returning the
+    neutral parent every time. A second independent source (Rhea's own participant list, which uses
+    microspecies exclusively) would have disagreed on <em>every single entity</em> at the first
+    comparison.
+  </p>
+</div>
+
+<h2 id="theorem">2. Why two is not enough</h2>
+
+<p>
+  The calculus models corroboration as a <strong>support graph</strong>: a directed edge from one
+  source to another when the first reinforces the second's contribution to the same claim. The
+  question is what shape that graph must have for the claim to survive losing any one source.
+</p>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Thm · Coherence requires three</span>
+    <span class="thm-src">Semantic Causal Propagation, Thm 7.9</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      <strong>(i) Necessity.</strong> If a set of sources grounds a claim and remains grounding after
+      the failure of any single source, the shortest support cycle compatible with that robustness has
+      length ≥ 3.
+    </p>
+    <p class="thm-stmt" style="margin-top:0.5rem">
+      <strong>(ii) Sufficiency.</strong> Three sources mutually supporting one another form a strongly
+      connected triangle; the claim survives removal of any single member.
+    </p>
+  </div>
+</div>
+
+<p>The exclusions are argued individually, and they are the interesting part:</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Shape</th><th>Why it fails</th><th>Concrete form</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Chain</strong><br><span class="small muted">A → B → C</span></td>
+      <td>The terminal source is supported by nothing. Remove it and each predecessor collapses in turn.</td>
+      <td>"KEGG says so, and KEGG cites ChEBI." Remove KEGG's mapping and nothing remains.</td>
+    </tr>
+    <tr>
+      <td><strong>1-cycle</strong><br><span class="small muted">A → A</span></td>
+      <td>Self-support. Vacuous.</td>
+      <td>A label checked against the row that generated it — G10 exactly.</td>
+    </tr>
+    <tr>
+      <td><strong>2-cycle</strong><br><span class="small muted">A ⇄ B</span></td>
+      <td>Mutual definition with no independent check. Remove either and one unsupported source is left. Two cannot outvote their own disagreement.</td>
+      <td>ChEBI and a database that imports ChEBI. They agree because they are the same source twice.</td>
+    </tr>
+    <tr>
+      <td><strong>Triangle</strong><br><span class="small muted">A ⇄ B ⇄ C ⇄ A</span></td>
+      <td>Each is supported by the other two. Removal leaves a supported pair.</td>
+      <td>ChEBI · Rhea · UniProt — <em>which this project already federates against.</em></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 720 200" role="img" aria-labelledby="fig3title fig3desc">
+  <title id="fig3title">Support graph shapes and their robustness</title>
+  <desc id="fig3desc">Chain, two-cycle and triangle compared; only the triangle survives removal of
+  any single node.</desc>
+
+  <!-- chain -->
+  <text x="100" y="26" class="fig-label fig-no" text-anchor="middle">chain — fails</text>
+  <circle cx="40" cy="90" r="16" class="fig-su fig-str-m" stroke-width="1.5"/><text x="40" y="95" class="fig-mono fig-t" text-anchor="middle">A</text>
+  <circle cx="100" cy="90" r="16" class="fig-su fig-str-m" stroke-width="1.5"/><text x="100" y="95" class="fig-mono fig-t" text-anchor="middle">B</text>
+  <circle cx="160" cy="90" r="16" class="fig-su fig-str-no" stroke-width="2"/><text x="160" y="95" class="fig-mono fig-t" text-anchor="middle">C</text>
+  <line x1="56" y1="90" x2="80" y2="90" class="fig-str-m" stroke-width="1.5"/><polygon points="84,90 76,86 76,94" class="fig-m"/>
+  <line x1="116" y1="90" x2="140" y2="90" class="fig-str-m" stroke-width="1.5"/><polygon points="144,90 136,86 136,94" class="fig-m"/>
+  <text x="160" y="128" class="fig-small fig-no" text-anchor="middle">unsupported</text>
+  <text x="100" y="158" class="fig-small fig-m" text-anchor="middle">remove C and</text>
+  <text x="100" y="174" class="fig-small fig-m" text-anchor="middle">the chain unwinds</text>
+
+  <!-- 2-cycle -->
+  <text x="350" y="26" class="fig-label fig-no" text-anchor="middle">pair — fails</text>
+  <circle cx="310" cy="90" r="16" class="fig-su fig-str-m" stroke-width="1.5"/><text x="310" y="95" class="fig-mono fig-t" text-anchor="middle">A</text>
+  <circle cx="390" cy="90" r="16" class="fig-su fig-str-m" stroke-width="1.5"/><text x="390" y="95" class="fig-mono fig-t" text-anchor="middle">B</text>
+  <path d="M 326 82 Q 350 66 374 82" class="fig-str-m" stroke-width="1.5"/><polygon points="378,84 370,79 369,87" class="fig-m"/>
+  <path d="M 374 98 Q 350 114 326 98" class="fig-str-m" stroke-width="1.5"/><polygon points="322,96 330,101 331,93" class="fig-m"/>
+  <text x="350" y="158" class="fig-small fig-m" text-anchor="middle">remove either and one</text>
+  <text x="350" y="174" class="fig-small fig-m" text-anchor="middle">unsupported source remains</text>
+
+  <!-- triangle -->
+  <text x="600" y="26" class="fig-label fig-ok" text-anchor="middle">triangle — robust</text>
+  <circle cx="600" cy="60" r="16" class="fig-sf fig-str-ok" stroke-width="2"/><text x="600" y="65" class="fig-mono fig-t" text-anchor="middle">A</text>
+  <circle cx="558" cy="122" r="16" class="fig-sf fig-str-ok" stroke-width="2"/><text x="558" y="127" class="fig-mono fig-t" text-anchor="middle">B</text>
+  <circle cx="642" cy="122" r="16" class="fig-sf fig-str-ok" stroke-width="2"/><text x="642" y="127" class="fig-mono fig-t" text-anchor="middle">C</text>
+  <line x1="589" y1="74" x2="570" y2="107" class="fig-str-ok" stroke-width="1.5"/>
+  <line x1="611" y1="74" x2="630" y2="107" class="fig-str-ok" stroke-width="1.5"/>
+  <line x1="575" y1="122" x2="625" y2="122" class="fig-str-ok" stroke-width="1.5"/>
+  <text x="600" y="158" class="fig-small fig-m" text-anchor="middle">remove any one and the</text>
+  <text x="600" y="174" class="fig-small fig-m" text-anchor="middle">other two still support each other</text>
+</svg>
+<figcaption>
+  Thm 7.9. The result is about <em>structure</em>, not about how strong any individual source is: a
+  chain of ten highly reliable sources is still a chain, and still collapses from the end.
+</figcaption>
+</figure>
+
+<h2 id="decidable">3. The part that makes it cheap</h2>
+
+<div class="thm">
+  <div class="thm-head">
+    <span class="thm-n">Cor · Coherence is ordinally decidable</span>
+    <span class="thm-src">Semantic Causal Propagation, Cor. 7.10</span>
+  </div>
+  <div class="thm-body">
+    <p class="thm-stmt">
+      Whether a set of sources is coherent is decidable from the <strong>signs</strong> of pairwise
+      support alone — whether each pair agrees or conflicts — with no access to any numerical
+      confidence, weight or score.
+    </p>
+  </div>
+</div>
+
+<div class="box key">
+  <span class="box-title">Why this matters for an implementation</span>
+  <p>
+    You never have to invent a confidence number. No "ChEBI is 0.9 reliable, KEGG is 0.7". The check
+    is: <em>does source X's answer agree with source Y's answer, yes or no</em> — build the graph of
+    agreements, look for a triangle. That is a handful of set comparisons and a cycle search over a
+    graph with three or four nodes. It is trivially implementable and there is nothing to tune, which
+    also means nothing to argue about in review.
+  </p>
+</div>
+
+<h2 id="proposal">4. What this proposes building</h2>
+
+<h3>4.1 Provenance that records independence, not just origin</h3>
+
+<p>
+  <code>data/dataset.ttl</code> carries a PROV envelope, and <code>GAPS_0.md</code> G3 already
+  criticised it for being static — "nothing records <em>which</em> build produced <em>this</em>
+  graph". The coherence result adds a second criticism: nothing records <strong>how many independent
+  sources back each fact</strong>, so the envelope cannot distinguish a fact confirmed three ways
+  from one asserted once.
+</p>
+
+<figure class="code">
+  <figcaption>proposed: per-entity support, alongside the existing <code>skos:exactMatch</code></figcaption>
+<pre><code><span class="tok-iri">tacat:CHEBI_29985</span>
+    <span class="tok-iri">skos:exactMatch</span>  <span class="tok-iri">&lt;http://purl.obolibrary.org/obo/CHEBI_29985&gt;</span> ;
+    <span class="tok-iri">tacat:supportedBy</span> [
+        <span class="tok-iri">tacat:source</span>    <span class="tok-iri">&lt;https://www.ebi.ac.uk/chebi/&gt;</span> ;
+        <span class="tok-iri">tacat:agreesOn</span>   <span class="tok-string">"formula"</span>, <span class="tok-string">"charge"</span> ;
+    ] , [
+        <span class="tok-iri">tacat:source</span>    <span class="tok-iri">&lt;https://www.rhea-db.org/&gt;</span> ;
+        <span class="tok-iri">tacat:agreesOn</span>   <span class="tok-string">"participant of RHEA:19453"</span> ;
+    ] , [
+        <span class="tok-iri">tacat:source</span>    <span class="tok-iri">&lt;https://www.uniprot.org/&gt;</span> ;
+        <span class="tok-iri">tacat:agreesOn</span>   <span class="tok-string">"cited by P24298 catalytic activity"</span> ;
+    ] ;
+    <span class="tok-comment"># three independent sources, mutually agreeing → coherent</span>
+    <span class="tok-iri">tacat:supportShape</span> <span class="tok-string">"triangle"</span> .</code></pre>
+</figure>
+
+<h3>4.2 A SHACL shape that enforces it</h3>
+
+<p>
+  This is where it stops being documentation. The project already validates with SHACL under
+  <code>--metashacl</code>; a coherence requirement is expressible as an ordinary cardinality
+  constraint, which means <strong>an under-supported fact fails the build</strong> rather than being
+  noted in a README.
+</p>
+
+<figure class="code">
+  <figcaption>proposed addition to <code>data/shapes.ttl</code></figcaption>
+<pre><code><span class="tok-iri">tacat:ChemicalEntityShape</span>
+    <span class="tok-kw">a</span> <span class="tok-iri">sh:NodeShape</span> ;
+    <span class="tok-iri">sh:targetClass</span> <span class="tok-iri">tacat:ChemicalEntity</span> ;
+    <span class="tok-iri">sh:property</span> [
+        <span class="tok-iri">sh:path</span>     <span class="tok-iri">tacat:supportedBy</span> ;
+        <span class="tok-iri">sh:minCount</span> <span class="tok-num">3</span> ;
+        <span class="tok-comment"># Thm 7.9: fewer than three independent sources cannot survive</span>
+        <span class="tok-comment"># any one of them being wrong. Two agreeing sources are not</span>
+        <span class="tok-comment"># corroboration if either imports the other.</span>
+        <span class="tok-iri">sh:message</span>  <span class="tok-string">"A chemical entity needs three independent supporting sources; this has fewer."</span> ;
+    ] .</code></pre>
+</figure>
+
+<div class="box bridge">
+  <span class="box-title">It fits the existing discipline exactly</span>
+  <p>
+    <code>RATIONALE.md</code> §4 lists the project's response to silent failure: "make failure loud" —
+    a reasoning gate that asserts the inference <em>fired</em>, <code>--metashacl</code> so a
+    malformed shape fails rather than constraining nothing, a negative control that would classify if
+    the definition were keyed on the wrong thing. A coherence minimum is the same move applied to
+    provenance: it converts "we checked carefully" from a claim in a document into a condition the
+    build enforces.
+  </p>
+</div>
+
+<h2 id="honest">5. What this does not fix</h2>
+
+<div class="box ask">
+  <span class="box-title">Be able to say this out loud</span>
+  <ul>
+    <li>
+      <strong>Three agreeing sources can be uniformly wrong.</strong> The theorem is about robustness
+      to <em>one source failing</em>, not about truth. If ChEBI, Rhea and UniProt all inherit an error
+      from a common upstream curation, the triangle is coherent and wrong. Coherence is a floor on
+      evidence, never a certificate.
+    </li>
+    <li>
+      <strong>"Independent" is doing enormous work and is not formally defined here.</strong> Rhea
+      cites ChEBI identifiers directly — so are they independent? For <em>formula and charge</em>,
+      arguably not; for <em>which species participates in RHEA:19453</em>, yes, because that is Rhea's
+      own curation. The honest implementation records <em>what</em> each source agrees on rather than
+      claiming blanket independence, which is why <code>tacat:agreesOn</code> is a field above.
+    </li>
+    <li>
+      <strong>A <code>sh:minCount 3</code> could be satisfied by three cheap sources.</strong> The
+      constraint counts, and counting is gameable. It raises the floor; it does not replace judgement
+      about which authorities are worth consulting.
+    </li>
+    <li>
+      <strong>For a nine-entity demo this is arguably over-engineering</strong>, and that should be
+      said plainly rather than defended. Its value is at curation scale — hundreds of entities where
+      nobody can check each one by hand. The demo would carry it as a <em>demonstrated pattern</em>,
+      not as necessary infrastructure.
+    </li>
+  </ul>
+</div>
+
+<div class="pagenav">
+  <a href="02-closure.html"><span class="dir">Back</span>2 · Closure, not confidence</a>
+  <span class="spacer"></span>
+  <a href="04-boundary.html"><span class="dir">Next</span>4 · Where the model stops</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

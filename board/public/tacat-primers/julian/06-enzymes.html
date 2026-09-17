@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6 · Enzymes from zero — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a class="here" href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 6</p>
+<h1>Enzymes from zero</h1>
+<p class="standfirst">
+  No chemistry assumed. By the end of this chapter you will understand what the three reactions in
+  the project actually are, why one molecule that is present in all of them must <em>not</em> be
+  modelled as a participant, and why &ldquo;substrate&rdquo; and &ldquo;product&rdquo; cannot be
+  types.
+</p>
+
+<h2 id="reaction">1. A reaction is a rearrangement</h2>
+
+<p>
+  Molecules are atoms held together by bonds. A chemical reaction breaks some bonds and makes
+  others; the atoms are conserved, only their arrangement changes. Conventionally:
+</p>
+
+<div class="eq">
+  <span class="don">L-alanine</span> <span class="op">+</span> <span class="acc">2-oxoglutarate</span>
+  <span class="op">&#8652;</span>
+  <span class="prd">pyruvate</span> <span class="op">+</span> <span class="prd">L-glutamate</span>
+  <span class="sub">Left of the arrow: what goes in. Right: what comes out. The double arrow means the
+  reaction runs in both directions.</span>
+</div>
+
+<p>
+  Two invariants hold and both are checkable, which makes them useful as tests:
+</p>
+
+<ul>
+  <li><strong>Mass balance</strong> — the same count of each element on both sides. Atoms are not created.</li>
+  <li><strong>Charge balance</strong> — the total electric charge is the same on both sides.</li>
+</ul>
+
+<p>For the reaction above:</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th>Left</th><th>Right</th><th></th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Formula</td>
+      <td class="mono">C<sub>3</sub>H<sub>7</sub>NO<sub>2</sub> + C<sub>5</sub>H<sub>4</sub>O<sub>5</sub></td>
+      <td class="mono">C<sub>3</sub>H<sub>3</sub>O<sub>3</sub> + C<sub>5</sub>H<sub>8</sub>NO<sub>4</sub></td>
+      <td class="yes">C<sub>8</sub>H<sub>11</sub>NO<sub>7</sub> both sides</td>
+    </tr>
+    <tr>
+      <td>Charge</td>
+      <td class="mono tnum">0 + (&minus;2)</td>
+      <td class="mono tnum">(&minus;1) + (&minus;1)</td>
+      <td class="yes">&minus;2 both sides</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box bridge">
+  <span class="box-title">This is a property-based test</span>
+  <p>
+    An invariant that must hold over the data regardless of which reaction you look at. The project
+    tests it, which is an original idea nobody asked for. Chapter 7 explains the sting: the test
+    passed on data that was <em>wrong</em>, because it checked an invariant of the values without
+    ever checking that the values belonged to the identifiers written beside them.
+  </p>
+</div>
+
+<h2 id="enzyme">2. What an enzyme is</h2>
+
+<p>
+  Most useful reactions, left alone in water at body temperature, run far too slowly to matter. An
+  <strong>enzyme</strong> is a protein that makes one specific reaction go fast — typically by a
+  factor of 10&#8310; to 10&#185;&#8311; — and comes out unchanged, ready to do it again.
+</p>
+
+<p>Three properties, all of which matter for modelling:</p>
+
+<ul>
+  <li><strong>Not consumed.</strong> It is not on either side of the equation. One enzyme molecule
+      processes thousands of substrate molecules per second.</li>
+  <li><strong>Specific.</strong> It accelerates <em>one</em> transformation, or a narrow family,
+      because catalysis depends on physical fit in a pocket called the active site.</li>
+  <li><strong>It does not change the destination.</strong> An enzyme changes how fast equilibrium
+      is reached, never where equilibrium lies. This is why reversibility is a property of the
+      reaction, not of the catalyst.</li>
+</ul>
+
+<div class="box bridge">
+  <span class="box-title">If an analogy helps</span>
+  <p>
+    A JIT compiler. It does not change what your program computes — it changes how long the
+    computation takes, by a large constant factor, and it is still there afterwards to do it again.
+    An enzyme is a physical object that does the same thing to a chemical transformation.
+  </p>
+  <p>
+    The analogy breaks in one place worth knowing: an enzyme accelerates the reaction in
+    <em>both</em> directions equally. Which way material actually flows is decided by
+    concentrations, not by the enzyme.
+  </p>
+</div>
+
+<h3>Substrate and product</h3>
+
+<p>
+  <strong>Substrate</strong> = what goes in. <strong>Product</strong> = what comes out. Simple, and
+  the source of the project&rsquo;s central modelling problem, because these are
+  <strong>roles in a particular reaction running in a particular direction</strong> — not properties
+  of the molecule.
+</p>
+
+<p>
+  L-glutamate is a product of all three reactions here. In glutamate dehydrogenase it is a
+  substrate. Same molecule, same graph, opposite role. Any model that types molecules as substrates
+  or products is broken before it starts — which is exactly why participation needs the bridge node
+  from chapter 1, carrying a role.
+</p>
+
+<h2 id="ec">3. EC numbers</h2>
+
+<p>
+  Enzymes are classified by the <strong>Enzyme Commission</strong> number: four integers, a strict
+  hierarchy, each level narrowing.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Level</th><th>Value</th><th>Means</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td class="mono">2</td><td>Transferase — moves a chemical group from one molecule to another</td></tr>
+    <tr><td>2</td><td class="mono">2.6</td><td>&hellip;transferring nitrogen-containing groups</td></tr>
+    <tr><td>3</td><td class="mono">2.6.1</td><td>&hellip;specifically a transaminase</td></tr>
+    <tr><td>4</td><td class="mono">2.6.1.2</td><td>serial number: alanine transaminase</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box key">
+  <span class="box-title">The modelling trap in one sentence</span>
+  <p>
+    <strong>An EC number classifies an activity, not a protein.</strong> It names a transformation
+    that something can catalyse. The relationship between EC numbers and actual proteins is
+    <em>many-to-many</em>:
+  </p>
+  <ul>
+    <li>One EC number, many proteins — human, <em>E. coli</em> and yeast all have an alanine
+        transaminase, all EC 2.6.1.2, all different proteins with different sequences.</li>
+    <li>One protein, many EC numbers — human GOT1 (UniProt <code>P17174</code>) carries
+        <strong>both</strong> 2.6.1.1 and 2.6.1.3. Cysteine transaminase activity is a secondary
+        activity of the aspartate transaminase protein.</li>
+  </ul>
+  <p>
+    So &ldquo;three reactions&rdquo; here is not &ldquo;three proteins&rdquo;. The project&rsquo;s
+    reference data records this correctly and the ontology builder currently mints three separate
+    <code>Enzyme</code> individuals — a known divergence between the data and the code, logged as
+    K5 in <code>docs/PLAN.md</code>.
+  </p>
+</div>
+
+<p>
+  One more identifier note that pays off later: there is <strong>no OBO ontology for EC
+  numbers</strong>, so inventing <code>obo:EC_2_6_1_2</code> would be wrong. The right IRI is
+  <code>http://purl.uniprot.org/enzyme/2.6.1.2</code> — a real OWL class in UniProt with the EC
+  hierarchy materialised as <code>rdfs:subClassOf</code>, so the tree in the table above is
+  traversable with a property path.
+</p>
+
+<h2 id="transaminase">4. What a transaminase does</h2>
+
+<p>
+  A transaminase (or aminotransferase) moves an <strong>amino group</strong> — a nitrogen atom with
+  two hydrogens, &minus;NH<sub>2</sub> — from one molecule to another. That is the whole job, and it
+  is a swap rather than a one-way transfer.
+</p>
+
+<p>Two families of molecule take part, and they trade places:</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Type</th><th>Has</th><th>Role going in</th><th>Becomes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>amino acid</strong></td><td>an &minus;NH<sub>2</sub> group</td>
+      <td>the <em>donor</em></td><td>a 2-oxo acid <span class="muted">(it lost the group)</span></td>
+    </tr>
+    <tr>
+      <td><strong>2-oxo acid</strong></td><td>a C=O in the 2-position</td>
+      <td>the <em>acceptor</em></td><td>an amino acid <span class="muted">(it gained the group)</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  So each side of the equation has one of each type, and the classes swap across the arrow. That
+  symmetry is the <strong>net-reaction pattern</strong> of a transamination — and it is exactly the
+  four-conjunct defined class from chapter 3:
+</p>
+
+<div class="eq">
+  <span class="don">amino acid</span> <span class="op">+</span> <span class="acc">2-oxo acid</span>
+  <span class="op">&#8652;</span>
+  <span class="prd">2-oxo acid</span> <span class="op">+</span> <span class="prd">amino acid</span>
+  <span class="sub">consumes an amino acid &middot; consumes a 2-oxo acid &middot; produces a 2-oxo
+  acid &middot; produces an amino acid — the four conditions HermiT checks.</span>
+</div>
+
+<div class="box key">
+  <span class="box-title">Now the negative control makes chemical sense</span>
+  <p>
+    Glutamate dehydrogenase runs
+    <span class="don">L-glutamate</span> &rarr; <span class="prd">2-oxoglutarate</span> —
+    an amino acid <em>in</em>, a 2-oxo acid <em>out</em>. It contains both headline molecules of the
+    transaminations, but it only has <em>half</em> the pattern: there is no 2-oxo acid consumed and
+    no amino acid produced, because the amino group is not transferred to a partner, it is stripped
+    off and released as ammonia.
+  </p>
+  <p>
+    That is a real chemical difference, and it is what the reasoner detects. The definition is not
+    an arbitrary set of conditions that happens to exclude one thing — it encodes what makes a
+    transamination a transamination.
+  </p>
+</div>
+
+<h3>The three reactions in the project</h3>
+
+<p>
+  All three use the same acceptor, <strong>2-oxoglutarate</strong>, and therefore all three make
+  the same amino-acid product, <strong>L-glutamate</strong>. Only the donor varies:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>EC</th><th>Enzyme</th><th>Donor</th><th>Its oxo product</th><th>Rhea</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono">2.6.1.1</td><td>aspartate transaminase <span class="muted">(AST)</span></td>
+      <td>L-aspartate</td><td>oxaloacetate</td><td class="mono">21824</td>
+    </tr>
+    <tr>
+      <td class="mono">2.6.1.2</td><td>alanine transaminase <span class="muted">(ALT)</span></td>
+      <td>L-alanine</td><td>pyruvate</td><td class="mono">19453</td>
+    </tr>
+    <tr>
+      <td class="mono">2.6.1.3</td><td>cysteine transaminase</td>
+      <td>L-cysteine</td><td>3-mercaptopyruvate</td><td class="mono">17441</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  That shared acceptor and shared product is why these three were chosen: it gives the graph a
+  genuine cross-cutting question (<em>which reactions involve L-glutamate?</em>) rather than three
+  disconnected records.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You have almost certainly seen two of these</span>
+  <p>
+    <strong>ALT</strong> and <strong>AST</strong> are the standard liver-function markers on a blood
+    panel. They live inside liver cells; when cells are damaged the enzymes leak into the
+    bloodstream, so elevated ALT/AST is a damage signal. Same enzymes, same EC numbers, being
+    measured for a completely different reason.
+  </p>
+</div>
+
+<h3>Why industry cares</h3>
+
+<p>
+  Many drug molecules contain an amine group attached to a carbon with four different neighbours —
+  a <strong>chiral</strong> centre, which can exist in two mirror-image forms. Usually only one form
+  works; the other is inactive or harmful. Ordinary chemistry tends to produce a 50/50 mixture that
+  then has to be separated, expensively.
+</p>
+<p>
+  Enzymes are chiral themselves, so they make one form and not the other. Engineered transaminases
+  are used industrially for exactly this — the best-known case being the manufacture of the diabetes
+  drug sitagliptin, where an evolved transaminase replaced a high-pressure metal-catalysed step.
+</p>
+<p>
+  This is the assessor&rsquo;s field: LARA, his lab-automation platform, describes itself as
+  &ldquo;fully automatized <strong>transaminase</strong> high throughput protein screening.&rdquo;
+  The three reactions are not arbitrary demo data — they are his daily subject matter.
+</p>
+
+<div class="box trap">
+  <span class="box-title">And the one that follows from it — the definition cannot classify his enzyme</span>
+  <p>
+    The transaminases LARA screens are <strong>ω-transaminases</strong> — amine transaminases. They
+    run <em>amine + keto acid → ketone + amino acid</em>. There is no amino-acid donor and no
+    2-oxo-acid product, so <strong>two of the four conjuncts fail</strong> and the reasoner does not
+    classify them.
+  </p>
+  <p>
+    The three shipped reactions are α-transaminations, so the model fits what it models. What
+    overclaims is the class <em>name</em>. <strong>Answer with the fix, not an apology:</strong>
+    "α-transamination is what I defined. A hierarchy is the fix — α and ω as siblings under a parent
+    requiring only the amino-group transfer — not a wider definition."
+  </p>
+  <p class="small muted">
+    This is the most likely hard question in the whole project, precisely because the paragraph above
+    is right that these are his daily subject matter.
+  </p>
+</div>
+
+
+<h2 id="cofactor">5. Cofactors — present, essential, and not participants</h2>
+
+<p>
+  Some enzymes cannot work with protein alone; they need a non-protein helper molecule called a
+  <strong>cofactor</strong>. The distinction that matters for modelling:
+</p>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">A substrate</span>
+    <p>Consumed. Enters the reaction, is chemically transformed, leaves as something else. Appears
+       in the equation. Counts toward mass and charge balance.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">A prosthetic group</span>
+    <p>Not consumed. Bound to the enzyme, changes during the reaction, and is returned to its
+       starting state before the next cycle. <strong>Does not appear in the equation and does not
+       balance.</strong></p>
+  </div>
+</div>
+
+<p>
+  All three of these enzymes require <strong>pyridoxal 5&prime;-phosphate</strong> (PLP), a
+  derivative of vitamin B6. In the resting enzyme it is bonded to an active-site lysine as an
+  <em>internal aldimine</em>; during catalysis that linkage is displaced and it forms an
+  <em>external aldimine</em> with the substrate. It stays with the enzyme across the cycle.
+</p>
+
+<h2 id="pingpong">6. Ping-pong bi-bi, and why PLP does not balance</h2>
+
+<p>
+  The mechanism explains the modelling decision, and it takes sixty seconds. The reaction happens in
+  <strong>two half-reactions</strong>, and the enzyme alternates between two states.
+</p>
+
+<div class="pingpong">
+  <div class="half">
+    <h4>Half 1</h4>
+    <p>The donor amino acid binds. Its amino group is handed to <strong>PLP</strong>, which becomes
+       <strong>PMP</strong> (the aminated form). The donor, now missing its amino group, leaves as a
+       2-oxo acid.</p>
+  </div>
+  <div class="swap">&rarr;&nbsp;first product leaves<br>before second substrate binds&nbsp;&rarr;</div>
+  <div class="half">
+    <h4>Half 2</h4>
+    <p>2-oxoglutarate binds. <strong>PMP</strong> hands the amino group over, becoming
+       <strong>PLP</strong> again. The acceptor, now carrying the amino group, leaves as
+       L-glutamate.</p>
+  </div>
+</div>
+
+<p>
+  &ldquo;<strong>Bi-bi</strong>&rdquo; = two substrates in, two products out.
+  &ldquo;<strong>Ping-pong</strong>&rdquo; = the first product departs before the second substrate
+  arrives, and the cofactor bounces between two forms carrying the group across.
+</p>
+
+<div class="box key">
+  <span class="box-title">The consequence</span>
+  <p>
+    PLP ends the cycle in exactly the state it started. Over one complete turnover its net change is
+    <strong>zero</strong>. It therefore does not appear in the equation and does not enter the
+    balance — which is why <strong>Rhea&rsquo;s equations for all three reactions have exactly four
+    participants and none of them is PLP</strong>, and why UniProt records it as a
+    <code>COFACTOR</code> annotation on the protein rather than as a reactant.
+  </p>
+</div>
+
+<p>
+  So the ontology puts <code>hasCofactor</code> on <code>Enzyme</code>, never on
+  <code>BiochemicalReaction</code>. PLP is a fact about the catalyst, not about the transformation.
+</p>
+
+<div class="box trap">
+  <span class="box-title">Why this is the domain-knowledge probe</span>
+  <p>
+    A developer given &ldquo;these three reactions all need PLP&rdquo; and no enzymology would model
+    PLP as a fourth substrate. It is the obvious reading. And <em>every syntactic check would still
+    pass</em>: the graph validates, SHACL is happy, queries return rows. Only the stoichiometry
+    would be a lie — a fact nothing in the software stack can detect.
+  </p>
+  <p>
+    There is a test named <code>test_plp_is_not_a_reaction_participant</code> asserting it never
+    appears as one. Getting this right is quiet and specific evidence of understanding the chemistry
+    rather than only the RDF, and the first submission got it right while never saying so — leaving
+    its strongest signal invisible.
+  </p>
+</div>
+
+<h2 id="direction">7. Direction: the same reaction, opposite roles</h2>
+
+<p>
+  Last piece, and the sharpest one. Reversible means the reaction genuinely runs both ways; which
+  way it actually runs in a living cell depends on concentrations and on what the cell needs.
+</p>
+
+<p>Concretely, from UniProt:</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Protein</th><th>Organism</th><th>Rhea master</th><th>Physiological direction</th><th>L-glutamate is&hellip;</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="mono">P24298</td><td>human ALT1</td><td class="mono">19453</td>
+      <td>left&nbsp;&rarr;&nbsp;right</td><td class="yes">produced</td>
+    </tr>
+    <tr>
+      <td class="mono">P0A959</td><td><em>E. coli</em> AlaA</td><td class="mono">19453</td>
+      <td>right&nbsp;&rarr;&nbsp;left</td><td class="no">consumed</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  <strong>Same reaction. Same identifier. Opposite roles.</strong> <em>E. coli</em> runs it
+  biosynthetically to make alanine, consuming the glutamate that human ALT1 produces.
+</p>
+
+<p>
+  This is the experimental evidence that substrate and product cannot be intrinsic properties, and
+  it is why the bridge node carries a role. It is also, per the design notes, the single best thirty
+  seconds available in a presentation: a modelling decision justified by a measured biological fact
+  rather than by an appeal to good practice.
+</p>
+
+<div class="box ask">
+  <span class="box-title">The nuance to keep straight</span>
+  <p>
+    Rhea gives each reaction four identifiers: a <strong>master</strong> (undirected) and three
+    directional children. UniProt&rsquo;s <code>Reaction=</code> line always cites the master; the
+    <code>PhysiologicalDirection=</code> line cites a child. Conflating them corrupts the graph.
+  </p>
+  <p>
+    Which raises a fair challenge, logged as D3 in <code>docs/GAPS_0.md</code>: if the project links
+    to the <em>master</em>, is it entitled to say a reaction &ldquo;produces&rdquo; L-glutamate?
+    Verified answer: the master does carry a left side, a right side and a canonically written
+    equation, so assigning roles per that written orientation is consistent — and the competency
+    question is worded &ldquo;in the left-to-right orientation&rdquo; for exactly this reason.
+  </p>
+</div>
+
+<div class="box key">
+  <span class="box-title">Chapter 6 in five lines</span>
+  <ul>
+    <li>An enzyme accelerates a reaction without being consumed, and does not change where equilibrium lies.</li>
+    <li>EC numbers classify <em>activities</em>, not proteins — the relationship is many-to-many.</li>
+    <li>A transaminase swaps an amino group between an amino acid and a 2-oxo acid; both classes appear on both sides.</li>
+    <li>PLP cycles and returns to its starting state, so it does not balance and is a property of the enzyme.</li>
+    <li>Direction is organism-specific, so substrate and product are roles rather than types.</li>
+  </ul>
+</div>
+
+<div class="pager">
+  <a href="05-stack.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; 5 &middot; Stores &amp; the stack</span>
+  </a>
+  <a class="next" href="07-identity.html">
+    <span class="dir">Next</span>
+    <span class="t">7 &middot; Chemical identity &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

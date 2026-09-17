@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2 · SPARQL &amp; the protocol — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a class="here" href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 2</p>
+<h1>SPARQL &amp; the protocol</h1>
+<p class="standfirst">
+  SPARQL is close enough to SQL that you will be productive in an hour. The two things worth real
+  attention are that joins happen implicitly through repeated variable names, and that
+  <code>SERVICE</code> lets a query reach across the internet into somebody else&rsquo;s database
+  mid-execution — which is both the payoff of this project and a server-side request forgery hole
+  if you expose it.
+</p>
+
+<h2 id="basics">1. It is SQL, with the joins moved</h2>
+
+<p>
+  A SPARQL query is a set of triple patterns. A triple pattern is a triple with variables
+  (<code>?x</code>) in some positions. The engine finds every set of bindings that makes all the
+  patterns true simultaneously.
+</p>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">SQL</span>
+<pre><code data-lang="sql">SELECT e.label, p.chebi
+FROM   reaction   r
+JOIN   participant p ON p.reaction_id = r.id
+JOIN   entity      e ON e.id = p.entity_id
+WHERE  r.label = 'alanine transaminase reaction';</code></pre>
+    <p>Joins are explicit. You name the tables, then state how they connect.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">SPARQL</span>
+<pre><code data-lang="sparql">SELECT ?entityLabel WHERE {
+  ?reaction rdfs:label "alanine transaminase reaction" ;
+            tacat:hasParticipant ?p .
+  ?p        tacat:participatingEntity ?e .
+  ?e        rdfs:label ?entityLabel .
+}</code></pre>
+    <p>No <code>JOIN</code> keyword. <code>?p</code> appearing as the object of one pattern and the
+       subject of the next <em>is</em> the join.</p>
+  </div>
+</div>
+
+<div class="box bridge">
+  <span class="box-title">The mental swap</span>
+  <p>
+    Think of every triple pattern as a row in one gigantic three-column table
+    <code>(subject, predicate, object)</code> — because that is literally what a triplestore is.
+    Then a SPARQL query is a self-join over that table, and repeating a variable name is the join
+    condition. Once you see it that way, the rest of the syntax is decoration.
+  </p>
+</div>
+
+<p>
+  The rest maps directly: <code>FILTER</code> is <code>WHERE</code>&rsquo;s predicate part,
+  <code>OPTIONAL</code> is <code>LEFT JOIN</code>, and <code>DISTINCT</code>,
+  <code>ORDER BY</code>, <code>GROUP BY</code>, <code>LIMIT</code>, <code>OFFSET</code>,
+  <code>COUNT</code>, <code>UNION</code> all mean what you expect.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>SQL</th><th>SPARQL</th><th>Note</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="mono">JOIN … ON</td><td class="mono">(repeat a variable)</td><td>implicit; the commonest source of accidental cross-products</td></tr>
+    <tr><td class="mono">LEFT JOIN</td><td class="mono">OPTIONAL { … }</td><td>unbound rather than NULL</td></tr>
+    <tr><td class="mono">WHERE x &gt; 3</td><td class="mono">FILTER(?x &gt; 3)</td><td>applies to bindings, not to matching</td></tr>
+    <tr><td class="mono">IN (…)</td><td class="mono">VALUES ?x { … }</td><td>also used to inject a parameter list</td></tr>
+    <tr><td class="mono">EXISTS</td><td class="mono">ASK { … }</td><td>a whole query form, not a sub-clause</td></tr>
+    <tr><td class="mono">UNION</td><td class="mono">{…} UNION {…}</td><td>same</td></tr>
+    <tr><td class="mono">EXCEPT</td><td class="mono">MINUS { … }</td><td>same</td></tr>
+    <tr><td>&mdash;</td><td class="mono">a/b/c</td><td><strong>property paths</strong> — no SQL equivalent; see §3</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="forms">2. Four query forms, not one</h2>
+
+<p>
+  SQL has one shape of result: a table. SPARQL has four forms, and two of them return a graph
+  rather than rows.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Form</th><th>Returns</th><th>Response media type</th><th>Nearest thing you know</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono">SELECT</td><td>a table of bindings</td>
+      <td class="mono">application/sparql-results+json</td>
+      <td><code>SELECT</code></td>
+    </tr>
+    <tr>
+      <td class="mono">ASK</td><td>a single boolean</td>
+      <td class="mono">application/sparql-results+json</td>
+      <td><code>SELECT EXISTS(…)</code></td>
+    </tr>
+    <tr>
+      <td class="mono">CONSTRUCT</td><td>a new RDF graph</td>
+      <td class="mono">text/turtle</td>
+      <td>a view, or a response-shaping serialiser</td>
+    </tr>
+    <tr>
+      <td class="mono">DESCRIBE</td><td>whatever the server thinks describes a node</td>
+      <td class="mono">text/turtle</td>
+      <td><code>SELECT *</code> — deliberately underspecified</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  <code>CONSTRUCT</code> is the interesting one and has no clean SQL analogue: it runs a query and
+  emits triples built from the bindings, so the output is itself a graph you can feed into another
+  query. It is the composability that makes graph pipelines work.
+</p>
+
+<h2 id="paths">3. Property paths</h2>
+
+<p>
+  This is genuinely absent from SQL, and once seen it explains a lot of otherwise-cryptic queries.
+  A property path traverses several edges in one pattern, with regex-like operators:
+</p>
+
+<pre><code data-lang="sparql"># exactly this chain of three predicates
+?protein up:annotation/up:catalyticActivity/up:catalyzedReaction ?rhea .
+
+# one or more hops up a class hierarchy
+?class rdfs:subClassOf+ tacat:ChemicalEntity .
+
+# either direction
+?a tacat:catalysedBy|^tacat:catalysedBy ?b .</code></pre>
+
+<p>
+  <code>+</code> is the one to notice: recursive traversal of arbitrary depth, in one line. In SQL
+  that is a recursive CTE. In this domain — where classifications are deep trees, like the EC
+  hierarchy in <a href="06-enzymes.html">chapter 6</a> — it comes up constantly.
+</p>
+
+<h2 id="real">4. Two real queries from the project</h2>
+
+<p>
+  These are the pair that justify the whole n-ary bridge-node design from chapter 1. Same molecule,
+  same graph; the only difference is one extra line.
+</p>
+
+<p class="codelabel">CQ05 — which reactions <em>have</em> L-glutamate as a participant?</p>
+<pre><code data-lang="sparql">SELECT DISTINCT ?label WHERE {
+    ?reaction a tacat:BiochemicalReaction ;
+              rdfs:label ?label ;
+              tacat:hasParticipant ?participant .
+    ?participant tacat:participatingEntity tacat:CHEBI_29985 .
+} ORDER BY ?label</code></pre>
+<p class="muted"><strong>4 rows</strong> — the three transaminases, plus the glutamate dehydrogenase control.</p>
+
+<p class="codelabel">CQ06 — which reactions <em>produce</em> it, in the left-to-right orientation?</p>
+<pre><code data-lang="sparql">SELECT DISTINCT ?label WHERE {
+    ?reaction a tacat:BiochemicalReaction ;
+              rdfs:label ?label ;
+              tacat:hasParticipant ?participant .
+    ?participant tacat:participatingEntity tacat:CHEBI_29985 ;
+                 tacat:participantRole tacat:Product .
+} ORDER BY ?label</code></pre>
+<p class="muted"><strong>3 rows</strong> — the dehydrogenase drops out, because there L-glutamate is consumed rather than produced.</p>
+
+<div class="box key">
+  <span class="box-title">Why this pair is the demo — stated carefully</span>
+  <p>
+    <strong>The bridge node is not required merely to ask whether something is a product.</strong>
+    A binary model could answer that directly with
+    <code>?reaction tacat:hasProduct tacat:CHEBI_29985</code>, and claiming otherwise is an overclaim
+    a reviewer will take apart.
+  </p>
+  <p>
+    What the bridge node buys is that <em>one participation</em> becomes a first-class object: the
+    role is <strong>data rather than a predicate name</strong>, a stoichiometric coefficient has
+    somewhere to live, evidence and provenance can attach to it, the same query shape works for every
+    role, and SHACL can validate it and cite it in a report. The 4-versus-3 difference is the
+    visible <em>demonstration</em>; the justification is that participation has properties of its own.
+  </p>
+</div>
+
+<h2 id="federation">5. Federation: a JOIN across the internet</h2>
+
+<p>
+  <code>SERVICE</code> tells the engine to evaluate part of the pattern against a
+  <em>remote</em> endpoint and join the results back in. It is a foreign data wrapper, except the
+  foreign database is a public research server in Switzerland and you did not have to ask anyone.
+</p>
+
+<p class="codelabel">The project&rsquo;s live federated query, in full</p>
+<pre><code data-lang="sparql">SELECT ?rhea ?equation (COUNT(DISTINCT ?protein) AS ?proteinCount)
+WHERE {
+  VALUES ?rhea { &lt;http://rdf.rhea-db.org/21824&gt;
+                 &lt;http://rdf.rhea-db.org/19453&gt;
+                 &lt;http://rdf.rhea-db.org/17441&gt; }
+
+  ?rhea rdfs:subClassOf rh:Reaction ;
+        rh:equation     ?equation .
+
+  SERVICE &lt;https://sparql.uniprot.org/sparql&gt; {
+    ?protein up:annotation/up:catalyticActivity/up:catalyzedReaction ?rhea ;
+             up:reviewed true .
+  }
+}
+GROUP BY ?rhea ?equation
+ORDER BY ?rhea</code></pre>
+
+<p>
+  Run against Rhea&rsquo;s endpoint, this returns in about a second:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Rhea master</th><th class="num">Reviewed proteins</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">17441</td><td class="num tnum">15</td></tr>
+    <tr><td class="mono">19453</td><td class="num tnum">27</td></tr>
+    <tr><td class="mono">21824</td><td class="num tnum">91</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The local graph knows nothing about organisms or proteins. It never will. But because every
+  reaction carries a real Rhea IRI rather than a locally invented identifier, the question
+  <em>&ldquo;which organisms express an enzyme catalysing these reactions?&rdquo;</em> is answerable
+  without any ETL, data copy, or agreement with SIB. <strong>That is what identifier reuse buys,
+  demonstrated rather than asserted.</strong>
+</p>
+
+<div class="box trap">
+  <span class="box-title">Three ways this bites, all found the hard way</span>
+  <ul>
+    <li>
+      <strong><code>rdfs:subClassOf rh:Reaction</code>, not <code>a rh:Reaction</code>.</strong>
+      Rhea models reactions as OWL <em>classes</em>, not individuals. Getting this wrong returns an
+      empty result set rather than an error — the recurring theme.
+    </li>
+    <li>
+      <strong>A <code>LIMIT</code> on an ordered federated join is a correctness bug.</strong>
+      An earlier revision limited the detail query to 25 rows. Because the join fans out and the
+      results were ordered, that silently returned only two of the three reactions. It looked like
+      a complete answer.
+    </li>
+    <li>
+      <strong>Latency is a demo risk.</strong> The aggregate above takes ~1 s; the per-protein
+      detail form takes ~43 s. The module caches its last good result and degrades loudly, because
+      a live demo that depends on somebody else&rsquo;s uptime is a demo that fails in front of an
+      audience.
+    </li>
+  </ul>
+</div>
+
+<h2 id="ssrf">6. SERVICE is an SSRF vector — this is your territory</h2>
+
+<p>
+  You will spot this faster than most people in this field do. If an unauthenticated endpoint
+  accepts arbitrary SPARQL and evaluates <code>SERVICE</code>, then anyone can make
+  <strong>your server</strong> issue arbitrary outbound HTTP requests to a host of their choosing.
+  Cloud metadata endpoints, internal services, port scanning by timing — the standard SSRF
+  catalogue, delivered through a query language.
+</p>
+
+<p>
+  The project&rsquo;s API refuses <code>SERVICE</code> clauses in submitted queries outright.
+  Federation is a build-time and demo-time concern, executed deliberately, not something a caller
+  gets to trigger. That refusal, and the read-only contract around it, live in
+  <code>src/tacat/api/policy.py</code>.
+</p>
+
+<p>
+  <strong>This was a real finding, and it is worth knowing how it started.</strong> An earlier
+  revision <em>did</em> reject <code>INSERT DATA</code>, <code>DELETE WHERE</code> and
+  <code>DROP ALL</code> — but only because rdflib&rsquo;s <code>Graph.query()</code> parser does not
+  accept update syntax. Nothing in the project decided it. Had a future rdflib merged its grammars,
+  an unauthenticated endpoint bound to <code>0.0.0.0</code> would have quietly become writable.
+</p>
+
+<p>
+  It is now a <code>QueryPolicy</code> that classifies the query form and refuses anything that is
+  not <code>SELECT</code>, <code>ASK</code>, <code>CONSTRUCT</code> or <code>DESCRIBE</code>, with
+  <code>tests/test_policy.py</code> covering it. The distinction matters more than the fix:
+  <em>correct by accident</em> and <em>correct by policy</em> look identical from outside and behave
+  differently under a dependency upgrade.
+</p>
+
+<div class="box ask">
+  <span class="box-title">A place your instincts are ahead of the domain</span>
+  <p>
+    &ldquo;Read-only&rdquo; being a property of a third-party parser rather than an enforced policy
+    is exactly the kind of thing a web engineer flags on sight and an ontologist does not. Worth
+    saying out loud — it is a genuinely open item, and identifying it is a point in your favour
+    rather than an admission.
+  </p>
+</div>
+
+<div class="box trap">
+  <span class="box-title">This is your territory, so know that the guard has been wrong four times</span>
+  <p>
+    Once <em>over</em>-refusing: it began as <code>re.compile(r"SERVICE", re.IGNORECASE)</code>,
+    a blacklist over raw text, which rejected the perfectly legal <code>SELECT ?service WHERE …</code>.
+    A scanner replaced it.
+  </p>
+  <p>
+    Three times <em>under</em>-refusing, and all three are the same bug — <strong>a skip that ran
+    further than it should and carried the keyword away inside it</strong>: a <code>&lt;</code>
+    comparison read as an IRI opener; a prefixed name whose local part re-entered the declaration
+    branch; and a backslash-escaped quote that closed a literal one character early, so the phantom
+    literal that opened swallowed the rest of the query.
+  </p>
+  <p>
+    <strong>The third is live in the submitted code.</strong> Verified end to end against a loopback
+    listener: the server made an outbound <code>POST</code> to a caller-chosen host. The caller still
+    receives a <code>400</code> only when the target returns something rdflib cannot parse; against
+    a target that speaks SPARQL the answer is <strong>200 with the target's data handed back</strong>.
+    The 400 case is the one that looks like the guard
+    working. Fixed on a branch that will not be merged, because the published repository is the
+    artefact under assessment.
+  </p>
+  <p class="small muted">
+    The useful observation is not the bug — it is that every one was found by reading the code against
+    the prose, and none by a test.
+  </p>
+</div>
+
+<h2 id="protocol">7. The SPARQL 1.1 Protocol is just HTTP</h2>
+
+<p>
+  &ldquo;Provide a SPARQL endpoint&rdquo; does not mean &ldquo;accept a query string in a bespoke
+  JSON body&rdquo;. There is a W3C protocol specifying the HTTP binding, and implementing it means
+  stock clients — YASGUI, rdflib&rsquo;s <code>SPARQLStore</code>, curl, any of the visual query
+  builders — work against your service unmodified. That is the difference between publishing data
+  and publishing an API only you can call.
+</p>
+
+<p class="codelabel">Three request forms the spec requires</p>
+<pre><code data-lang="http">GET /sparql?query=SELECT%20%3Fs%20WHERE%20%7B...%7D
+Accept: application/sparql-results+json
+
+POST /sparql
+Content-Type: application/x-www-form-urlencoded
+
+query=SELECT+%3Fs+WHERE+%7B...%7D
+
+POST /sparql
+Content-Type: application/sparql-query
+
+SELECT ?s WHERE { ... }</code></pre>
+
+<p>
+  Plus content negotiation on the way out: <code>application/sparql-results+json</code> by default,
+  <code>text/csv</code> if asked, <code>text/turtle</code> for the graph-producing forms. And
+  correct status codes — a malformed query is a <strong>400</strong>, not a 500, because the fault
+  is the client&rsquo;s.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">Ordinary web engineering, and it counts</span>
+  <p>
+    This is the one part of the project where your existing instincts are directly, immediately
+    correct. The form-encoded variant is also why <code>python-multipart</code> is a
+    <em>runtime</em> dependency rather than a test one: FastAPI implements it with
+    <code>Form()</code>, and <code>Form()</code> raises at app-construction time if the package is
+    missing. It does not degrade — the process fails to start.
+  </p>
+</div>
+
+<p>
+  Two smaller things the API does that are worth knowing about because they were bugs first:
+  queries run in a thread pool rather than on the event loop (one expensive query used to block
+  every other request, including <code>/health</code>), and asking for <code>text/csv</code> on an
+  <code>ASK</code> result returns <strong>406</strong> rather than crashing, because a boolean has
+  no CSV representation.
+</p>
+
+<h2 id="testing">8. The queries are the test suite</h2>
+
+<p>
+  One methodological point, because it is the part most tailored to the assessor. In ontology
+  engineering, <strong>competency questions</strong> are the specification: you write down the
+  questions the model must be able to answer <em>before</em> building it, and the model is
+  finished when it answers them.
+</p>
+<p>
+  This project ships them as executable tests — each question carries its SPARQL and its expected
+  answer set, so the specification and the regression suite are the same artefact. CQ01&ndash;CQ04
+  are quoted verbatim from NFDI4Cat&rsquo;s own published biocatalysis question set, which the
+  assessor wrote.
+</p>
+<p>
+  It also ships <code>OUT_OF_SCOPE_QUESTIONS</code> — the questions from that set this model
+  deliberately <em>cannot</em> answer, each with what it would require. Kinetics needs quantities
+  with units; purification needs a laboratory-process model. Knowing where a model stops is the
+  point of writing competency questions at all.
+</p>
+
+<div class="box key">
+  <span class="box-title">Chapter 2 in four lines</span>
+  <ul>
+    <li>SPARQL is SQL over one three-column table; repeating a variable name is the join.</li>
+    <li>Four query forms; two return graphs, and <code>CONSTRUCT</code> is what makes pipelines compose.</li>
+    <li><code>SERVICE</code> is a cross-internet join — the project&rsquo;s payoff, and an SSRF hole if exposed.</li>
+    <li>The SPARQL 1.1 Protocol is plain HTTP, and implementing it properly is why stock clients work.</li>
+  </ul>
+</div>
+
+<div class="pager">
+  <a href="01-rdf.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; 1 &middot; RDF as a database</span>
+  </a>
+  <a class="next" href="03-owl.html">
+    <span class="dir">Next</span>
+    <span class="t">3 &middot; OWL &amp; inference &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

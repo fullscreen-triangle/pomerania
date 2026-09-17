@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>8 · The reference databases — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a class="here" href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 8</p>
+<h1>The reference databases</h1>
+<p class="standfirst">
+  Six public databases supply every identifier in this project. Which one you anchor to is not a
+  cosmetic choice: it determines whether a federated query is possible at all, and the first
+  submission foreclosed federation without noticing.
+</p>
+
+<h2 id="landscape">1. The landscape in one table</h2>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>Database</th><th>Identifies</th><th>IRI form</th><th>SPARQL?</th><th>Used here</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>ChEBI</strong></td>
+      <td>chemical entities</td>
+      <td class="mono">purl.obolibrary.org/obo/CHEBI_29985</td>
+      <td>via OLS</td>
+      <td class="yes">yes — every molecule</td>
+    </tr>
+    <tr>
+      <td><strong>Rhea</strong></td>
+      <td>biochemical reactions</td>
+      <td class="mono">rdf.rhea-db.org/19453</td>
+      <td class="yes">yes</td>
+      <td class="yes">yes — every reaction</td>
+    </tr>
+    <tr>
+      <td><strong>UniProt</strong></td>
+      <td>proteins, and EC classes</td>
+      <td class="mono">purl.uniprot.org/uniprot/P24298</td>
+      <td class="yes">yes</td>
+      <td class="yes">yes — enzymes + EC</td>
+    </tr>
+    <tr>
+      <td><strong>EC / IUBMB</strong></td>
+      <td>enzyme activities</td>
+      <td class="mono">purl.uniprot.org/enzyme/2.6.1.2</td>
+      <td>through UniProt</td>
+      <td class="yes">yes</td>
+    </tr>
+    <tr>
+      <td><strong>SBO</strong></td>
+      <td>systems-biology roles</td>
+      <td class="mono">biomodels.net/SBO/SBO_0000010</td>
+      <td>no</td>
+      <td class="yes">yes — participant roles</td>
+    </tr>
+    <tr>
+      <td><strong>KEGG</strong></td>
+      <td>compounds, reactions, pathways</td>
+      <td class="mono">genome.jp/entry/C00025</td>
+      <td class="no">no</td>
+      <td class="no">no — see §4</td>
+    </tr>
+    <tr>
+      <td><strong>BRENDA</strong></td>
+      <td>enzyme functional data</td>
+      <td>&mdash;</td>
+      <td class="no">no</td>
+      <td class="no">no — literature reference only</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="chebi">2. ChEBI — molecules</h2>
+
+<p>
+  Chemical Entities of Biological Interest, curated at the EBI. Every distinct chemical species gets
+  a number, and — per chapter 7 — <em>distinct</em> includes each protonation state and each
+  tautomer separately. ChEBI is an OBO Foundry ontology, so entries sit in a subsumption hierarchy
+  (L-alanine <em>is a</em> alpha-amino acid <em>is a</em> carboxylic acid) and are linked by typed
+  relations including <code>is_conjugate_base_of</code> and <code>is_tautomer_of</code> — the exact
+  relationships that caused the trouble.
+</p>
+
+<pre><code data-lang="turtle">http://purl.obolibrary.org/obo/CHEBI_29985</code></pre>
+
+<p>
+  Note the pattern: <code>obo/</code> plus <code>PREFIX_number</code>, with an
+  <strong>underscore</strong> in the IRI even though the same identifier is written
+  <code>CHEBI:29985</code> in prose. Both spellings appear constantly and a string comparison
+  between them fails.
+</p>
+
+<h2 id="rhea">3. Rhea — reactions, and two facts that cost time</h2>
+
+<p>
+  Rhea, at the Swiss Institute of Bioinformatics, is the reference set of biochemical reactions. It
+  is what UniProt uses to say what an enzyme does, which makes it the natural anchor for anything
+  that wants to talk to protein data.
+</p>
+
+<h3>Fact one: four identifiers per reaction</h3>
+
+<p>
+  Every Rhea reaction has a <strong>master</strong> plus three directional children at consecutive
+  offsets:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Is</th><th>Cited by</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">19453</td><td>master — undirected</td><td>UniProt&rsquo;s <code>Reaction=</code> line, always</td></tr>
+    <tr><td class="mono">19454</td><td>left &rarr; right</td><td><code>PhysiologicalDirection=</code></td></tr>
+    <tr><td class="mono">19455</td><td>right &rarr; left</td><td><code>PhysiologicalDirection=</code></td></tr>
+    <tr><td class="mono">19456</td><td>bidirectional</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Chapter 6 showed the payoff: <em>E. coli</em> AlaA and human ALT1 share master
+  <code>19453</code> and differ on the child. Build on the master, then treat direction as separate
+  information — conflating the two corrupts the graph in a way that looks fine.
+</p>
+
+<h3>Fact two: Rhea models reactions as OWL <em>classes</em></h3>
+
+<p>This is a genuine trap, and it costs an afternoon if you hit it cold:</p>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">What you would write</span>
+<pre><code data-lang="sparql">?rhea a rh:Reaction .</code></pre>
+    <p>Returns <strong>zero rows</strong>. No error, no warning, no hint.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">What is correct</span>
+<pre><code data-lang="sparql">?rhea rdfs:subClassOf rh:Reaction .</code></pre>
+    <p>A Rhea reaction is a <em>class</em> of chemical events, not an individual event. So the
+       relationship is subsumption, not instantiation.</p>
+  </div>
+</div>
+
+<p>
+  Worth noticing that this is a modelling decision Rhea made and this project made differently —
+  <code>tacat</code> models its reactions as individuals. Both are defensible; the reactions here
+  are specific curated records rather than universals. It is the kind of divergence worth being able
+  to name.
+</p>
+
+<h2 id="uniprot">4. UniProt — proteins, and the EC hierarchy for free</h2>
+
+<p>
+  UniProt is the protein sequence and annotation database. Two parts matter here.
+</p>
+
+<p>
+  <strong>Accessions</strong> like <code>P24298</code> identify a specific protein in a specific
+  organism. <em>Reviewed</em> entries (Swiss-Prot) are manually curated; unreviewed (TrEMBL) are
+  automatic — which is why the federated query in chapter 2 filters on
+  <code>up:reviewed true</code>. Without that filter the counts inflate by orders of magnitude with
+  machine predictions.
+</p>
+
+<p>
+  <strong>Enzyme class IRIs</strong> are the more interesting part. There is no OBO ontology for EC
+  numbers, so the community convention is UniProt&rsquo;s:
+</p>
+
+<pre><code data-lang="turtle">http://purl.uniprot.org/enzyme/2.6.1.2</code></pre>
+
+<p>
+  That is a real <code>up:Enzyme</code> OWL class with the four-level EC hierarchy from chapter 6
+  materialised as <code>rdfs:subClassOf</code>. So &ldquo;find me every transaminase&rdquo; is one
+  property path rather than string surgery on a dotted number:
+</p>
+
+<pre><code data-lang="sparql">?enzyme rdfs:subClassOf+ &lt;http://purl.uniprot.org/enzyme/2.6.1&gt; .</code></pre>
+
+<p class="muted">
+  Rhea itself emits <code>ec</code> triples pointing at these same <code>purl.uniprot.org/enzyme/</code>
+  IRIs, which independently confirms the choice — you are using the identifier the ecosystem uses.
+</p>
+
+<h3>The relationship, precisely</h3>
+
+<p>
+  An EC class is an <em>activity</em>; a UniProt accession is a <em>protein that has</em> that
+  activity. Related, not identical — so the link is UniProt&rsquo;s own
+  <code>up:enzyme</code>, written in UniProt&rsquo;s direction: <code>&lt;protein&gt; up:enzyme
+  &lt;ec-class&gt;</code>. The evidence is right there in the data: <code>P17174</code> carries both
+  2.6.1.1 and 2.6.1.3, so any claim of identity would be saying one protein <em>is</em> two
+  different activities. Using UniProt&rsquo;s property also makes the link checkable against its
+  source, and a test does exactly that.
+</p>
+
+<h2 id="sbo">5. SBO — roles as identifiers rather than strings</h2>
+
+<p>
+  The Systems Biology Ontology supplies controlled terms for the roles in the bridge node, so
+  &ldquo;reactant&rdquo; is a URL rather than a free-text string that can be typo&rsquo;d or
+  translated:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>SBO term</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">SBO_0000010</td><td>reactant</td></tr>
+    <tr><td class="mono">SBO_0000011</td><td>product</td></tr>
+    <tr><td class="mono">SBO_0000013</td><td>catalyst</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box trap">
+  <span class="box-title">One easy mistake, flagged in the shapes file</span>
+  <p>
+    <code>SBO:0000014</code> is &ldquo;enzyme&rdquo; — but it lives in SBO&rsquo;s
+    <em>physical-entity</em> branch, not its <em>role</em> branch. Using it as a participant role is
+    a common error, because the name reads as though it belongs. The SHACL shape restricts roles to
+    reactant and product with <code>sh:in</code> and says why in its <code>sh:message</code>.
+  </p>
+</div>
+
+<h2 id="kegg">6. Why KEGG was dropped, and what it cost</h2>
+
+<p>
+  KEGG is the best-known reaction database and the obvious first choice. The first submission
+  anchored on it. Two consequences followed, and the second is the serious one:
+</p>
+
+<div class="pipeline">
+  <div class="step">
+    <div class="n">1</div>
+    <div>
+      <h4>KEGG&rsquo;s ChEBI mapping returns the neutral parent</h4>
+      <p>The <code>conv/chebi</code> cross-reference maps to the neutral form, not the physiological
+         microspecies. That is the direct cause of the six wrong identifiers in chapter 7 — a
+         systematic method producing a systematic error.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">2</div>
+    <div>
+      <h4>No Rhea identifier means no federation, at all</h4>
+      <p>UniProt speaks Rhea. There was not a single Rhea ID anywhere in the first submission, so
+         the join in chapter 2 was not merely unimplemented — it was <strong>impossible</strong>.
+         The FAIR interoperability claim in the README had no route to being demonstrated.</p>
+    </div>
+  </div>
+</div>
+
+<div class="box key">
+  <span class="box-title">The general lesson</span>
+  <p>
+    Identifier choice is an <strong>architectural</strong> decision, not a data-entry detail. It
+    determines which other systems you can ever talk to, and the cost of getting it wrong is not
+    paid at the moment of the mistake — it is paid later, as a capability that quietly does not
+    exist.
+  </p>
+  <p>
+    The nearest thing in your world: picking an ID scheme for a public API. Sequential integers
+    versus UUIDs versus a natural key looks like a small choice on day one and dictates every
+    integration afterwards.
+  </p>
+</div>
+
+<h2 id="resolve">7. PURLs, w3id, and the one that does not resolve</h2>
+
+<p>
+  A <strong>PURL</strong> is a persistent URL: a stable address run by the curating institution,
+  redirecting to wherever the resource currently lives. The point is that the identifier outlives
+  the hosting arrangement. <code>purl.obolibrary.org</code>, <code>purl.uniprot.org</code> and
+  <code>rdf.rhea-db.org</code> are all institutionally operated and stable.
+</p>
+<p>
+  <strong>w3id.org</strong> is the community equivalent for people who do not run an institution: a
+  redirect service backed by a GitHub repository, where you register a namespace by pull request.
+</p>
+
+<div class="box ask">
+  <span class="box-title">An honest gap in this project</span>
+  <p>
+    Every locally minted IRI sits under <code>https://w3id.org/bitspark/tacat/</code>, and that
+    namespace is <strong>not registered</strong>, so the IRIs do not dereference. Follow one and you
+    get a 404.
+  </p>
+  <p>
+    This is not fatal — an IRI is an identifier first and a locator second, and plenty of published
+    ontologies are in the same state. But it should be <em>said</em> rather than left for a reviewer
+    to discover, and the two honest fixes are to register the namespace by PR or to serve the
+    ontology under a path that genuinely resolves.
+  </p>
+</div>
+
+<h3>Opaque identifiers rather than readable ones</h3>
+
+<p>
+  One convention that looks wrong to a web developer and is deliberate. The project mints
+  <code>tacat:REACT_0000001</code> with an <code>rdfs:label</code>, not
+  <code>tacat:AlanineTransaminaseReaction</code>.
+</p>
+<p>
+  Every major vocabulary in this space does the same: OBO uses <code>PREFIX_0000123</code>, EMMO
+  uses UUIDs, and NFDI4Cat&rsquo;s own Voc4Cat uses
+  <code>w3id.org/nfdi4cat/voc4cat_0000123</code>. The reason is that a label can be corrected,
+  translated or re-scoped without breaking every dataset that references the term — the identifier
+  is a key and the label is display text, and conflating them means a copy-edit is a breaking
+  change.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You have made this trade before</span>
+  <p>
+    Slugs versus IDs in URLs. <code>/posts/42</code> survives a retitle; <code>/posts/my-post</code>
+    does not, and now you own a redirect table. Same trade-off, much longer time horizon —
+    these identifiers are expected to outlive the projects that mint them.
+  </p>
+</div>
+
+<h2 id="mintvsreuse">8. The one place this project mints anyway</h2>
+
+<p>
+  Worth knowing because it is a fair challenge. &ldquo;Reuse, never mint&rdquo; is the slogan, but
+  <code>tacat</code> does not use ChEBI PURLs <em>as</em> its nodes. It mints
+  <code>tacat:CHEBI_29985</code> and declares it an <em>instance</em> of the ChEBI class.
+</p>
+
+<div class="vs">
+  <div class="newthing">
+    <span class="vs-label">What tacat does</span>
+<pre><code data-lang="turtle">tacat:CHEBI_29985
+    a tacat:AminoAcid ,
+      &lt;http://purl.obolibrary.org/obo/CHEBI_29985&gt; ;
+    rdfs:label "L-glutamate" .</code></pre>
+    <p>Local assertions stay on a local node. The graph never appears to make claims about
+       ChEBI&rsquo;s own term.</p>
+  </div>
+  <div class="known">
+    <span class="vs-label">The alternative</span>
+<pre><code data-lang="turtle">&lt;http://purl.obolibrary.org/obo/CHEBI_29985&gt;
+    a tacat:AminoAcid ;
+    rdfs:label "L-glutamate" .</code></pre>
+    <p>Simpler, more obviously &ldquo;reuse&rdquo;, one fewer hop in every query — at the cost of
+       asserting into somebody else&rsquo;s namespace.</p>
+  </div>
+</div>
+
+<p>
+  Both are standard practice. It is logged as an open decision (D2 in <code>docs/GAPS_0.md</code>),
+  defensible either way, and the useful position is being able to argue it rather than having
+  picked one silently.
+</p>
+
+<div class="box key">
+  <span class="box-title">Chapter 8 in four lines</span>
+  <ul>
+    <li>ChEBI for molecules, Rhea for reactions, UniProt for proteins and EC classes, SBO for roles.</li>
+    <li>Rhea has four IDs per reaction and models them as OWL <em>classes</em> — both are silent-failure traps.</li>
+    <li>KEGG&rsquo;s ChEBI mapping caused the identifier error, and choosing KEGG made federation impossible.</li>
+    <li>Identifier choice is architecture: it decides which systems you can ever talk to.</li>
+  </ul>
+</div>
+
+<div class="pager">
+  <a href="07-identity.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; 7 &middot; Chemical identity</span>
+  </a>
+  <a class="next" href="09-map.html">
+    <span class="dir">Next</span>
+    <span class="t">9 &middot; Repo map &amp; glossary &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

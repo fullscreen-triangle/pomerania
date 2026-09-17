@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tacat primer — start here</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a class="here" href="index.html">Start here</a></li>
+    <li class="extra"><a href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a href="01-data.html">Facts as data</a></li>
+    <li><a href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a href="03-questions.html">Asking questions</a></li>
+    <li><a href="04-checking.html">Checking the data</a></li>
+    <li><a href="05-serving.html">Serving it</a></li>
+    <li><a href="06-shipping.html">Shipping it</a></li>
+    <li><a href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+    <li class="extra"><a href="../cards/cheatsheet.html">Glossary &amp; cards — every term</a></li>
+  </ol>
+  <div class="nav-label">Readiness</div>
+  <div class="progress" data-progress></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Start here</p>
+<h1>You already understand the hard half</h1>
+<p class="standfirst">
+  The computing side of the transaminase submission — data formats, databases, queries, APIs,
+  containers — for someone who knows the biochemistry cold and the computer science not at all.
+</p>
+
+<div class="chips">
+  <span class="chip hot">9 chapters</span>
+  <span class="chip">~15 min each</span>
+  <span class="chip">7 things to click</span>
+  <span class="chip">press <strong>d</strong> for one-idea-per-screen</span>
+</div>
+
+<div class="resume" data-continue></div>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">3</span><span class="l">reactions modelled</span></div>
+  <div class="bignum"><span class="v">0</span><span class="l">asserted as transaminations</span></div>
+  <div class="bignum"><span class="v">3</span><span class="l">derived by the reasoner</span></div>
+  <div class="bignum"><span class="v">1</span><span class="l">negative control, excluded</span></div>
+</div>
+
+<h2 id="premise">1. The premise</h2>
+
+<p>
+  The thing that makes this project defensible is <strong>enzymology</strong>, and you have that
+  already.
+</p>
+<p>
+  Most people who could write the code could not have told you that pyridoxal 5′-phosphate must not
+  be a reaction participant, or that "L-cysteine" as a bare name lands on the wrong tautomer. Those
+  are the decisions being graded.
+</p>
+<p>
+  What you need from this primer is the <em>vocabulary and the mechanics</em> to explain how those
+  chemical decisions were encoded. That is a much smaller thing to learn than a computer-science
+  degree, and this is scoped to exactly it.
+</p>
+
+<div class="box key">
+  <span class="box-title">The one-sentence framing</span>
+  <p>
+    <strong>I treated the requested demo application as a miniature FAIR data product.</strong> Everything else — reusing
+    ChEBI identifiers rather than inventing your own, running a reasoner, the validation gates, the
+    federated query — is a <em>consequence</em> of that sentence rather than a list of features.
+  </p>
+  <p>
+    If you remember one line, remember that one, and let every part of the system be an answer to
+    "why would a data product need this?"
+  </p>
+</div>
+
+<h2 id="built">2. What was actually built</h2>
+
+<p>
+  A small service. You give it a question in a query language; it answers from a graph of facts about
+  three transaminase reactions.
+</p>
+<p>
+  Underneath, six things happen in order — and <strong>each one proves something about the one
+  before it.</strong> That chain is the whole design.
+</p>
+
+<div class="pipeline">
+  <div class="step">
+    <div class="n">1</div>
+    <div>
+      <h4>Verified reference data</h4>
+      <p>Nine chemical entities, three EC numbers, three Rhea IDs, seven UniProt accessions — each
+         checked by hand against the primary database.</p>
+      <div class="proves">→ the facts are real, and traceable</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">2</div>
+    <div>
+      <h4>An ontology</h4>
+      <p>A formal description of what a reaction <em>is</em> — its parts, and the roles they play —
+         written in OWL, a logic a machine can compute over.</p>
+      <div class="proves">→ the vocabulary is coherent, and can classify</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">3</div>
+    <div>
+      <h4>A knowledge graph, reasoned over</h4>
+      <p>The data in that vocabulary. Then a logic engine reads it and <em>derives</em> conclusions
+         nobody wrote down.</p>
+      <div class="proves">→ the ontology does work rather than decorating</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">4</div>
+    <div>
+      <h4>Validation and tests</h4>
+      <p>SHACL shapes reject malformed data. Real scientific questions run as automated tests on
+         every change.</p>
+      <div class="proves">→ the graph answers what it claims to</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">5</div>
+    <div>
+      <h4>A SPARQL endpoint</h4>
+      <p>A web service implementing a published standard, so off-the-shelf tools query it with no
+         modification.</p>
+      <div class="proves">→ the data is reachable by someone who isn't you</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">6</div>
+    <div>
+      <h4>A container, built automatically</h4>
+      <p>The whole thing frozen into one runnable image, rebuilt from scratch by a server on every
+         change, with all the gates above running first.</p>
+      <div class="proves">→ the result reproduces away from your laptop</div>
+    </div>
+  </div>
+</div>
+
+<div class="box bridge">
+  <span class="box-title">You already know this shape</span>
+  <p>
+    It is a protocol with controls at every step. Reagents verified against a certificate of
+    analysis, method written down, positive and negative controls alongside, results checked against
+    acceptance criteria, the whole thing repeated by someone else.
+  </p>
+  <p>
+    Nobody would accept a result from a protocol missing those. Computing calls the same discipline
+    "reproducible builds" and "continuous integration".
+  </p>
+</div>
+
+<h2 id="three">3. The three ideas that carry the weight</h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Idea</th><th>In one line</th><th>Where</th></tr></thead>
+  <tbody>
+    <tr class="hl">
+      <td><strong>Necessary vs sufficient</strong></td>
+      <td>The reactions are never labelled "transamination" — a logic engine works it out. That is
+          the difference between a knowledge graph and a database.</td>
+      <td><a href="02-meaning.html">Ch. 2</a></td>
+    </tr>
+    <tr>
+      <td><strong>Roles, not molecules</strong></td>
+      <td>Substrate and product are roles in a direction, not properties of a molecule. Encoding
+          that needs a bridge node.</td>
+      <td><a href="02-meaning.html">Ch. 2</a>, <a href="07-biology.html">7</a></td>
+    </tr>
+    <tr>
+      <td><strong>Reuse identity</strong></td>
+      <td>Every chemical points at its real ChEBI identifier — as a <em>link</em>, not text. That is
+          what makes the federated query possible at all.</td>
+      <td><a href="01-data.html">Ch. 1</a>, <a href="03-questions.html">3</a></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="silent">4. The thread through everything: silent failure</h2>
+
+<p>
+  One property of this domain is worth internalising before any technical detail, because it
+  explains why the project looks over-engineered in places.
+</p>
+<p>
+  <strong>Almost every mistake available here produces no error message.</strong>
+</p>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">0 rows</span><span class="l">what a wrong identifier returns</span></div>
+  <div class="bignum"><span class="v">200 OK</span><span class="l">…and the status it returns it with</span></div>
+  <div class="bignum"><span class="v">✓ green</span><span class="l">what the test suite says</span></div>
+</div>
+
+<div class="box bridge">
+  <span class="box-title">The bench equivalent</span>
+  <p>
+    A Western blot with no bands. Is the protein absent, or did the secondary antibody never go in?
+    The blot cannot tell you — which is why you run a loading control. Not because you expect it to
+    fail, but because without it "no signal" has two readings you cannot distinguish.
+  </p>
+  <p>
+    <strong>Every seemingly excessive gate in this project is a loading control.</strong> The SHACL
+    shapes, the assertion that the reasoner actually fired, the negative-control reaction, the test
+    that checks an identifier is a <em>link</em> and not a <em>string</em> — each exists because the
+    corresponding failure is invisible.
+  </p>
+</div>
+
+<h2 id="use">5. How to use this</h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>If you have…</th><th>Read</th></tr></thead>
+  <tbody>
+    <tr><td>3 minutes</td><td><a href="tldr.html"><strong>The whole thing in 3 minutes</strong></a> — nine paragraphs, nothing else</td></tr>
+    <tr><td>20 minutes</td><td><a href="02-meaning.html">Chapter 2</a> and play with the classifier. It is the centrepiece.</td></tr>
+    <tr><td>An afternoon</td><td>In order, 1 → 8. Chapter 7 is where you are ahead of the material.</td></tr>
+    <tr><td>The night before</td><td><a href="08-defending.html">Chapter 8</a> — flashcards, weak points, narrative</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="small muted">
+  Two controls at the top right: <strong>☾</strong> switches light/dark, <strong>▦ deck</strong>
+  (or the <strong>d</strong> key) repaginates any chapter to one idea per screen, navigated with the
+  arrow keys. Your place is remembered per page.
+</p>
+
+<div class="cards">
+  <a class="card" href="01-data.html">
+    <div class="k">Chapter 1</div><h3>Facts as data</h3>
+    <p>Why not a spreadsheet. Triples, IRIs, Turtle — and the distinction that broke v0.</p>
+    <div class="cmeta"><span class="stars">★★★</span><span class="chip">2 to click</span></div>
+  </a>
+  <a class="card" href="02-meaning.html">
+    <div class="k">Chapter 2</div><h3>Meaning &amp; inference</h3>
+    <p>Classes vs individuals, necessary vs sufficient, and what a reasoner actually does.</p>
+    <div class="cmeta"><span class="stars">★★★</span><span class="chip hot">the classifier</span></div>
+  </a>
+  <a class="card" href="03-questions.html">
+    <div class="k">Chapter 3</div><h3>Asking questions</h3>
+    <p>SPARQL from scratch, your own competency questions, the federated join.</p>
+    <div class="cmeta"><span class="stars">★★★</span><span class="chip">2 to click</span></div>
+  </a>
+  <a class="card" href="04-checking.html">
+    <div class="k">Chapter 4</div><h3>Checking the data</h3>
+    <p>SHACL, open vs closed world, and why the questions <em>are</em> the test suite.</p>
+    <div class="cmeta"><span class="stars">★★★</span><span class="chip">1 to click</span></div>
+  </a>
+  <a class="card" href="05-serving.html">
+    <div class="k">Chapter 5</div><h3>Serving it</h3>
+    <p>What an API is, HTTP in ten minutes, and one real security hole.</p>
+    <div class="cmeta"><span class="stars">★★</span></div>
+  </a>
+  <a class="card" href="06-shipping.html">
+    <div class="k">Chapter 6</div><h3>Shipping it</h3>
+    <p>Containers, build-time reasoning, CI, and what a green pipeline proves.</p>
+    <div class="cmeta"><span class="stars">★★</span><span class="chip">1 to click</span></div>
+  </a>
+  <a class="card" href="07-biology.html">
+    <div class="k">Chapter 7</div><h3>The chemistry</h3>
+    <p>Home ground: microspecies, the tautomer trap, PLP, direction.</p>
+    <div class="cmeta"><span class="stars">★★★</span><span class="chip">2 to click</span></div>
+  </a>
+  <a class="card" href="08-defending.html">
+    <div class="k">Chapter 8</div><h3>Defending it</h3>
+    <p>Flashcards, likely questions, honest weak points, and a glossary.</p>
+    <div class="cmeta"><span class="stars">★★★</span><span class="chip hot">quiz mode</span></div>
+  </a>
+</div>
+
+<div class="box ask">
+  <span class="box-title">A note on honesty</span>
+  <p>
+    Several places flag things that are <em>arguable</em> rather than settled, and a few that are
+    genuinely open. Those are marked.
+  </p>
+  <p>
+    Say them out loud rather than hoping they do not come up — the assessor has published on the
+    limits of exactly this problem, so "here is where my model stops" is a stronger answer than a
+    confident overclaim he can puncture.
+  </p>
+</div>
+
+<div class="pager">
+  <span></span>
+  <a class="next" href="tldr.html"><span class="dir">Next</span><span class="t">The whole thing in 3 min →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

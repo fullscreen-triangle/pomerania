@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S-entropy — distance to truth, measured from where you stand</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html" aria-current="page">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">00 · The foundation</p>
+  <h1>Distance to the truth is a property of the observer, not of the answer.</h1>
+
+  <p class="lede">
+    This is where the rest comes from, and it is the most abstract page here. Everything
+    else — the floor, the medium vertex, the cut, path opacity — is this calculus applied
+    in one domain or another. It is also the part most in need of repair, and this page
+    says where.
+  </p>
+
+  <div class="caveat">
+    <strong>Read this page last, or skip it.</strong> The results on the other pages do
+    not depend on accepting any of this. The instrumental floor is arithmetic from a
+    datasheet; the cofactor split is checkable against a reaction database; the min-cut is
+    standard graph theory. This page explains where the ideas <em>came from</em>, which is
+    a different question from whether they hold.
+  </div>
+
+  <h2>The receiver</h2>
+
+  <p>
+    The move that starts everything: <b>do not measure distance in the space of answers.
+    Measure it from a stated observer.</b> A receiver is a four-part object — a signal
+    space, a decoder, an internal knowledge framework, and a projection back onto
+    candidate answers. It is <em>bounded</em> when its internal state set is strictly
+    smaller than the space of candidates.
+  </p>
+
+  <p>
+    Given a receiver, an S-value is how far <em>that</em> receiver stands from the truth on
+    a given candidate, on a bounded scale. Not a distance between two answers — a distance
+    mediated by the machinery doing the knowing.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="receiver" viewBox="0 0 760 340" role="img"
+           aria-label="A bounded receiver, its reachable set, and the residue"></svg>
+    </div>
+    <div class="controls">
+      <label>receiver capacity <input id="cap" type="range" min="4" max="60" step="1" value="18">
+        <output for="cap"></output></label>
+      <button id="showResidue" data-view="residue" aria-pressed="true" type="button">show residue</button>
+      <button id="showReach" data-view="reach" type="button">show reachable set</button>
+    </div>
+    <figcaption>
+      <b>Figure 21 — the residue is what capacity cannot reach.</b>
+      The grid is the total information space; the highlighted cells are what this
+      receiver can internally represent. Raise the capacity and the reachable set grows —
+      but as long as the space is larger, a region remains that the receiver cannot
+      individuate at all. <b>That is the one theorem on this page that is fully sound</b>:
+      a cardinality argument, and nothing more.
+    </figcaption>
+  </figure>
+
+  <h2 id="residue">Residue persistence — the result that holds</h2>
+
+  <div class="claim">
+    <span class="label">Proved, and correctly</span>
+    <p>
+      If a receiver's internal capacity is strictly smaller than the total information
+      space, then the region it cannot reach has the cardinality of the whole space. Not a
+      shrinking remainder — <em>the same size as what it started with</em>. The proof is
+      three lines of cardinal arithmetic and it is right.
+    </p>
+  </div>
+
+  <p>
+    This is the honest foundation. A bounded knower in a larger space has an irreducible
+    blind region, and its size does not diminish as the knower improves. Everything about
+    floors, smallest knowable errors, and why individuation costs something should be
+    built <em>on this</em>.
+  </p>
+
+  <h2 id="floor">The floor — and a defect in how it was derived</h2>
+
+  <p>
+    The framework states that no bounded receiver reaches zero: there is a smallest
+    knowable error, characteristic of the receiver rather than of the truth. The intuition
+    is right and the consequences are useful. The <em>derivation</em>, in the recursion
+    paper, is circular.
+  </p>
+
+  <div class="caveat">
+    <strong>The circularity, stated plainly.</strong> Axiom S3 already asserts that a floor
+    function exists with a strictly positive value for every receiver. The theorem then
+    proves that the floor is strictly positive — which is a hypothesis of the axiom system,
+    not a consequence of it. The proof also opens “suppose the floor is zero; by Axiom S3
+    there is a candidate at zero”, but Axiom S3 is precisely what forbids that. The final
+    step invokes “positive measure with respect to any cardinality-preserving measure”,
+    and cardinality does not induce a measure.
+  </div>
+
+  <div class="claim">
+    <span class="label">The repair, and it is small</span>
+    <p>
+      Weaken Axiom S3 to assert only that a floor function <em>exists</em>, and derive its
+      positivity from residue persistence. The floor then becomes a <b>definition built on
+      a sound theorem</b> rather than an assumption re-proved. Everything downstream — why
+      linear justification fails, why validation must be circular — survives unchanged,
+      now on a foundation that holds.
+    </p>
+  </div>
+
+  <p>
+    Two other papers reach a floor by better routes, and both are on other pages. The
+    instrumental floor is <span class="mono">D/N</span> from a datasheet
+    (<a href="floor.html">the floor</a>); the graph floor is the minimum weight of a
+    realisable separator (<a href="individuation.html">individuation</a>). Neither needs
+    Axiom S3.
+  </p>
+
+  <h2 id="catalyst">Information catalysts — the cleanest result in the framework</h2>
+
+  <p>
+    A <b>catalyst</b> is an expression whose application strictly reduces the receiver's
+    distance to truth. Its <b>catalytic power</b> is the fraction of the remaining
+    above-floor distance it removes — a number in
+    <span class="mono">[0, 1]</span>, where 0 is neutral and 1 closes the gap in one step.
+  </p>
+
+  <div class="claim">
+    <span class="label">Multiplicativity of catalytic power</span>
+    <p>
+      Compose two catalysts and the powers do not add. The <em>residuals</em> multiply:
+    </p>
+    <p style="font-family:var(--mono);font-size:1.05rem;color:var(--warm);margin-top:0.8rem">
+      κ(γ₁ ∘ γ₂) = 1 − (1 − κ₁)(1 − κ₂)
+    </p>
+  </div>
+
+  <p>
+    A chemist recognises that shape immediately: it is how independent efficiencies
+    compose, and it is why a cascade of good-but-imperfect steps has a predictable
+    end-to-end yield. The corollary is the familiar one — repeating a catalyst
+    <span class="mono">n</span> times gives
+    <span class="mono">1 − (1 − κ)ⁿ</span>, which approaches 1 and never arrives.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="cascade" viewBox="0 0 760 360" role="img"
+           aria-label="Catalytic powers composing multiplicatively along a cascade"></svg>
+    </div>
+    <div class="controls">
+      <label>κ₁ <input id="k1" type="range" min="0" max="0.95" step="0.01" value="0.5">
+        <output for="k1"></output></label>
+      <label>κ₂ <input id="k2" type="range" min="0" max="0.95" step="0.01" value="0.4">
+        <output for="k2"></output></label>
+      <label>κ₃ <input id="k3" type="range" min="0" max="0.95" step="0.01" value="0.3">
+        <output for="k3"></output></label>
+      <label>floor <input id="fl" type="range" min="0" max="30" step="1" value="8">
+        <output for="fl"></output></label>
+    </div>
+    <figcaption>
+      <b>Figure 22 — the residual multiplies, and the floor is never crossed.</b>
+      The bar is distance to truth; each stage removes a fraction of what remains
+      <em>above the floor</em>. Set every κ to its maximum and the bar still stops at the
+      floor — that is the constraint doing work rather than decorating. The composite power
+      shown beneath is computed from the formula, and the bar is computed by simulating the
+      stages: they agree, which is the check worth having.
+    </figcaption>
+  </figure>
+
+  <h2 id="unconstrained">Unconstrained subtasks — what it does and does not say</h2>
+
+  <p>
+    An expression resolving to a global value admits arbitrary decomposition into
+    subtasks — signed, fractional, type-mixed, even locally impossible — provided the
+    composition still evaluates to that value. A subtask may sit at maximum distance from
+    the truth while the whole sits at the floor.
+  </p>
+
+  <div class="caveat">
+    <strong>The proof is short, and it should be.</strong> If the evaluation map is a
+    homomorphism, substituting an equivalent sub-expression preserves the whole. That is
+    compositionality, true in any algebra, and the worked examples all amount to adding a
+    term and its negation. So the theorem is correct and it is not surprising —
+    what makes it interesting is not the algebra but <em>what it licenses</em>:
+    <a href="opacity.html">the interior of a computation is free when only the endpoint is
+    checked</a>. That page states the version worth defending, along with the condition
+    that is still missing.
+  </div>
+
+  <h2 id="triple">Triple equivalence and recursive coordinates</h2>
+
+  <p>
+    Two further structural claims complete the calculus. <b>Triple equivalence</b> holds
+    that oscillatory, categorical and partition representations of a state are convertible,
+    so a computation can be relocated to whichever representation makes it cheapest — the
+    ancestor of representation mobility in the
+    <a href="languages.html#honjo">chemistry language</a>. And <b>no privileged level</b>
+    holds that every S-value decomposes into a triple at the next depth, each itself a
+    global value of its sub-problem, with the same laws at every scale — the ancestor of
+    <a href="runtime.html">addressing a computation at any depth</a>.
+  </p>
+
+  <p>
+    Both are load-bearing for the architecture and both are proved by construction with
+    trivial witnesses. Treat them as design commitments that the implementation then
+    justifies, rather than as discoveries.
+  </p>
+
+  <h2>Why this page exists at all</h2>
+
+  <p>
+    Because the honest answer to “where does this come from?” is better than a vague one,
+    and because the defects above are ones a careful reader would find. The strongest
+    version of the framework is the one that says: <em>residue persistence is sound, the
+    catalyst algebra is clean and useful, the floor should be defined from the first rather
+    than assumed, and the subtask theorem is a compositionality result whose value lies in
+    what it licenses downstream.</em>
+  </p>
+
+  <h2>What is claimed here</h2>
+
+  <table>
+    <thead><tr><th>Statement</th><th>Standing</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Residue persistence — the unreachable region keeps the cardinality of the whole</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Clean cardinal arithmetic. The sound foundation.</td></tr>
+      <tr><td>Catalytic power lies in [0, 1]</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>The numerator is bounded by the denominator because values cannot fall
+              below the floor.</td></tr>
+      <tr><td>κ(γ₁ ∘ γ₂) = 1 − (1 − κ₁)(1 − κ₂)</td>
+          <td><span class="tag proved">proved</span> <span class="tag measured">verified</span></td>
+          <td>Agreement to 10⁻¹⁵ across 81 pairs. The most immediately usable result in
+              the framework.</td></tr>
+      <tr><td>Unconstrained subtask decomposition</td>
+          <td><span class="tag proved">proved</span></td>
+          <td>Correct, and close to a restatement of compositionality. Its value is
+              downstream.</td></tr>
+      <tr><td>Floor positivity, as derived in the recursion paper</td>
+          <td><span class="tag refuted">circular</span></td>
+          <td>The conclusion is a hypothesis of Axiom S3. Repairable by deriving it from
+              residue persistence instead.</td></tr>
+      <tr><td>Triple equivalence · no privileged level</td>
+          <td><span class="tag open">by construction</span></td>
+          <td>Proved with trivial witnesses. Design commitments rather than
+              discoveries.</td></tr>
+      <tr><td>The epistemic floor is needed for the applied results</td>
+          <td><span class="tag refuted">not claimed</span></td>
+          <td>No result on any other page uses it. The instrumental and graph floors stand
+              on their own.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pager">
+    <a href="index.html"><span class="dir">back</span>Overview</a>
+    <a href="individuation.html"><span class="dir">next</span>01 · Individuation</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="s-entropy.js"></script>
+</body>
+</html>

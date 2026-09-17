@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tacat architecture · 02 · The ontology</title>
+<style>
+  :root {
+      --bg:#141413; --panel:#1c1b1a; --ink:#ecebe9; --ink-soft:#b0aca6; --ink-faint:#7d7973; --rule:#322f2c;
+      --authored:#16305c; --authored-line:#6ba3f5; --authored-ink:#cfe0fb;
+      --generated:#4a3208; --generated-line:#e8a838; --generated-ink:#f7e2b4;
+      --seam:#33215e; --seam-line:#a78bfa; --seam-ink:#e2d8fb;
+      --external:#12401f; --external-line:#4ade80; --external-ink:#c9f2d5;
+      --tool:#2a2825; --tool-line:#9c9791; --tool-ink:#d6d2cc;
+      --bad:#4a1717; --bad-line:#f87171; --bad-ink:#fbd0d0;
+      --band-build:#1d1a2b; --band-run:#16241f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#141413; --panel:#1c1b1a; --ink:#ecebe9; --ink-soft:#b0aca6; --ink-faint:#7d7973; --rule:#322f2c;
+      --authored:#16305c; --authored-line:#6ba3f5; --authored-ink:#cfe0fb;
+      --generated:#4a3208; --generated-line:#e8a838; --generated-ink:#f7e2b4;
+      --seam:#33215e; --seam-line:#a78bfa; --seam-ink:#e2d8fb;
+      --external:#12401f; --external-line:#4ade80; --external-ink:#c9f2d5;
+      --tool:#2a2825; --tool-line:#9c9791; --tool-ink:#d6d2cc;
+      --bad:#4a1717; --bad-line:#f87171; --bad-ink:#fbd0d0;
+      --band-build:#1d1a2b; --band-run:#16241f;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; padding:2rem 1.5rem 6rem; background:var(--bg); color:var(--ink);
+    font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  main { max-width:1240px; margin:0 auto; }
+
+  nav.sheets {
+    display:flex; flex-wrap:wrap; gap:.35rem; margin:0 0 2.25rem;
+    padding-bottom:.9rem; border-bottom:1px solid var(--rule); font-size:.82rem;
+  }
+  nav.sheets a, nav.sheets span {
+    padding:.34rem .7rem; border-radius:6px; text-decoration:none;
+    color:var(--ink-soft); border:1px solid transparent;
+  }
+  nav.sheets a:hover { background:var(--panel); border-color:var(--rule); color:var(--ink); }
+  nav.sheets a[aria-current="page"] {
+    background:var(--seam); border-color:var(--seam-line); color:var(--seam-ink); font-weight:620;
+  }
+  nav.sheets span.planned { color:var(--ink-faint); opacity:.65; }
+  nav.sheets span.planned::after { content:" · planned"; font-size:.9em; }
+
+  .eyebrow { font-size:.78rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin:0 0 .5rem; }
+  h1 { font-size:clamp(1.6rem,3.4vw,2.3rem); line-height:1.15; margin:0 0 .75rem; letter-spacing:-.02em; }
+  h2 { font-size:1.18rem; margin:3rem 0 .9rem; letter-spacing:-.01em; padding-bottom:.45rem; border-bottom:1px solid var(--rule); }
+  h3 { font-size:.97rem; margin:1.8rem 0 .5rem; letter-spacing:-.005em; }
+  p { margin:0 0 1rem; max-width:74ch; color:var(--ink-soft); }
+  p.lede { font-size:1.06rem; color:var(--ink); max-width:72ch; }
+  strong { color:var(--ink); font-weight:650; }
+  code {
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace; font-size:.875em;
+    background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:.1em .38em;
+  }
+  pre {
+    background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:1rem 1.1rem;
+    overflow-x:auto; font-size:.83rem; line-height:1.6; margin:1rem 0 1.5rem;
+  }
+  pre code { background:none; border:none; padding:0; font-size:1em; }
+
+  .figure { background:var(--panel); border:1px solid var(--rule); border-radius:12px; padding:1.25rem; margin:1.75rem 0; overflow-x:auto; }
+  .figure svg { display:block; width:100%; height:auto; min-width:920px; }
+  .caption { font-size:.83rem; color:var(--ink-faint); margin:.9rem 0 0; padding-top:.85rem; border-top:1px solid var(--rule); max-width:none; }
+
+  table { border-collapse:collapse; width:100%; margin:1rem 0 1.5rem; font-size:.9rem; }
+  th,td { text-align:left; padding:.5rem .7rem; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th { font-weight:620; color:var(--ink); font-size:.8rem; letter-spacing:.03em; text-transform:uppercase; }
+  td:first-child { white-space:nowrap; }
+  td code { background:none; border:none; padding:0; }
+
+  .note { border-left:3px solid var(--seam-line); background:var(--panel); padding:.85rem 1.1rem; margin:1.25rem 0; border-radius:0 8px 8px 0; }
+  .note.warn { border-left-color:var(--generated-line); }
+  .note p:last-child { margin-bottom:0; }
+
+  footer { margin-top:4rem; padding-top:1.25rem; border-top:1px solid var(--rule); font-size:.85rem; color:var(--ink-faint); }
+  .pager { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; font-size:.9rem; }
+  .pager a { color:var(--seam-line); text-decoration:none; font-weight:560; }
+  .pager a:hover { text-decoration:underline; }
+
+  .n-title { font:600 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-sm    { font:600 11.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-role  { font:400 11px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+  .g-label { font:600 11.5px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; letter-spacing:.07em; }
+  .b-label { font:700 12px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; letter-spacing:.11em; }
+  .e-label { font:400 10.5px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+  .verdict { font:700 15px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+</style>
+</head>
+<body>
+<main>
+
+  <nav class="sheets">
+    <a href="01-system.html">01 · System</a>
+    <a href="02-ontology.html" aria-current="page">02 · Ontology</a>
+    <a href="03-delivery.html">03 · Build &amp; delivery</a>
+    <a href="04-identity.html">04 · Identity &amp; federation</a>
+    <a href="05-request.html">05 · The request path</a>
+  </nav>
+
+  <p class="eyebrow">tacat architecture · 02 of a series</p>
+  <h1>The ontology</h1>
+
+  <p class="lede">
+    Sheet <a href="01-system.html">01</a> showed <code>schema.py</code> as one box. This is what is
+    inside it: eight classes, nine properties, and one <strong>defined class</strong> that the
+    reasoner uses to recognise transaminations rather than merely check them.
+  </p>
+
+  <p>
+    Two modelling decisions carry most of the weight, and both are visible in the first diagram:
+    participation goes through a <strong>bridge node</strong> because RDF triples are binary, and the
+    cofactor hangs off the <strong>enzyme</strong> rather than the reaction because that is where the
+    chemistry puts it.
+  </p>
+
+  <h2>Participation is an n-ary relation</h2>
+
+  <p>
+    A reaction relates an entity, a <em>role</em> and a <em>coefficient</em> — three things at once. A
+    binary <code>hasSubstrate</code> has nowhere to put the last two, so participation goes through a
+    <code>ReactionParticipant</code> node that carries all three. This is the W3C n-ary relation
+    pattern, Use Case 1; BioPAX calls its equivalent an "n-ary bridge" in the ontology's own
+    <code>rdfs:comment</code>, and UniProt reaches for the same construct with
+    <code>up:Catalytic_Activity</code>.
+  </p>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 700" role="img" aria-labelledby="t1 d1">
+    <title id="t1">The n-ary participation pattern, instantiated</title>
+    <desc id="d1">
+      One reaction individual links to four participant bridge nodes, each carrying a chemical entity,
+      a role and a stoichiometric coefficient. The reaction also links to an enzyme, which in turn
+      carries the PLP cofactor.
+    </desc>
+    <defs>
+      <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+      </marker>
+    </defs>
+
+    <!-- reaction -->
+    <rect x="26" y="222" width="212" height="116" rx="9" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2.2"/>
+    <text x="132" y="254" class="n-title" fill="var(--authored-ink)" text-anchor="middle">REACT_0000002</text>
+    <text x="132" y="276" class="n-role" fill="var(--authored-ink)" text-anchor="middle">alanine transaminase</text>
+    <text x="132" y="292" class="n-role" fill="var(--authored-ink)" text-anchor="middle">reaction</text>
+    <text x="132" y="316" class="e-label" fill="var(--authored-ink)" text-anchor="middle">a BiochemicalReaction</text>
+
+    <!-- bridge nodes -->
+    <g>
+      <rect x="308" y="22" width="252" height="96" rx="8" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+      <text x="434" y="48" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">PART_0000002_01</text>
+      <text x="434" y="70" class="n-role" fill="var(--seam-ink)" text-anchor="middle">participantRole → reactant</text>
+      <text x="434" y="88" class="n-role" fill="var(--seam-ink)" text-anchor="middle">stoichiometricCoefficient → 1.0</text>
+      <text x="434" y="106" class="e-label" fill="var(--seam-ink)" text-anchor="middle">a ReactionParticipant</text>
+    </g>
+    <g>
+      <rect x="308" y="142" width="252" height="96" rx="8" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+      <text x="434" y="168" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">PART_0000002_02</text>
+      <text x="434" y="190" class="n-role" fill="var(--seam-ink)" text-anchor="middle">participantRole → reactant</text>
+      <text x="434" y="208" class="n-role" fill="var(--seam-ink)" text-anchor="middle">stoichiometricCoefficient → 1.0</text>
+      <text x="434" y="226" class="e-label" fill="var(--seam-ink)" text-anchor="middle">a ReactionParticipant</text>
+    </g>
+    <g>
+      <rect x="308" y="262" width="252" height="96" rx="8" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+      <text x="434" y="288" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">PART_0000002_03</text>
+      <text x="434" y="310" class="n-role" fill="var(--seam-ink)" text-anchor="middle">participantRole → product</text>
+      <text x="434" y="328" class="n-role" fill="var(--seam-ink)" text-anchor="middle">stoichiometricCoefficient → 1.0</text>
+      <text x="434" y="346" class="e-label" fill="var(--seam-ink)" text-anchor="middle">a ReactionParticipant</text>
+    </g>
+    <g>
+      <rect x="308" y="382" width="252" height="96" rx="8" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+      <text x="434" y="408" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">PART_0000002_04</text>
+      <text x="434" y="430" class="n-role" fill="var(--seam-ink)" text-anchor="middle">participantRole → product</text>
+      <text x="434" y="448" class="n-role" fill="var(--seam-ink)" text-anchor="middle">stoichiometricCoefficient → 1.0</text>
+      <text x="434" y="466" class="e-label" fill="var(--seam-ink)" text-anchor="middle">a ReactionParticipant</text>
+    </g>
+
+    <!-- entities -->
+    <g>
+      <rect x="628" y="22" width="248" height="96" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+      <text x="752" y="52" class="n-title" fill="var(--external-ink)" text-anchor="middle">L-alanine</text>
+      <text x="752" y="74" class="n-role" fill="var(--external-ink)" text-anchor="middle">CHEBI:57972</text>
+      <text x="752" y="96" class="e-label" fill="var(--external-ink)" text-anchor="middle">an AminoAcid</text>
+    </g>
+    <g>
+      <rect x="628" y="142" width="248" height="96" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+      <text x="752" y="172" class="n-title" fill="var(--external-ink)" text-anchor="middle">2-oxoglutarate</text>
+      <text x="752" y="194" class="n-role" fill="var(--external-ink)" text-anchor="middle">CHEBI:16810</text>
+      <text x="752" y="216" class="e-label" fill="var(--external-ink)" text-anchor="middle">a TwoOxoAcid</text>
+    </g>
+    <g>
+      <rect x="628" y="262" width="248" height="96" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+      <text x="752" y="292" class="n-title" fill="var(--external-ink)" text-anchor="middle">pyruvate</text>
+      <text x="752" y="314" class="n-role" fill="var(--external-ink)" text-anchor="middle">CHEBI:15361</text>
+      <text x="752" y="336" class="e-label" fill="var(--external-ink)" text-anchor="middle">a TwoOxoAcid</text>
+    </g>
+    <g>
+      <rect x="628" y="382" width="248" height="96" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+      <text x="752" y="412" class="n-title" fill="var(--external-ink)" text-anchor="middle">L-glutamate</text>
+      <text x="752" y="434" class="n-role" fill="var(--external-ink)" text-anchor="middle">CHEBI:29985</text>
+      <text x="752" y="456" class="e-label" fill="var(--external-ink)" text-anchor="middle">an AminoAcid</text>
+    </g>
+
+    <!-- enzyme + cofactor -->
+    <rect x="308" y="530" width="252" height="106" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2"/>
+    <text x="434" y="560" class="n-title" fill="var(--authored-ink)" text-anchor="middle">EC_2_6_1_2</text>
+    <text x="434" y="582" class="n-role" fill="var(--authored-ink)" text-anchor="middle">alanine transaminase</text>
+    <text x="434" y="600" class="n-role" fill="var(--authored-ink)" text-anchor="middle">kineticMechanism → ping-pong bi-bi</text>
+    <text x="434" y="620" class="e-label" fill="var(--authored-ink)" text-anchor="middle">an Enzyme</text>
+
+    <rect x="628" y="530" width="248" height="106" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+    <text x="752" y="560" class="n-title" fill="var(--external-ink)" text-anchor="middle">PLP</text>
+    <text x="752" y="582" class="n-role" fill="var(--external-ink)" text-anchor="middle">CHEBI:597326 — the dianion</text>
+    <text x="752" y="602" class="n-role" fill="var(--external-ink)" text-anchor="middle">not a reaction participant</text>
+    <text x="752" y="622" class="e-label" fill="var(--external-ink)" text-anchor="middle">a ChemicalEntity</text>
+
+    <!-- edges -->
+    <path d="M238,268 C274,268 272,70 302,70"   stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <path d="M238,276 C276,276 274,190 302,190" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <path d="M238,284 C276,284 274,310 302,310" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <path d="M238,292 C274,292 272,430 302,430" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <text x="266" y="150" class="e-label" fill="var(--ink-faint)" text-anchor="middle" transform="rotate(-90 266 150)">hasParticipant ×4</text>
+
+    <path d="M560,70 L622,70"   stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <path d="M560,190 L622,190" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <path d="M560,310 L622,310" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <path d="M560,430 L622,430" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <text x="591" y="14" class="e-label" fill="var(--ink-faint)" text-anchor="middle">participatingEntity</text>
+
+    <path d="M132,338 L132,583 L302,583" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a2)"/>
+    <text x="196" y="574" class="e-label" fill="var(--ink-faint)" text-anchor="middle">catalysedBy</text>
+
+    <path d="M560,583 L622,583" stroke="var(--external-line)" stroke-width="2" fill="none" marker-end="url(#a2)"/>
+    <text x="591" y="524" class="e-label" fill="var(--external-line)" text-anchor="middle">hasCofactor</text>
+
+    <!-- callout -->
+    <rect x="920" y="222" width="256" height="176" rx="9" fill="var(--band-build)" stroke="var(--seam-line)" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="1048" y="252" class="g-label" fill="var(--seam-line)" text-anchor="middle">WHY A BRIDGE NODE</text>
+    <text x="944" y="280" class="n-role" fill="var(--ink-soft)">A triple has two ends. The role and</text>
+    <text x="944" y="300" class="n-role" fill="var(--ink-soft)">the coefficient need a third and a</text>
+    <text x="944" y="320" class="n-role" fill="var(--ink-soft)">fourth, so they hang off a node of</text>
+    <text x="944" y="340" class="n-role" fill="var(--ink-soft)">their own.</text>
+    <text x="944" y="368" class="n-role" fill="var(--ink-soft)">Same molecule, different role, in a</text>
+    <text x="944" y="388" class="n-role" fill="var(--ink-soft)">different reaction — expressible.</text>
+
+    <rect x="920" y="500" width="256" height="136" rx="9" fill="var(--band-run)" stroke="var(--external-line)" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="1048" y="530" class="g-label" fill="var(--external-line)" text-anchor="middle">WHY PLP IS NOT HERE</text>
+    <text x="944" y="558" class="n-role" fill="var(--ink-soft)">A prosthetic group is not consumed</text>
+    <text x="944" y="578" class="n-role" fill="var(--ink-soft)">and does not balance. Rhea's</text>
+    <text x="944" y="598" class="n-role" fill="var(--ink-soft)">equations have exactly four</text>
+    <text x="944" y="618" class="n-role" fill="var(--ink-soft)">participants; none is PLP.</text>
+  </svg>
+
+  <p class="caption">
+    One reaction, four bridge nodes. Model PLP as a fifth participant and the graph still validates,
+    the queries still run, and the stoichiometry is a lie — which is why
+    <code>test_plp_is_not_a_reaction_participant</code> exists.
+  </p>
+  </div>
+
+  <p>
+    That shape is what makes this pair of questions answerable, and <em>different</em>: which reactions
+    have L-glutamate as a participant (four, including the control), versus which reactions
+    <em>produce</em> it (three). Role is a property of the participation, not of the molecule.
+  </p>
+
+  <h2>The defined class, and the control that must not match</h2>
+
+  <p>
+    <code>TransaminationReaction</code> is declared with <code>equivalent_to</code> — necessary
+    <em>and sufficient</em> conditions — over chemical <em>classes</em> and participant <em>roles</em>,
+    never over specific molecules. Nothing is ever asserted to be a transamination; HermiT derives all
+    three at build time.
+  </p>
+
+<pre><code>class TransaminationReaction(BiochemicalReaction):
+    equivalent_to = [
+        BiochemicalReaction
+        &amp; hasParticipant.some(ReactionParticipant &amp; participatingEntity.some(AminoAcid)  &amp; participantRole.value(reactant))
+        &amp; hasParticipant.some(ReactionParticipant &amp; participatingEntity.some(TwoOxoAcid) &amp; participantRole.value(reactant))
+        &amp; hasParticipant.some(ReactionParticipant &amp; participatingEntity.some(TwoOxoAcid) &amp; participantRole.value(product))
+        &amp; hasParticipant.some(ReactionParticipant &amp; participatingEntity.some(AminoAcid)  &amp; participantRole.value(product))
+    ]</code></pre>
+
+  <p>
+    The negative control is the informative half. Glutamate dehydrogenase contains <strong>both
+    headline molecules</strong> of the transaminations — L-glutamate and 2-oxoglutarate — with their
+    roles reversed. A definition written over molecule identity would have matched it.
+  </p>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 660" role="img" aria-labelledby="t2 d2">
+    <title id="t2">The four conjuncts against the negative control</title>
+    <desc id="d2">
+      The definition requires four role-and-class combinations. Glutamate dehydrogenase satisfies two
+      of them and fails the other two, because its roles are reversed.
+    </desc>
+    <defs>
+      <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+      </marker>
+    </defs>
+
+    <!-- LEFT: the definition -->
+    <rect x="16" y="40" width="560" height="596" rx="11" fill="var(--band-build)" stroke="var(--seam-line)" stroke-width="1.5"/>
+    <text x="40" y="72" class="b-label" fill="var(--seam-line)">THE DEFINITION — ALL FOUR REQUIRED</text>
+
+    <rect x="40" y="96" width="512" height="72" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="1.6"/>
+    <text x="60" y="126" class="n-sm" fill="var(--seam-ink)">① AminoAcid</text>
+    <text x="290" y="126" class="n-sm" fill="var(--seam-ink)">as reactant</text>
+    <text x="60" y="150" class="n-role" fill="var(--seam-ink)">the amino donor is consumed</text>
+
+    <rect x="40" y="184" width="512" height="72" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="1.6"/>
+    <text x="60" y="214" class="n-sm" fill="var(--seam-ink)">② TwoOxoAcid</text>
+    <text x="290" y="214" class="n-sm" fill="var(--seam-ink)">as reactant</text>
+    <text x="60" y="238" class="n-role" fill="var(--seam-ink)">the amino acceptor is consumed</text>
+
+    <rect x="40" y="272" width="512" height="72" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="1.6"/>
+    <text x="60" y="302" class="n-sm" fill="var(--seam-ink)">③ TwoOxoAcid</text>
+    <text x="290" y="302" class="n-sm" fill="var(--seam-ink)">as product</text>
+    <text x="60" y="326" class="n-role" fill="var(--seam-ink)">the deaminated donor appears</text>
+
+    <rect x="40" y="360" width="512" height="72" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="1.6"/>
+    <text x="60" y="390" class="n-sm" fill="var(--seam-ink)">④ AminoAcid</text>
+    <text x="290" y="390" class="n-sm" fill="var(--seam-ink)">as product</text>
+    <text x="60" y="414" class="n-role" fill="var(--seam-ink)">the aminated acceptor appears</text>
+
+    <rect x="40" y="462" width="512" height="150" rx="8" fill="var(--panel)" stroke="var(--rule)" stroke-width="1.4"/>
+    <text x="60" y="492" class="g-label" fill="var(--ink-faint)">ALSO ASSERTED</text>
+    <text x="60" y="520" class="n-role" fill="var(--ink-soft)">AllDisjoint([TwoOxoAcid, AminoAcid])</text>
+    <text x="60" y="544" class="n-role" fill="var(--ink-soft)">AllDifferent([reactant, product])</text>
+    <text x="60" y="576" class="e-label" fill="var(--ink-soft)">Without the second, OWL may identify the two</text>
+    <text x="60" y="594" class="e-label" fill="var(--ink-soft)">roles and the four conjuncts collapse into two.</text>
+
+    <!-- RIGHT: the control -->
+    <rect x="624" y="40" width="560" height="596" rx="11" fill="var(--band-run)" stroke="var(--ink-faint)" stroke-width="1.5"/>
+    <text x="648" y="72" class="b-label" fill="var(--ink-soft)">THE CONTROL — REACT_0000099</text>
+
+    <rect x="648" y="96" width="512" height="72" rx="7" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.6"/>
+    <text x="668" y="126" class="n-sm" fill="var(--external-ink)">L-glutamate</text>
+    <text x="898" y="126" class="n-sm" fill="var(--external-ink)">as reactant</text>
+    <text x="668" y="150" class="n-role" fill="var(--external-ink)">an AminoAcid · CHEBI:29985 · consumed here</text>
+
+    <rect x="648" y="184" width="512" height="72" rx="7" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.6"/>
+    <text x="668" y="214" class="n-sm" fill="var(--external-ink)">2-oxoglutarate</text>
+    <text x="898" y="214" class="n-sm" fill="var(--external-ink)">as product</text>
+    <text x="668" y="238" class="n-role" fill="var(--external-ink)">a TwoOxoAcid · CHEBI:16810 · produced here</text>
+
+    <text x="648" y="300" class="g-label" fill="var(--ink-faint)">MATCHED AGAINST THE FOUR CONJUNCTS</text>
+
+    <rect x="648" y="316" width="512" height="52" rx="6" fill="var(--panel)" stroke="var(--external-line)" stroke-width="1.6"/>
+    <text x="668" y="348" class="n-sm" fill="var(--ink)">① AminoAcid as reactant</text>
+    <text x="1130" y="349" class="verdict" fill="var(--external-line)" text-anchor="end">✓</text>
+
+    <rect x="648" y="378" width="512" height="52" rx="6" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.6"/>
+    <text x="668" y="410" class="n-sm" fill="var(--bad-ink)">② TwoOxoAcid as reactant</text>
+    <text x="1130" y="411" class="verdict" fill="var(--bad-line)" text-anchor="end">✗</text>
+
+    <rect x="648" y="440" width="512" height="52" rx="6" fill="var(--panel)" stroke="var(--external-line)" stroke-width="1.6"/>
+    <text x="668" y="472" class="n-sm" fill="var(--ink)">③ TwoOxoAcid as product</text>
+    <text x="1130" y="473" class="verdict" fill="var(--external-line)" text-anchor="end">✓</text>
+
+    <rect x="648" y="502" width="512" height="52" rx="6" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.6"/>
+    <text x="668" y="534" class="n-sm" fill="var(--bad-ink)">④ AminoAcid as product</text>
+    <text x="1130" y="535" class="verdict" fill="var(--bad-line)" text-anchor="end">✗</text>
+
+    <text x="648" y="588" class="n-role" fill="var(--ink-soft)">Two of four satisfied. The definition is a conjunction,</text>
+    <text x="648" y="608" class="n-role" fill="var(--ink-soft)">so the reaction is <tspan font-weight="700">not derived</tspan> — the two that fail are</text>
+    <text x="648" y="626" class="n-role" fill="var(--ink-soft)">exactly the role-reversed pair.</text>
+
+    <path d="M576,266 L620,266" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#a3)"/>
+  </svg>
+
+  <p class="caption">
+    The control is not obviously different — it matches <strong>half</strong> the definition. That is
+    what makes it a real test: it fails on role, which is precisely the thing the model claims to
+    discriminate on.
+  </p>
+  </div>
+
+  <div class="note warn">
+    <p>
+      <strong>"Not derived" is not "proven false."</strong> Under the open-world assumption HermiT has
+      failed to prove the control <em>is</em> a transamination; it has not proved it is not. The CLI
+      says <em>"not derived (roles do not match the definition)"</em> for exactly this reason.
+      Asserting non-membership would be a closed-world claim, and that is SHACL's job — which is why
+      both run.
+    </p>
+  </div>
+
+  <h2>What the definition does not constrain</h2>
+
+  <p>
+    Worth stating plainly, because the class name is broader than its logical extension. The four
+    conjuncts define a <strong>participant-role signature</strong>, not a mechanism. The expression
+    says nothing about:
+  </p>
+
+  <table>
+    <thead><tr><th>Not constrained</th><th>Consequence</th></tr></thead>
+    <tbody>
+      <tr><td>Atom or amino-group transfer</td><td>Nothing checks that a group actually moved.</td></tr>
+      <tr><td>Mass or charge balance</td><td>An unbalanced equation still classifies.</td></tr>
+      <tr><td>Additional participants</td><td>Add ATP → ADP + phosphate and it still classifies.</td></tr>
+      <tr><td>Stoichiometric coefficients</td><td>Coefficients 2,1,1,1 classify under OWL; only SHACL objects.</td></tr>
+      <tr><td>PLP dependence, or any enzyme</td><td>A reaction with no <code>catalysedBy</code> still classifies.</td></tr>
+      <tr><td>The ping-pong bi-bi mechanism</td><td>Carried as a datum on the enzyme, not encoded in the class.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note warn">
+    <p>
+      <strong>An overstatement that was in the source, and is now fixed.</strong> The docstring in
+      <code>schema.py</code> used to call these four conjuncts a complete <em>mechanism</em>
+      signature. They are not — as the table above shows, the mechanism is nowhere in the class
+      expression. It now reads <em>the net participant-role signature shared by the three canonical
+      amino-acid/2-oxo-acid transaminations</em>, and spells out what the conjuncts do not
+      constrain. Flagged by an independent review; both that fix and the
+      <code>AllDifferent</code> one have landed.
+    </p>
+  </div>
+
+  <h2>The vocabulary in full</h2>
+
+  <h3>Classes</h3>
+  <table>
+    <thead><tr><th>Class</th><th>Role in the model</th></tr></thead>
+    <tbody>
+      <tr><td><code>BiochemicalReaction</code></td><td>A reaction catalysed by an enzyme.</td></tr>
+      <tr><td><code>TransaminationReaction</code></td><td><strong>Defined class</strong> ⊑ <code>BiochemicalReaction</code>. Never asserted; always inferred.</td></tr>
+      <tr><td><code>ReactionParticipant</code></td><td>The n-ary bridge: entity + role + coefficient.</td></tr>
+      <tr><td><code>ChemicalEntity</code></td><td>A chemical, anchored on a ChEBI identifier.</td></tr>
+      <tr><td><code>AminoAcid</code></td><td>⊑ <code>ChemicalEntity</code>. The amino-group donor side.</td></tr>
+      <tr><td><code>TwoOxoAcid</code></td><td>⊑ <code>ChemicalEntity</code>. The acceptor side. Disjoint from <code>AminoAcid</code>.</td></tr>
+      <tr><td><code>ParticipantRole</code></td><td>Role in a direction, referencing an SBO term.</td></tr>
+      <tr><td><code>Enzyme</code></td><td>Anchored on a UniProt EC class IRI. Carries mechanism and cofactor.</td></tr>
+      <tr><td><code>ReversibilityKind</code></td><td>Controlled term — a boolean cannot express BioPAX's three-way distinction.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Properties</h3>
+  <table>
+    <thead><tr><th>Property</th><th>Domain → Range</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><code>hasParticipant</code></td><td>Reaction → Participant</td><td>The only non-functional object property.</td></tr>
+      <tr><td><code>participatingEntity</code></td><td>Participant → ChemicalEntity</td><td>Functional.</td></tr>
+      <tr><td><code>participantRole</code></td><td>Participant → ParticipantRole</td><td>Functional.</td></tr>
+      <tr><td><code>stoichiometricCoefficient</code></td><td>Participant → float</td><td>Functional. The reason the bridge node exists.</td></tr>
+      <tr><td><code>catalysedBy</code></td><td>Reaction → Enzyme</td><td></td></tr>
+      <tr><td><code>hasCofactor</code></td><td><strong>Enzyme</strong> → ChemicalEntity</td><td>Domained on the enzyme, deliberately.</td></tr>
+      <tr><td><code>hasReversibility</code></td><td>Reaction → ReversibilityKind</td><td>Functional.</td></tr>
+      <tr><td><code>kineticMechanism</code></td><td>Enzyme → str</td><td>On the catalyst, not the transformation.</td></tr>
+      <tr><td><code>systematicName</code></td><td>Enzyme → str</td><td>IUBMB name; answers NFDI4Cat's CQ02.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <p>
+      <strong>Why the role individuals live in the schema.</strong> The definition restricts with
+      <code>participantRole.value(reactant)</code> — a <code>hasValue</code> restriction on a
+      <em>named individual</em>. Those individuals must exist when the class is declared, so they sit
+      in <code>schema.py</code> beside the classes despite being individuals. The obvious module split
+      would have put them in the A-Box and silently broken the definition.
+    </p>
+  </div>
+
+  <footer>
+    <div class="pager">
+      <a href="01-system.html">← 01 · System overview</a>
+      <a href="03-delivery.html">03 · Build and delivery →</a>
+    </div>
+    <p>
+      Sheet 02 of the tacat architecture series. Self-contained: no external scripts, fonts or
+      stylesheets. Renders from <code>file://</code>, light and dark.
+    </p>
+  </footer>
+
+</main>
+</body>
+</html>

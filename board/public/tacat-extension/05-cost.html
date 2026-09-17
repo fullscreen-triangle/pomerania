@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5 · What it would cost — tacat extension</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="5">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat · extension</strong>
+    <span>What the individuation papers would add to the submission</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-floor.html">The floor under identity</a></li>
+    <li><a href="02-closure.html">Closure, not confidence</a></li>
+    <li><a href="03-coherence.html">Three sources or none</a></li>
+    <li><a href="04-boundary.html">Where the model stops</a></li>
+    <li><a class="here" href="05-cost.html">What it would cost</a></li>
+    <li><a href="06-lara.html">The same three parts</a></li>
+    <li><a href="07-three.html">Three verdicts on one run</a></li>
+    <li><a href="08-os.html">What exists, and what does not</a></li>
+    <li class="extra"><a href="09-enforced.html">Enforced, or merely represented</a></li>
+  </ol>
+  <div class="nav-label">Theme</div>
+  <div data-theme-toggle></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 5</p>
+<h1>What it would cost</h1>
+<p class="standfirst">
+  Four proposals, unequal in value. This chapter prices them, says which one to build first, says
+  which one to drop, and states the case against the whole approach in the strongest form I can put
+  it — because a proposal that has not been argued against has not been argued for.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★ decision page</span>
+  <span class="chip">9 min</span>
+  <span class="chip">PLAN R5 · defensibility</span>
+  <span class="chip trap">contains the retraction</span>
+</div>
+
+<div class="provenance">
+  <strong>Provenance.</strong> The theory throughout these chapters is unpublished single-author work
+  and has not been peer-reviewed. This page deliberately argues the other side. If only one page of
+  the five is read, §3 and §4 are the ones that matter, because they are the ones that would survive
+  a hostile reading.
+</div>
+
+<h2 id="ledger">1. The four proposals, priced</h2>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>#</th><th>Proposal</th><th>Answers</th><th>Effort</th><th>Standing on its own?</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>4.2</strong></td>
+      <td>Boundary test guarding <code>OUT_OF_SCOPE_QUESTIONS</code></td>
+      <td><code>RATIONALE.md</code> §6.3 — the stated real target</td>
+      <td class="fig-ok"><strong>~1 h</strong></td>
+      <td>Completely. It is an ordinary regression test.</td>
+    </tr>
+    <tr>
+      <td><strong>1.1</strong></td>
+      <td>Dereference gate — formula/charge vs. the authority</td>
+      <td>G10, the defect the submission exists to argue against</td>
+      <td class="fig-ok"><strong>~half day</strong></td>
+      <td>Completely. Motivated by the G10 corruption run, not by any theorem.</td>
+    </tr>
+    <tr>
+      <td><strong>2.1</strong></td>
+      <td><code>tacat closure</code> — a fourth CLI verb</td>
+      <td><code>RATIONALE.md</code> §4, "everything fails green"</td>
+      <td><strong>~2 days</strong></td>
+      <td>Mostly. The <em>idea</em> needs Thm 8.3; the implementation does not.</td>
+    </tr>
+    <tr>
+      <td><strong>3.2</strong></td>
+      <td><code>sh:minCount 3</code> on supporting sources</td>
+      <td>G10's "human verification is not a gate"</td>
+      <td><strong>~1 day</strong> + ongoing curation cost</td>
+      <td>Weakest. The number 3 comes from the theorem and nowhere else.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="bignums">
+  <div class="bignum"><span class="v">1</span><span class="l">build first — the boundary test</span></div>
+  <div class="bignum"><span class="v">2</span><span class="l">strongest transfer — closure</span></div>
+  <div class="bignum"><span class="v">1</span><span class="l">drop for a nine-entity demo — §3.2</span></div>
+  <div class="bignum"><span class="v">0</span><span class="l">of these are in the frozen repository</span></div>
+</div>
+
+<h2 id="drop">2. The one to drop, and why</h2>
+
+<div class="box trap">
+  <span class="box-title">Retracting the SHACL coherence constraint for this repository</span>
+  <p>
+    Chapter 3 proposes <code>sh:minCount 3</code> on <code>tacat:supportedBy</code>. For a
+    nine-entity demonstration graph, <strong>I would not ship it</strong>, and the reason is the
+    project's own rule.
+  </p>
+  <p>
+    <code>PLAN.md</code> R5, quoted in <code>RATIONALE.md</code> §6: <em>"any line that cannot be
+    explained under questioning is a liability, not an asset. Where something cannot be defended,
+    cut it."</em> The constraint's defence is a theorem nobody has reviewed. Asked "why three?" in a
+    presentation, the honest answer is <em>because an unpublished paper of mine proves a triangle is
+    the shortest robust support cycle</em> — which converts a data-quality gate into a discussion of
+    my own unrefereed work, in a submission being graded on <em>Technologie, Qualität, Stil</em>.
+  </p>
+  <p>
+    That is a bad trade at this scale. The <em>principle</em> — record which independent sources back
+    each fact, and what each agrees on — is worth keeping as
+    <code>tacat:supportedBy</code> without the cardinality constraint. It carries the information
+    and costs no argument.
+  </p>
+</div>
+
+<p>
+  The constraint earns its place at curation scale, where nobody can check each entity by hand and a
+  count is the only mechanism available. That is a different project, and saying so is more useful
+  than defending it here.
+</p>
+
+<h2 id="against">3. The case against all of this</h2>
+
+<p>
+  Put as strongly as I can put it, because this is the version that will be put to me.
+</p>
+
+<div class="vs">
+  <div class="side bad">
+    <h4>The objection</h4>
+    <p>
+      Every one of these four proposals is reachable by ordinary engineering reasoning. "Check the
+      identifier against the source." "Don't stop because the tests are green." "Corroborate."
+      "Test that your documented limits are real." None of it needs a theory of individuation.
+    </p>
+    <p>
+      Dressing routine good practice in theorems imported from unpublished work is the opposite of
+      the discipline this repository demonstrates everywhere else — where every claim is tied to a
+      commit SHA, a DOI, or a live primary source.
+    </p>
+  </div>
+  <div class="side good">
+    <h4>What survives it</h4>
+    <p>
+      Most of it is conceded. The proposals <em>are</em> reachable without the theory, and that is
+      why every chapter states them so they stand alone.
+    </p>
+    <p>
+      What the theory adds is not the proposals but the <strong>ordering and the prediction</strong>:
+      it says in advance which gates cannot work, and why adding more of the same kind will not help.
+      G10 was found by deliberate corruption after the fact. The floor result says <em>every</em>
+      internal check has that blind spot, before you write it.
+    </p>
+  </div>
+</div>
+
+<div class="box key">
+  <span class="box-title">The honest summary</span>
+  <p>
+    The theory earns its keep as a <strong>generator of the right question</strong>, not as
+    justification for the answer. "What is this check comparing against, and does that thing live
+    inside my graph?" is worth having as a reflex. Whether it arrives via a floor theorem or via
+    scar tissue from G10 makes no difference to the code — and the code is what is being graded.
+  </p>
+</div>
+
+<h2 id="fit">4. Where it fits the post, stated carefully</h2>
+
+<p>
+  <code>JOB_PROFILE.md</code> is emphatic about two things that bear directly on how these pages
+  should be used, and both are constraints rather than encouragements.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>What the profile says</th><th>What follows for this material</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>§1 — the stated technology surface is a <strong>closed list</strong>; it omits SHACL, ML, EMMO, DCAT-AP+ and more, and "sehr gut vertraut" is a seniority bar on <em>those</em> foundations</td>
+      <td>None of this substitutes for the five steps. It is strictly additional, and it should never be the first thing shown.</td>
+    </tr>
+    <tr>
+      <td>§4.1 — the observation about his published work is stated <strong>as opportunity, never as deficiency</strong></td>
+      <td>Same rule applies here, harder. These chapters critique <em>this</em> repository's own gaps — G10, the static provenance, the enumerated boundary. That is the safe direction.</td>
+    </tr>
+    <tr>
+      <td>§7.1 — the decision is <strong>collective</strong>, and at least one decision-maker "may not be a software person"</td>
+      <td>Anything requiring an unpublished theorem to follow is inaudible to part of the audience. The four proposals must each be sayable in one sentence with no theory. They are — that was the design constraint.</td>
+    </tr>
+    <tr>
+      <td>§10 — being able to say "here is the boundary, here is why I drew it there" is stronger than gesturing at everything</td>
+      <td>The strongest use of these pages is Chapter 4, and the strongest single artefact is the boundary test. Everything else is optional.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ask">
+  <span class="box-title">If asked "is this part of the submission?"</span>
+  <p>
+    No. The repository froze on 28 July with none of this in it. These are five pages describing what
+    I would build next and why, written against the submission's own recorded gaps. The one I would
+    start with is the boundary test, because it takes an hour and it guards the claim the whole
+    submission is organised around.
+  </p>
+</div>
+
+<h2 id="order">5. Build order</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 720 150" role="img" aria-labelledby="fig5title fig5desc">
+  <title id="fig5title">Proposed build order</title>
+  <desc id="fig5desc">Four proposals in order: boundary test, dereference gate, closure verb,
+  supportedBy without the cardinality constraint.</desc>
+
+  <line x1="40" y1="66" x2="680" y2="66" class="fig-str-b" stroke-width="2"/>
+
+  <circle cx="100" cy="66" r="13" class="fig-sf fig-str-a" stroke-width="2"/>
+  <text x="100" y="71" class="fig-mono fig-a" text-anchor="middle">1</text>
+  <text x="100" y="40" class="fig-small fig-t" text-anchor="middle">boundary test</text>
+  <text x="100" y="98" class="fig-small fig-m" text-anchor="middle">~1 h</text>
+  <text x="100" y="114" class="fig-small fig-ok" text-anchor="middle">highest value</text>
+
+  <circle cx="270" cy="66" r="13" class="fig-sf fig-str-a" stroke-width="2"/>
+  <text x="270" y="71" class="fig-mono fig-a" text-anchor="middle">2</text>
+  <text x="270" y="40" class="fig-small fig-t" text-anchor="middle">dereference gate</text>
+  <text x="270" y="98" class="fig-small fig-m" text-anchor="middle">~half day</text>
+  <text x="270" y="114" class="fig-small fig-m" text-anchor="middle">closes G10 properly</text>
+
+  <circle cx="450" cy="66" r="13" class="fig-su fig-str-m" stroke-width="2"/>
+  <text x="450" y="71" class="fig-mono fig-t" text-anchor="middle">3</text>
+  <text x="450" y="40" class="fig-small fig-t" text-anchor="middle">tacat closure</text>
+  <text x="450" y="98" class="fig-small fig-m" text-anchor="middle">~2 days</text>
+  <text x="450" y="114" class="fig-small fig-m" text-anchor="middle">needs the federated layer</text>
+
+  <circle cx="620" cy="66" r="13" class="fig-su fig-str-m" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="620" y="71" class="fig-mono fig-m" text-anchor="middle">4</text>
+  <text x="620" y="40" class="fig-small fig-t" text-anchor="middle">supportedBy</text>
+  <text x="620" y="98" class="fig-small fig-m" text-anchor="middle">~1 day</text>
+  <text x="620" y="114" class="fig-small fig-no" text-anchor="middle">no minCount — see §2</text>
+</svg>
+<figcaption>
+  Ordered by value per hour, not by the order the chapters present them. Item 4 is drawn dashed
+  because only half of it is proposed for this scale.
+</figcaption>
+</figure>
+
+<div class="pagenav">
+  <a href="04-boundary.html"><span class="dir">Back</span>4 · Where the model stops</a>
+  <span class="spacer"></span>
+  <a href="06-lara.html"><span class="dir">Next series</span>6 · The same three parts</a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="extension.js"></script>
+</body>
+</html>

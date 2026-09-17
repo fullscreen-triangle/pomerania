@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1 · Facts as data — tacat primer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-accent="1">
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li class="extra"><a href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a class="here" href="01-data.html">Facts as data</a></li>
+    <li><a href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a href="03-questions.html">Asking questions</a></li>
+    <li><a href="04-checking.html">Checking the data</a></li>
+    <li><a href="05-serving.html">Serving it</a></li>
+    <li><a href="06-shipping.html">Shipping it</a></li>
+    <li><a href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+  </ol>
+  <div class="nav-label">Readiness</div>
+  <div class="progress" data-progress></div>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 1</p>
+<h1>Facts as data</h1>
+<p class="standfirst">
+  Before anything can be reasoned over, queried or served, the facts have to be written down in a
+  form a machine can join to other people's facts.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★★★ must know</span>
+  <span class="chip">15 min</span>
+  <span class="chip">RDF · IRI · Turtle</span>
+  <span class="chip ask">will be asked</span>
+</div>
+
+<div class="resume" data-resume></div>
+
+<h2 id="spreadsheet">1. Why not a spreadsheet?</h2>
+
+<p>
+  You could put three reactions in a table in five minutes and everyone could read it. So why the
+  machinery?
+</p>
+
+<h3>a. A table has a fixed shape; reactions do not</h3>
+<p>
+  Your columns are <code>substrate_1</code>, <code>substrate_2</code>, <code>product_1</code>,
+  <code>product_2</code>. Fine for these three.
+</p>
+<p>
+  Now add glutamate dehydrogenase — three substrates, three products. Now a coefficient of 2. Now
+  two cofactors. Each time you either add columns that are empty for most rows, or start cramming
+  lists into cells, at which point only a human can read it.
+</p>
+
+<h3>b. Merging a table with someone else's costs a negotiation, every time</h3>
+<p>
+  This is the important one. Your column is <code>substrate</code>. Rhea's is
+  <code>participant</code>. UniProt does not have it at all. Tables <em>can</em> be integrated —
+  but somebody has to map the schemas and reconcile the keys first, by hand, for each new pair.
+</p>
+
+<figure class="fig" data-figure="merge">
+  <figcaption>Strings need a human to reconcile them, every time. Shared IRIs do not.</figcaption>
+</figure>
+
+<h3>c. A table cannot say what its words mean</h3>
+<p>
+  Your cell says <code>L-glutamate</code>. Which one — the neutral acid, or the singly-charged anion
+  at physiological pH? The string cannot tell you, and the machine cannot ask.
+</p>
+
+<div class="box key">
+  <span class="box-title">What RDF is for</span>
+  <p>
+    RDF makes <strong>global identifiers and shared vocabularies part of the data model</strong>,
+    so two graphs produced independently join automatically <em>when they reuse the same terms</em>.
+    That is the entire purpose, and the odd syntax and the URLs-as-names are in service of it.
+  </p>
+  <p class="muted">
+    The honest qualifier: RDF removes the <em>per-pair</em> negotiation, not the need for agreement
+    altogether. Two graphs that use different vocabularies for the same idea still need mapping. What
+    changes is that the agreement lives in a shared vocabulary, once, rather than in a bespoke
+    reconciliation for every pair of datasets.
+  </p>
+</div>
+
+<h2 id="triple">2. The triple</h2>
+
+<p>RDF has exactly one kind of statement. It has three parts.</p>
+
+<figure class="fig" data-figure="triple">
+  <figcaption>There is no other construct. Complex structures are built by making the object of one
+    triple the subject of the next — which is why the result is a <em>graph</em>.</figcaption>
+</figure>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    A triple is a lab-notebook line made machine-readable: <em>sample 7 — OD600 — 0.42</em>. Subject,
+    what was measured, value.
+  </p>
+  <p>
+    The discipline RDF adds: the subject and the predicate are not free text. They are globally
+    unique names someone else can also use.
+  </p>
+</div>
+
+<h2 id="iri">3. IRIs: names that are also addresses</h2>
+
+<p>
+  If two people are to combine their facts, they must use the same name for the same thing. RDF
+  solves this by making every name a <strong>URL</strong>.
+</p>
+
+<figure class="code">
+  <figcaption>the same molecule, named three ways</figcaption>
+  <pre><code data-lang="turtle"># a string — means nothing to a machine
+"L-glutamate"
+
+# an accession — better, but you must know it is a ChEBI id
+"CHEBI:29985"
+
+# an IRI — globally unique, and it resolves in a browser
+&lt;http://purl.obolibrary.org/obo/CHEBI_29985&gt;</code></pre>
+</figure>
+
+<p>
+  Only the third has the property that matters: <strong>if two datasets anywhere in the world use
+  that IRI, they are provably talking about the same molecule</strong> — no negotiation, no mapping
+  table. That is the trick, and it is why the project reuses ChEBI, Rhea, UniProt and SBO
+  identifiers.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">You already know this</span>
+  <p>
+    You would never write "the aspartate one" in a methods section — you would write the accession.
+    An IRI is that instinct made mandatory and machine-readable. Paste
+    <code>http://purl.obolibrary.org/obo/CHEBI_29985</code> into a browser and ChEBI's page loads.
+    <strong>The name is the address.</strong>
+  </p>
+</div>
+
+<h3>Why not invent our own names?</h3>
+<p>
+  Because a name only helps if others use it. OBO Foundry principle FP-005: <em>terms out of scope
+  should be imported from the appropriate ontology.</em> Minting your own <code>:Water</code>
+  instead of <code>CHEBI:15377</code> means your data can never join anyone else's — which defeats
+  the purpose of RDF.
+</p>
+
+<div class="box ask">
+  <span class="box-title">Worth knowing, because it is arguable</span>
+  <p>
+    This project <em>does</em> create a local name per chemical — <code>tacat:CHEBI_29985</code> —
+    and then <strong>links</strong> it to the official ChEBI IRI. The alternative is to use ChEBI's
+    IRI directly as the node.
+  </p>
+  <p>
+    Both are standard. Linking keeps this project's own statements off ChEBI's identifier, so the
+    graph never appears to make claims about ChEBI's term; using it directly is simpler and more
+    obviously "reuse". Be able to state the trade-off rather than pretend it is settled.
+  </p>
+</div>
+
+<h2 id="turtle">4. Turtle: the readable way to write triples</h2>
+
+<p>
+  RDF is an abstract model, not a file format. The project uses <strong>Turtle</strong>
+  (<code>.ttl</code>), the one designed for humans.
+</p>
+
+<div class="widget" data-widget="turtle-expand"></div>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Symbol</th><th>Means</th></tr></thead>
+  <tbody>
+    <tr><td><code>@prefix tacat: &lt;…&gt;</code></td>
+        <td>An abbreviation. <code>tacat:REACT_0000002</code> <em>is</em> the full IRI — shorthand,
+            nothing more. Same idea as <code>CHEBI:29985</code>.
+            <br><strong>Worth knowing, because it cost a build:</strong> rdflib invents
+            <code>ns1:</code>, <code>ns2:</code>… for namespaces nothing has bound, in the order it
+            happens to meet them — and that order is not stable <em>between processes</em>. Two
+            builds of the identical graph serialised with <code>ns1</code> and <code>ns2</code>
+            swapped, a byte difference in a file whose whole claim is &ldquo;same inputs, same
+            artefact&rdquo;. Binding every prefix explicitly fixed it, and
+            <code>test_every_prefix_is_bound_rather_than_invented</code> keeps it fixed.</td></tr>
+    <tr><td><code>;</code></td><td>"…and about the same subject, also…"</td></tr>
+    <tr><td><code>,</code></td><td>"…and also this object, same subject and predicate"</td></tr>
+    <tr><td><code>a</code></td><td>"is of type". The most common predicate in any RDF file.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ask">
+  <span class="box-title">Notice something in the real file</span>
+  <p>
+    The built graph types each reaction as <code>tacat:TransaminationReaction</code> — and
+    <strong>nobody wrote that</strong>. No line of code asserts it. A reasoner derived it and it was
+    written into the file afterwards. That is <a href="02-meaning.html">Chapter 2</a>, and it is the
+    centrepiece of the submission.
+  </p>
+</div>
+
+<button class="checkline" data-check="1:triple" aria-pressed="false">
+  <span class="ct">I can explain what a triple is, and read a Turtle file aloud
+  <small>subject–predicate–object; <code>;</code> <code>,</code> <code>a</code>; prefixes are shorthand</small></span>
+</button>
+
+<h2 id="opaque">5. Why the names look like <code>REACT_0000002</code></h2>
+
+<p>
+  It would be more readable as <code>tacat:AlanineTransaminaseReaction</code>. It is deliberately not.
+</p>
+<p>
+  Every serious vocabulary here does the same: <strong>ChEBI</strong> (<code>CHEBI_29985</code>),
+  the whole <strong>OBO Foundry</strong> (<code>GO_0006103</code>), <strong>EMMO</strong>, and
+  NFDI4Cat's own <strong>Voc4Cat</strong> (<code>voc4cat_0000123</code>).
+</p>
+<p>
+  The reason: <em>a label can change and an identifier cannot</em>. With a readable IRI you have two
+  bad choices when terminology moves — change the IRI and break everyone who linked to it, or keep
+  an IRI that contradicts its own label. With an opaque number you change the
+  <code>rdfs:label</code> and nothing breaks.
+</p>
+
+<h2 id="literal">6. Literals vs IRIs — the distinction that mattered</h2>
+
+<p>An object can be one of two things, and this is the most consequential thing in the chapter.</p>
+
+<div class="vs">
+  <div class="side good">
+    <h4>an IRI</h4>
+    <p><code>&lt;http://…/CHEBI_29985&gt;</code></p>
+    <p>A <strong>node</strong> — a thing in the graph. Can be linked to and from. <strong>Joins to
+       other datasets.</strong></p>
+  </div>
+  <div class="side bad">
+    <h4>a literal</h4>
+    <p><code>"http://…/CHEBI_29985"</code></p>
+    <p>A <strong>value</strong> — text. A dead end. <strong>Never joins to anything.</strong></p>
+  </div>
+</div>
+
+<p>
+  The difference is <em>two quotation marks</em>. Visually almost nothing. Functionally, the
+  difference between a working knowledge graph and a very tidy text file.
+</p>
+
+<div class="widget" data-widget="silent-failure"></div>
+
+<div class="box trap">
+  <span class="box-title">This actually happened</span>
+  <p>
+    An earlier version stored every ChEBI, Rhea and EC identifier as a <strong>string</strong>. The
+    file looked right. The identifiers were correct and well-formed. A test confirmed they were
+    present and correctly shaped.
+  </p>
+  <p>
+    It took two more passes to fix properly, and the middle one is the part worth knowing. The first
+    fix carried <em>both</em> forms — an IRI so joins work, plus the string so validation could
+    pattern-match it. The premise was that <code>sh:pattern</code> needs a literal.
+    <strong>That premise is false:</strong> <code>sh:pattern</code> matches the lexical form of the
+    value node, and for an IRI the lexical form is the IRI string. The duplicate was buying nothing.
+  </p>
+  <p>
+    So the second fix deleted it. What is left is one triple, and it is not a link property at all —
+    <code>rdf:type</code>.
+  </p>
+</div>
+
+<figure class="code">
+  <figcaption>the identifier is the type — from the built graph</figcaption>
+  <pre><code data-lang="turtle">tacat:REACT_0000002
+    a  tacat:BiochemicalReaction ,
+       &lt;http://rdf.rhea-db.org/19453&gt; .   # a node — joins work, and sh:pattern still validates it</code></pre>
+</figure>
+
+<h3>Why <code>rdf:type</code>, and not <code>owl:sameAs</code> or <code>skos:exactMatch</code>?</h3>
+<p>
+  Because it is the relation that is exactly true. In ChEBI, Rhea, UniProt and SBO the external term
+  is a <em>class</em>, and each node here is an <em>instance</em> of one — so class membership needs
+  no invented predicate.
+</p>
+<p>
+  <code>owl:sameAs</code> is far stronger: it licenses a reasoner to pull <em>everything</em> ChEBI
+  asserts into your graph, and everything you assert into ChEBI's. <code>skos:exactMatch</code> is
+  weaker but wrong in a different way — it is a concept-scheme mapping property, so it
+  <em>entails</em> both ends are <code>skos:Concept</code>, and here it pointed an individual at a
+  class. For linking to a database you do not control, the claim that is simply accurate beats both.
+</p>
+
+<button class="checkline" data-check="1:literal" aria-pressed="false">
+  <span class="ct">I can explain why a string identifier joins to nothing, and why it fails silently
+  <small>the v0 bug; the false sh:pattern premise; why rdf:type rather than sameAs or exactMatch</small></span>
+</button>
+
+<h2 id="blank">7. What was deliberately avoided: blank nodes</h2>
+
+<p>
+  RDF lets you write a node with <em>no</em> name — useful for intermediates nothing else refers to.
+  The participant bridge nodes of Chapter 2 are exactly that, so blank nodes were the obvious choice.
+</p>
+<p>They were rejected, for two practical reasons:</p>
+<ul>
+  <li>An unnamed node <strong>cannot be cited</strong> — a validation report saying "this node is
+      wrong" needs something to point at.</li>
+  <li>Unnamed nodes <strong>duplicate silently when graphs merge</strong>, because nothing can tell
+      the machine your anonymous node and mine are the same one.</li>
+</ul>
+<p>Hence <code>PART_0000002_01</code>: ugly, and addressable.</p>
+
+<h2 id="stack">8. The vocabulary, so the words stop being scary</h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Word</th><th>What it actually is</th></tr></thead>
+  <tbody>
+    <tr><td><strong>RDF</strong></td><td>The model: all facts are triples. Not a file format.</td></tr>
+    <tr><td><strong>Turtle / .ttl</strong></td><td>A readable file format for RDF. Used throughout.</td></tr>
+    <tr><td><strong>RDF/XML</strong></td><td>An older format for the same thing. Verbose; still common in ontology tooling.</td></tr>
+    <tr><td><strong>JSON-LD</strong></td><td>RDF as JSON, for ordinary web tooling. Dörr's own <code>SciDatS</code> uses it.</td></tr>
+    <tr><td><strong>IRI / URI / URL</strong></td><td>For your purposes the same thing: a unique name that is also an address.</td></tr>
+    <tr><td><strong>Literal</strong></td><td>A plain value. No outgoing links.</td></tr>
+    <tr><td><strong>Namespace / prefix</strong></td><td>An abbreviation for a long IRI stem. Exactly the <code>CHEBI:</code> in <code>CHEBI:29985</code>.</td></tr>
+    <tr><td><strong>Graph</strong></td><td>A set of triples. That is the entire definition.</td></tr>
+    <tr><td><strong>Triplestore</strong></td><td>A database for triples that answers SPARQL. Here it is <strong>rdflib</strong>, in memory inside the running program — fine for ~390 triples, not a production store, and the README says so.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ask">
+  <span class="box-title">They might ask: why RDF rather than a graph database like Neo4j?</span>
+  <p>
+    Both store networks. But a Neo4j <code>SUBSTRATE_OF</code> relationship means whatever your team
+    decided it means — joining to another lab's Neo4j needs a human. RDF makes every node and every
+    relationship a globally resolvable IRI, so two graphs from two institutions merge by
+    construction.
+  </p>
+  <p>
+    For a FAIR-data project that property <em>is</em> the requirement. For an internal application
+    with no external integration, Neo4j would often be the better engineering choice.
+  </p>
+</div>
+
+<div class="pager">
+  <a class="prev" href="tldr.html"><span class="dir">Previous</span><span class="t">← The whole thing in 3 min</span></a>
+  <a class="next" href="02-meaning.html"><span class="dir">Next</span><span class="t">2 · Meaning &amp; inference →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

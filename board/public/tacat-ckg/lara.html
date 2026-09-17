@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What this means for a laboratory pipeline</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>Causal Knowledge Graph</strong> · one object, several readings</a>
+    <nav class="top">
+      <a href="index.html">Overview</a>
+      <a href="s-entropy.html">S-entropy</a>
+      <a href="individuation.html">Individuation</a>
+      <a href="floor.html">The floor</a>
+      <a href="propagation.html">Propagation</a>
+      <a href="opacity.html">Path opacity</a>
+      <a href="federation.html">Federated querying</a>
+      <a href="languages.html">The languages</a>
+      <a href="runtime.html">Runtime</a>
+      <a href="lara.html" aria-current="page">For LARA</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <p class="eyebrow">→ Application</p>
+  <h1>Five layers you keep in sync are one object addressed at five depths.</h1>
+
+  <p class="lede">
+    A laboratory pipeline that controls instruments and robots already has all the pieces
+    of this framework, held apart. An ontology models. A reasoner infers. A query layer
+    retrieves. A scheduler plans. A provenance store records what happened. Each carries
+    its own representation of the same experiment, and keeping them aligned is permanent,
+    unrewarding work.
+  </p>
+
+  <div class="claim">
+    <span class="label">The proposal</span>
+    <p>
+      They are not five things that must agree. They are one graph, read at different
+      depths and at different arguments. The drift cannot occur because there is nothing
+      to drift <em>between</em>.
+    </p>
+  </div>
+
+  <h2>The mapping, stated concretely</h2>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="layers" viewBox="0 0 760 420" role="img"
+           aria-label="Conventional pipeline layers mapped onto one graph"></svg>
+    </div>
+    <div class="controls">
+      <button id="m-sep" data-mode="separate" aria-pressed="true" type="button">as five systems</button>
+      <button id="m-one" data-mode="unified" type="button">as one object</button>
+    </div>
+    <figcaption>
+      <b>Figure 15 — the same experiment, held five ways or held once.</b>
+      In the first view each layer keeps its own copy and the arrows between them are
+      synchronisation work — the places where a change in one has to be propagated by
+      hand. In the second, each layer is a <em>reading</em> of one graph: a projection, a
+      dispatch, a walk, a trajectory, an edge set. Hover a layer for what replaces it.
+    </figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th>Your layer</th><th>Becomes</th><th>Why that is the same thing</th></tr></thead>
+    <tbody>
+      <tr><td>Ontology model</td>
+          <td>Node identity plus its bundle of realisations</td>
+          <td>A class is a subtask name; an instance is a node carrying values</td></tr>
+      <tr><td>Reasoner</td>
+          <td>Federation dispatch across modules</td>
+          <td>Inference is a module reading values and emitting new ones</td></tr>
+      <tr><td>SPARQL / query access</td>
+          <td>Walking the graph the run produced</td>
+          <td>The store is what was emitted, with a closed retrieval vocabulary</td></tr>
+      <tr><td>Workflow scheduler</td>
+          <td>The trajectory</td>
+          <td>Emergent rather than planned — the set of nodes information crossed</td></tr>
+      <tr><td>Provenance store</td>
+          <td>The edges themselves</td>
+          <td>An edge exists <em>because</em> a value propagated; provenance is not a
+              parallel record but the graph's own structure</td></tr>
+      <tr><td>Instrument driver</td>
+          <td>Node execution, with the monitor's floor attached</td>
+          <td>What the instrument entitles the node to assert is
+              <a href="floor.html">computable from its specification</a></td></tr>
+    </tbody>
+  </table>
+
+  <div class="caveat">
+    <strong>Honest about the standards.</strong> This is a proposal about executable
+    knowledge graphs, and it does not yet speak RDF, OWL, SHACL or PROV natively. The
+    static reading <em>is</em> an ordinary knowledge graph and can be expressed in those
+    terms; the contribution is the dynamic reading layered on it. In particular the audit
+    record maps onto PROV directly — activity, used, wasDerivedFrom — and that mapping is
+    a paragraph of work rather than a research problem. It has not been done.
+  </div>
+
+  <h2>Three things it changes on the bench</h2>
+
+  <h3>1 · Reproducibility moves to the protocol</h3>
+  <p>
+    Two runs of one assay do not produce the same number, and treating that as a bug
+    produces pipelines that lie. Fingerprinting the protocol rather than the result gives
+    a reproducibility claim that is true: <em>this is the same experiment</em>, without
+    asserting <em>this is the same measurement</em>.
+    <a href="runtime.html">How the fingerprint is built →</a>
+  </p>
+
+  <h3>2 · Anomalies stop halting runs</h3>
+  <p>
+    A chunk that raises deposits an error <em>value</em> on its node and the run
+    continues. Nothing upstream is lost because something downstream failed, and the
+    failure is in the record rather than in a log file beside it. Against a
+    halt-on-error comparator this is the difference between reaching every node and
+    reaching the first anomaly.
+  </p>
+
+  <h3>3 · Instrument limits become part of the model</h3>
+  <p>
+    What a monitor entitles you to conclude is computable from its specification, so the
+    floor is not a footnote in a methods section — it sits in the graph beside the value.
+    Two consequences a bench will feel: a ranking finer than the cell width is a ranking
+    of quantiser codes, and a triplicate protects against a dead instrument but not
+    against a drifting one.
+    <a href="floor.html#triplicate">Why four, not three →</a>
+  </p>
+
+  <h2>Where the chemistry actually enters</h2>
+
+  <p>
+    The framework was taken through cytochrome P450 across roughly twenty papers, and the
+    resulting catalytic-cycle graph is where the composition shows: one node holds
+    reaction chemistry, a circuit result and a spectroscopic acquisition simultaneously,
+    contributed by three different modules.
+  </p>
+
+  <figure class="fig">
+    <div class="fig-body">
+      <svg id="cycle" viewBox="0 0 760 420" role="img"
+           aria-label="A catalytic cycle whose states carry facts from several modules"></svg>
+    </div>
+    <div class="controls">
+      <button id="mod-all" data-mod="all" aria-pressed="true" type="button">all modules</button>
+      <button id="mod-chem" data-mod="cytochrome" type="button">chemistry</button>
+      <button id="mod-circ" data-mod="sbs" type="button">circuit</button>
+      <button id="mod-ms" data-mod="shapeshifter" type="button">acquisition</button>
+    </div>
+    <figcaption>
+      <b>Figure 16 — one graph, several modules writing to it.</b>
+      Each state of the cycle is a node; each coloured band is a fact contributed by a
+      module. Filter by module to see what one contributes alone — no single one covers
+      the cycle, and the composition is the point. Facts are keyed
+      <span class="mono">fact:&lt;module&gt;#&lt;chunk&gt;</span> so several can occupy one
+      node without collision.
+    </figcaption>
+  </figure>
+
+  <h2>What I would want to ask you</h2>
+
+  <p>
+    These are genuine questions rather than rhetorical ones, and they are the places where
+    an outside view would change what gets built next.
+  </p>
+
+  <table>
+    <thead><tr><th>Question</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td>Would you score the competency-question partition independently?</td>
+          <td>The claim that two representational views answer disjoint question sets rests
+              on a table I scored myself. If you score it and the blocks disagree, the
+              claim weakens in exactly the right way.</td></tr>
+      <tr><td>Is the near-equilibrium flux law defensible for the networks you care about?</td>
+          <td>The circuit correspondence stands on it, and it is the assumption I am least
+              able to test alone.
+              <a href="propagation.html#circuit">The step in question →</a></td></tr>
+      <tr><td>What does the medium bias buy over component-contribution methods?</td>
+              <td>Those already compute physiological direction quantitatively. If the
+              answer is "nothing", the direction result is representational only, and I
+              would rather know that now.</td></tr>
+      <tr><td>Which failure mode does your pipeline actually hit — dead instruments or
+              drifting ones?</td>
+          <td>It decides whether the redundancy result is interesting or merely correct.</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="rule">
+
+  <p class="aside">
+    Every page in this presentation states what is proved, what is measured, what is
+    conjecture, and what has been refuted — including results that went against the
+    framework's own interest. Those are on the pages rather than in an appendix because
+    they are the part of the work that would not survive a tidy-up, and they are the
+    reason the rest should be taken seriously.
+  </p>
+
+  <div class="pager">
+    <a href="runtime.html"><span class="dir">back</span>05 · The graph as runtime</a>
+    <a href="index.html"><span class="dir">start</span>Overview</a>
+  </div>
+
+</div>
+</main>
+
+<script type="module" src="lara.js"></script>
+</body>
+</html>

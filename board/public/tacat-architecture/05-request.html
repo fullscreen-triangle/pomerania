@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tacat architecture · 05 · The request path</title>
+<style>
+  :root {
+      --bg:#141413; --panel:#1c1b1a; --ink:#ecebe9; --ink-soft:#b0aca6; --ink-faint:#7d7973; --rule:#322f2c;
+      --authored:#16305c; --authored-line:#6ba3f5; --authored-ink:#cfe0fb;
+      --generated:#4a3208; --generated-line:#e8a838; --generated-ink:#f7e2b4;
+      --seam:#33215e; --seam-line:#a78bfa; --seam-ink:#e2d8fb;
+      --external:#12401f; --external-line:#4ade80; --external-ink:#c9f2d5;
+      --tool:#2a2825; --tool-line:#9c9791; --tool-ink:#d6d2cc;
+      --bad:#4a1717; --bad-line:#f87171; --bad-ink:#fbd0d0;
+      --band-build:#1d1a2b; --band-run:#16241f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#141413; --panel:#1c1b1a; --ink:#ecebe9; --ink-soft:#b0aca6; --ink-faint:#7d7973; --rule:#322f2c;
+      --authored:#16305c; --authored-line:#6ba3f5; --authored-ink:#cfe0fb;
+      --generated:#4a3208; --generated-line:#e8a838; --generated-ink:#f7e2b4;
+      --seam:#33215e; --seam-line:#a78bfa; --seam-ink:#e2d8fb;
+      --external:#12401f; --external-line:#4ade80; --external-ink:#c9f2d5;
+      --tool:#2a2825; --tool-line:#9c9791; --tool-ink:#d6d2cc;
+      --bad:#4a1717; --bad-line:#f87171; --bad-ink:#fbd0d0;
+      --band-build:#1d1a2b; --band-run:#16241f;
+    }
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:2rem 1.5rem 6rem; background:var(--bg); color:var(--ink);
+    font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  main { max-width:1240px; margin:0 auto; }
+
+  nav.sheets {
+    display:flex; flex-wrap:wrap; gap:.35rem; margin:0 0 2.25rem;
+    padding-bottom:.9rem; border-bottom:1px solid var(--rule); font-size:.82rem;
+  }
+  nav.sheets a, nav.sheets span {
+    padding:.34rem .7rem; border-radius:6px; text-decoration:none;
+    color:var(--ink-soft); border:1px solid transparent;
+  }
+  nav.sheets a:hover { background:var(--panel); border-color:var(--rule); color:var(--ink); }
+  nav.sheets a[aria-current="page"] { background:var(--seam); border-color:var(--seam-line); color:var(--seam-ink); font-weight:620; }
+
+  .eyebrow { font-size:.78rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin:0 0 .5rem; }
+  h1 { font-size:clamp(1.6rem,3.4vw,2.3rem); line-height:1.15; margin:0 0 .75rem; letter-spacing:-.02em; }
+  h2 { font-size:1.18rem; margin:3rem 0 .9rem; letter-spacing:-.01em; padding-bottom:.45rem; border-bottom:1px solid var(--rule); }
+  h3 { font-size:.97rem; margin:1.8rem 0 .5rem; letter-spacing:-.005em; }
+  p { margin:0 0 1rem; max-width:74ch; color:var(--ink-soft); }
+  p.lede { font-size:1.06rem; color:var(--ink); max-width:72ch; }
+  strong { color:var(--ink); font-weight:650; }
+  a { color:var(--seam-line); }
+  code {
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace; font-size:.875em;
+    background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:.1em .38em;
+  }
+  pre {
+    background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:1rem 1.1rem;
+    overflow-x:auto; font-size:.83rem; line-height:1.6; margin:1rem 0 1.5rem;
+  }
+  pre code { background:none; border:none; padding:0; font-size:1em; }
+
+  .figure { background:var(--panel); border:1px solid var(--rule); border-radius:12px; padding:1.25rem; margin:1.75rem 0; overflow-x:auto; }
+  .figure svg { display:block; width:100%; height:auto; min-width:920px; }
+  .caption { font-size:.83rem; color:var(--ink-faint); margin:.9rem 0 0; padding-top:.85rem; border-top:1px solid var(--rule); max-width:none; }
+
+  table { border-collapse:collapse; width:100%; margin:1rem 0 1.5rem; font-size:.9rem; }
+  th,td { text-align:left; padding:.5rem .7rem; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th { font-weight:620; color:var(--ink); font-size:.8rem; letter-spacing:.03em; text-transform:uppercase; }
+  td code { background:none; border:none; padding:0; }
+
+  .note { border-left:3px solid var(--seam-line); background:var(--panel); padding:.85rem 1.1rem; margin:1.25rem 0; border-radius:0 8px 8px 0; }
+  .note.warn { border-left-color:var(--generated-line); }
+  .note.bad  { border-left-color:var(--bad-line); }
+  .note p:last-child { margin-bottom:0; }
+
+  footer { margin-top:4rem; padding-top:1.25rem; border-top:1px solid var(--rule); font-size:.85rem; color:var(--ink-faint); }
+  .pager { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; font-size:.9rem; }
+  .pager a { text-decoration:none; font-weight:560; }
+  .pager a:hover { text-decoration:underline; }
+
+  .n-title { font:600 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-sm    { font:600 11.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-mono  { font:400 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-role  { font:400 11px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+  .g-label { font:600 11.5px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; letter-spacing:.07em; }
+  .b-label { font:700 12px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; letter-spacing:.11em; }
+  .e-label { font:400 10.5px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+  .big     { font:700 22px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+</style>
+</head>
+<body>
+<main>
+
+  <nav class="sheets">
+    <a href="01-system.html">01 · System</a>
+    <a href="02-ontology.html">02 · Ontology</a>
+    <a href="03-delivery.html">03 · Build &amp; delivery</a>
+    <a href="04-identity.html">04 · Identity &amp; federation</a>
+    <a href="05-request.html" aria-current="page">05 · The request path</a>
+  </nav>
+
+  <p class="eyebrow">tacat architecture · 05 of a series</p>
+  <h1>The request path</h1>
+
+  <p class="lede">
+    One SPARQL query, from the socket to the response body. <code>GET</code> and <code>POST</code>
+    differ in how they obtain two strings — the query and the <code>Accept</code> header — and in how
+    each refuses a request that carries neither, then converge on
+    <strong>one pipeline of four phases</strong>. Two of those phases are decisions
+    and two are work, and both decisions live in modules that have never heard of HTTP.
+  </p>
+
+  <p>
+    Sheet 01 draws this as a single box below the build/run seam: a finished graph, served without a
+    reasoner. This sheet opens the box. The parts worth the space are the <strong>lexical scanner
+    that decides read-only</strong> — which has now been wrong four times, in both directions — and
+    the fact that <strong>a running server is not evidence that a graph loaded</strong>.
+  </p>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 1064" role="img" aria-labelledby="rt rd">
+    <title id="rt">The tacat request path</title>
+    <desc id="rd">
+      Starlette's error middleware wraps CORS, which wraps the router. A GET arm validates its query
+      parameter and a POST arm reads its body once; both converge on a single four-phase pipeline —
+      read-only policy, execute and force evaluation, result-size check, content negotiation. Each
+      phase has one refusal. The store is consulted only in phase two and holds a finished graph with
+      no reasoner behind it.
+    </desc>
+
+    <defs>
+      <marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+      </marker>
+      <marker id="r2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--bad-line)"/>
+      </marker>
+      <marker id="r3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--external-line)"/>
+      </marker>
+    </defs>
+
+    <rect x="8" y="16" width="1184" height="1036" rx="12" fill="none" stroke="var(--tool-line)" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="600" y="38" class="e-label" fill="var(--ink-faint)" text-anchor="middle">ServerErrorMiddleware — OUTSIDE CORS, so an unhandled 500 carries no CORS header and a browser sees an opaque failure rather than a 500</text>
+
+    <rect x="30" y="50" width="1140" height="988" rx="11" fill="var(--panel)" stroke="var(--tool-line)" stroke-width="1.8"/>
+    <text x="600" y="78" class="b-label" fill="var(--tool-line)" text-anchor="middle">CORS MIDDLEWARE</text>
+    <text x="600" y="88" class="e-label" fill="var(--ink-faint)" text-anchor="middle">answers a real preflight itself — an OPTIONS carrying Origin never reaches the router; a bare OPTIONS does, and gets a 405</text>
+    <text x="600" y="104" class="e-label" fill="var(--ink-faint)" text-anchor="middle">and it only acts on requests that CARRY an Origin — curl gets no CORS header at all, on any status</text>
+
+    <rect x="76" y="136" width="420" height="142" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.6"/>
+    <text x="286" y="164" class="n-title" fill="var(--authored-ink)" text-anchor="middle">GET /sparql?query=…</text>
+    <text x="286" y="190" class="e-label" fill="var(--authored-ink)" text-anchor="middle">FastAPI validates the required parameter</text>
+    <text x="286" y="208" class="e-label" fill="var(--authored-ink)" text-anchor="middle">BEFORE the handler body runs</text>
+    <text x="286" y="234" class="e-label" fill="var(--authored-ink)" text-anchor="middle">a plain def — Starlette threadpools it</text>
+    <text x="286" y="260" class="n-mono" fill="var(--authored-ink)" text-anchor="middle">headers.get("accept", SPARQL_JSON)</text>
+
+    <rect x="560" y="136" width="420" height="142" rx="8" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.6"/>
+    <text x="770" y="164" class="n-title" fill="var(--authored-ink)" text-anchor="middle">POST /sparql</text>
+    <text x="770" y="190" class="e-label" fill="var(--authored-ink)" text-anchor="middle">body read ONCE, not via a Form parameter —</text>
+    <text x="770" y="208" class="e-label" fill="var(--authored-ink)" text-anchor="middle">a re-read raises "Stream consumed", i.e. a 500</text>
+    <text x="770" y="234" class="e-label" fill="var(--authored-ink)" text-anchor="middle">the only async def — hands off explicitly</text>
+    <text x="770" y="260" class="e-label" fill="var(--authored-ink)" text-anchor="middle">form-urlencoded → parse_qs · anything else → raw body</text>
+
+    <rect x="1004" y="136" width="152" height="60" rx="7" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.5"/>
+    <text x="1080" y="161" class="n-sm" fill="var(--bad-ink)" text-anchor="middle">422</text>
+    <text x="1080" y="181" class="e-label" fill="var(--bad-ink)" text-anchor="middle">no query param</text>
+
+    <rect x="1004" y="212" width="152" height="60" rx="7" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.5"/>
+    <text x="1080" y="237" class="n-sm" fill="var(--bad-ink)" text-anchor="middle">400</text>
+    <text x="1080" y="257" class="e-label" fill="var(--bad-ink)" text-anchor="middle">no query in the body</text>
+
+    <path d="M400,136 L400,122 L1080,122 L1080,132" stroke="var(--bad-line)" stroke-width="1.4" fill="none" marker-end="url(#r2)"/>
+    <path d="M980,242 L1000,242" stroke="var(--bad-line)" stroke-width="1.4" fill="none" marker-end="url(#r2)"/>
+
+    <path d="M286,278 L286,300 L530,300 L530,318" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#r1)"/>
+    <path d="M770,278 L770,300 L530,300" stroke="var(--ink-faint)" stroke-width="1.6" fill="none"/>
+    <text x="600" y="294" class="e-label" fill="var(--ink-faint)" text-anchor="middle">the arms obtain (query, accept) differently and each guards emptiness differently — 422 from FastAPI on GET, 400 from the handler on POST</text>
+
+    <rect x="250" y="320" width="560" height="596" rx="11" fill="var(--band-run)" stroke="var(--seam-line)" stroke-width="2.2"/>
+    <text x="530" y="348" class="b-label" fill="var(--seam-line)" text-anchor="middle">run_query — ONE PIPELINE</text>
+    <text x="530" y="366" class="e-label" fill="var(--seam-line)" text-anchor="middle">a closure over the repository and the policy, not an importable function</text>
+
+    <rect x="274" y="384" width="512" height="118" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+    <text x="530" y="410" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">1 · policy.check — A DECISION</text>
+    <text x="530" y="432" class="e-label" fill="var(--seam-ink)" text-anchor="middle">empty? · is the FIRST bare keyword a read form? ·</text>
+    <text x="530" y="450" class="e-label" fill="var(--seam-ink)" text-anchor="middle">does any bare keyword equal SERVICE?</text>
+    <text x="530" y="474" class="e-label" fill="var(--seam-ink)" text-anchor="middle">a hand-written scanner, not a regex — §2 below</text>
+    <text x="530" y="492" class="e-label" fill="var(--seam-ink)" text-anchor="middle">imports no web framework · names no status codes</text>
+
+    <rect x="274" y="520" width="512" height="118" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.6"/>
+    <text x="530" y="546" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">2 · execute, then FORCE the lazy result</text>
+    <text x="530" y="570" class="e-label" fill="var(--authored-ink)" text-anchor="middle">rdflib returns lazily. Consuming it inside the try is a</text>
+    <text x="530" y="588" class="e-label" fill="var(--authored-ink)" text-anchor="middle">load-bearing side effect, not a computation:</text>
+    <text x="530" y="612" class="e-label" fill="var(--authored-ink)" text-anchor="middle">without it, a query that parses but fails on consumption</text>
+    <text x="530" y="630" class="e-label" fill="var(--authored-ink)" text-anchor="middle">escapes as a 500 instead of a 400</text>
+
+    <rect x="274" y="656" width="512" height="82" rx="7" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="1.6"/>
+    <text x="530" y="682" class="n-sm" fill="var(--authored-ink)" text-anchor="middle">3 · check_result_size</text>
+    <text x="530" y="704" class="e-label" fill="var(--authored-ink)" text-anchor="middle">SELECT only — 10 000 rows. A cap, deliberately not a</text>
+    <text x="530" y="722" class="e-label" fill="var(--authored-ink)" text-anchor="middle">timeout: rdflib cannot interrupt a running query</text>
+
+    <rect x="274" y="756" width="512" height="140" rx="7" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+    <text x="530" y="782" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">4 · serialise — A DECISION</text>
+    <text x="530" y="806" class="e-label" fill="var(--seam-ink)" text-anchor="middle">two branches. CONSTRUCT and DESCRIBE are</text>
+    <text x="530" y="824" class="e-label" fill="var(--seam-ink)" text-anchor="middle">Turtle-or-406 whatever the client asked for;</text>
+    <text x="530" y="842" class="e-label" fill="var(--seam-ink)" text-anchor="middle">SELECT and ASK walk the ranked Accept list</text>
+    <text x="530" y="866" class="e-label" fill="var(--seam-ink)" text-anchor="middle">four media types out — §3 below</text>
+    <text x="530" y="884" class="e-label" fill="var(--seam-ink)" text-anchor="middle">also framework-agnostic: returns a value, or raises</text>
+
+    <rect x="52" y="520" width="172" height="118" rx="8" fill="var(--generated)" stroke="var(--generated-line)" stroke-width="1.8"/>
+    <text x="138" y="548" class="n-sm" fill="var(--generated-ink)" text-anchor="middle">the store</text>
+    <text x="138" y="572" class="e-label" fill="var(--generated-ink)" text-anchor="middle">rdflib, in memory</text>
+    <text x="138" y="592" class="e-label" fill="var(--generated-ink)" text-anchor="middle">~390 triples</text>
+    <text x="138" y="618" class="e-label" fill="var(--generated-ink)" text-anchor="middle">NO reasoner here</text>
+    <path d="M270,562 L228,562" stroke="var(--ink-faint)" stroke-width="1.5" fill="none" marker-end="url(#r1)"/>
+    <path d="M228,596 L270,596" stroke="var(--ink-faint)" stroke-width="1.5" fill="none" marker-end="url(#r1)"/>
+
+    <rect x="840" y="384" width="300" height="118" rx="7" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.5"/>
+    <text x="990" y="410" class="n-sm" fill="var(--bad-ink)" text-anchor="middle">400 × 3</text>
+    <text x="990" y="434" class="e-label" fill="var(--bad-ink)" text-anchor="middle">empty · not-read-only · service-refused</text>
+    <text x="990" y="458" class="e-label" fill="var(--bad-ink)" text-anchor="middle">an update, a LOAD, a CLEAR or a federated</text>
+    <text x="990" y="476" class="e-label" fill="var(--bad-ink)" text-anchor="middle">clause — one status, three reason strings,</text>
+    <text x="990" y="494" class="e-label" fill="var(--bad-ink)" text-anchor="middle">so the caller is told which rule it broke</text>
+
+    <rect x="840" y="520" width="300" height="118" rx="7" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.5"/>
+    <text x="990" y="546" class="n-sm" fill="var(--bad-ink)" text-anchor="middle">400 · rdflib raised</text>
+    <text x="990" y="570" class="e-label" fill="var(--bad-ink)" text-anchor="middle">malformed or unsupported SPARQL.</text>
+    <text x="990" y="594" class="e-label" fill="var(--bad-ink)" text-anchor="middle">A named-graph query is legal SPARQL and</text>
+    <text x="990" y="612" class="e-label" fill="var(--bad-ink)" text-anchor="middle">there are no named graphs, so it gets its</text>
+    <text x="990" y="630" class="e-label" fill="var(--bad-ink)" text-anchor="middle">own explanation rather than a stack trace</text>
+
+    <rect x="840" y="656" width="300" height="82" rx="7" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.5"/>
+    <text x="990" y="682" class="n-sm" fill="var(--bad-ink)" text-anchor="middle">400 · too many rows</text>
+    <text x="990" y="704" class="e-label" fill="var(--bad-ink)" text-anchor="middle">turns an accidental cartesian product into</text>
+    <text x="990" y="722" class="e-label" fill="var(--bad-ink)" text-anchor="middle">a clear rejection rather than a huge reply</text>
+
+    <rect x="840" y="756" width="300" height="140" rx="7" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.5"/>
+    <text x="990" y="782" class="n-sm" fill="var(--bad-ink)" text-anchor="middle">406 · cannot be produced</text>
+    <text x="990" y="806" class="e-label" fill="var(--bad-ink)" text-anchor="middle">the only status the PIPELINE gives</text>
+    <text x="990" y="824" class="e-label" fill="var(--bad-ink)" text-anchor="middle">that is neither 400 nor 200. The</text>
+    <text x="990" y="842" class="e-label" fill="var(--bad-ink)" text-anchor="middle">alternative is answering in a format</text>
+    <text x="990" y="866" class="e-label" fill="var(--bad-ink)" text-anchor="middle">nobody asked for with a 200 on it —</text>
+    <text x="990" y="884" class="e-label" fill="var(--bad-ink)" text-anchor="middle">which is what most endpoints do</text>
+
+    <path d="M786,443 L836,443" stroke="var(--bad-line)" stroke-width="1.4" fill="none" marker-end="url(#r2)"/>
+    <path d="M786,579 L836,579" stroke="var(--bad-line)" stroke-width="1.4" fill="none" marker-end="url(#r2)"/>
+    <path d="M786,697 L836,697" stroke="var(--bad-line)" stroke-width="1.4" fill="none" marker-end="url(#r2)"/>
+    <path d="M786,826 L836,826" stroke="var(--bad-line)" stroke-width="1.4" fill="none" marker-end="url(#r2)"/>
+
+    <rect x="250" y="948" width="560" height="70" rx="8" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.8"/>
+    <text x="530" y="976" class="n-title" fill="var(--external-ink)" text-anchor="middle">200 · body + Content-Type</text>
+    <text x="530" y="1000" class="e-label" fill="var(--external-ink)" text-anchor="middle">the media type the serialiser chose, not one the handler assumed</text>
+    <path d="M530,896 L530,944" stroke="var(--external-line)" stroke-width="1.8" fill="none" marker-end="url(#r3)"/>
+  </svg>
+
+  <p class="caption">
+    <strong>Phases 1 and 4 are the decisions; 2 and 3 are the work.</strong> Both decisions live in
+    modules that import no web framework and name no status code:
+    <code>api/policy.py</code> raises <code>PolicyViolation</code>, <code>api/negotiation.py</code>
+    raises <code>NotAcceptable</code>, and <code>api/app.py</code> is the only file that knows either
+    of those is a 400 or a 406. That is what lets both be tested without a client — and it is why the
+    scanner below could be attacked directly, in a unit test, rather than only through HTTP.
+  </p>
+  </div>
+
+  <h2>2. The scanner, and the four times it has been wrong</h2>
+
+  <p>
+    Read-only is a <strong>whitelist on the query form</strong>: the first bare keyword must be one of
+    <code>SELECT</code>, <code>ASK</code>, <code>CONSTRUCT</code>, <code>DESCRIBE</code>. "Bare" means
+    outside IRIs, string literals and comments — the three places a keyword-shaped run of letters can
+    appear without being a keyword. Deciding that needs a scanner, because those tokens contain each
+    other's delimiters: <code>#</code> is legal and common inside an IRI
+    (<code>&lt;…rdf-schema#&gt;</code>), so stripping comments with a pattern truncates the prologue
+    and makes a valid query unparseable.
+  </p>
+
+  <p>
+    The same scan answers the second question — does any bare keyword equal <code>SERVICE</code>? A
+    federated clause makes <em>this</em> server fetch a URL the caller chose and hand back the
+    response, which is server-side request forgery rather than a feature.
+  </p>
+
+  <div class="note bad">
+    <p>
+      <strong>It has been wrong in both directions, and every time it was found by reading rather
+      than by the tests.</strong>
+    </p>
+    <p>
+      <strong>Over-refusal, once.</strong> It began as
+      <code>re.compile(r"\bSERVICE\b", re.IGNORECASE)</code> — a blacklist over raw text, sitting one
+      function away from a docstring explaining that a blacklist over raw text is unsound.
+      <code>SELECT ?service</code> is a legal query with no federated clause and it was refused; so
+      was <code>SERVICE</code> inside a comment, a literal, or an IRI path segment — and the
+      case-insensitive flag caught a lower-case <code>service</code> in prose too.
+      The scanner replaced it.
+    </p>
+    <p>
+      <strong>Under-refusal, three times — and all three are the same bug.</strong> A skip ran
+      further than it should have and carried the keyword away inside it.
+    </p>
+    <ol style="color:var(--ink-soft);max-width:74ch">
+      <li><strong>The <code>&lt;</code> operator.</strong> Every <code>&lt;</code> was read as
+        opening an IRI, so <code>FILTER(1 &lt; 2)</code> started a skip that ran to the next
+        <code>&gt;</code> — past the clause. Fixed in <code>8f94207</code> by validating the span
+        against the characters SPARQL rule&nbsp;[139] forbids inside an <code>IRIREF</code>.</li>
+      <li><strong>The prefixed name.</strong> Resuming the scan on the local part let
+        <code>ex:prefix</code> re-enter the declaration branch, whose skip-to-<code>&gt;</code> did
+        the same thing.</li>
+      <li><strong>The escaped quote.</strong> The literal skip used <code>str.find</code>, which
+        cannot see a backslash escape:</li>
+    </ol>
+<pre><code>SELECT ?o WHERE { FILTER(?o != "\"") SERVICE &lt;http://169.254.169.254/…&gt; { ?s ?p ?o } }</code></pre>
+    <p>
+      In <code>"\""</code> the search stops at the <em>escaped</em> quote, closing the literal one
+      character early; the real closing quote then opens a second, unterminated literal whose skip
+      runs to end of input and takes the <code>SERVICE</code> clause with it. The scanner yields
+      <code>[SELECT, WHERE, FILTER]</code> and the policy accepts the query.
+    </p>
+    <p>
+      <strong>That one was exploitable, and the symptom hides it.</strong> The query is valid SPARQL,
+      so rdflib accepts it and the clause executes. Against a loopback listener the server made a
+      <code>POST</code> to the caller-chosen host — and the caller still received a <code>400</code>,
+      raised afterwards by rdflib failing on the response — but only when the target returns
+      something rdflib cannot parse. Against a target that speaks SPARQL the endpoint answers
+      <strong>200, with the target's data handed back verbatim</strong>. <em>A refusal that arrives after the
+      request has already gone out looks exactly like a refusal that prevented it.</em>
+    </p>
+  </div>
+
+  <p>
+    The fix walks the literal honouring <code>ECHAR</code> escapes, and raises
+    <code>UnterminatedLiteral</code> if it never closes. <code>contains_service_clause</code> turns
+    that into <code>True</code> — a refusal — because the tail the scanner could not reach is
+    precisely where a smuggled clause sits. <code>query_form</code> carries the same guard, though it
+    rarely fires: it returns on the <em>first</em> bare keyword, so it usually abandons the generator
+    long before the unterminated literal is reached. The refusal comes from the SERVICE check, which
+    has to drain the whole stream.
+  </p>
+
+  <div class="note warn">
+    <p>
+      <strong>Where that fix actually is, as at 30 July 2026.</strong> It was found after the
+      submission deadline, so it sits on the branch <code>fix/service-scanner-escape</code> on the
+      development remote — <strong>not</strong> on <code>main</code>, and not in the published
+      repository or the image in the registry. The submitted code still has the hole this section
+      describes.
+    </p>
+    <p>
+      <strong>And it stays that way.</strong> The published version is what was submitted and
+      shared; changing it now would change the thing being assessed. So the fix is not a pending
+      merge — it is evidence about how the defect was found, which is the only reason it is worth
+      writing down. The table below describes the fixed behaviour, which is what the branch's tests
+      assert; the assessed artefact behaves as the paragraphs above it describe.
+    </p>
+  </div>
+
+  <table>
+    <thead><tr><th>Query</th><th>Verdict</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>SELECT ?service WHERE …</code></td><td>served</td><td>a variable — <code>?</code> consumes the name</td></tr>
+      <tr><td><code>… BIND(ex:service AS ?v)</code></td><td>served</td><td>a prefixed name, consumed label and local part together</td></tr>
+      <tr><td><code>… # SERVICE &lt;http://evil/&gt;</code></td><td>served</td><td>inside a comment</td></tr>
+      <tr><td><code>… ?p "SERVICE &lt;http://evil/&gt;"</code></td><td>served</td><td>inside a literal</td></tr>
+      <tr><td><code>… ?p "a \" quote"</code></td><td>served</td><td>a legal escape — closing the hole must not refuse this</td></tr>
+      <tr><td><code>… SERVICE &lt;http://evil/&gt; { … }</code></td><td><strong>refused</strong></td><td>a bare keyword, however it is spelled or spaced</td></tr>
+      <tr><td><code>FILTER(?o != "\"") SERVICE …</code></td><td><strong>refused</strong></td><td>the escape is consumed, so the keyword stays bare</td></tr>
+      <tr><td><code>FILTER(?o != "oops) SERVICE …</code></td><td><strong>refused</strong></td><td>unscannable — fails closed rather than reporting a clean scan</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note warn">
+    <p>
+      <strong>The pattern worth naming.</strong> All three under-refusals have the same shape: a
+      <em>skip</em> that ran further than it should and carried the keyword away inside it. The
+      scanner's whole job is to decide what is bare, and every bug in it has been a token it wrongly
+      decided was not. A fourth would most likely be the same shape again — which is why the
+      regression cases are named "smuggled behind X" rather than one test per syntax feature, and why
+      the interesting question about this module is not "is it right?" but "what else can start a
+      skip?"
+    </p>
+  </div>
+
+  <h2>3. Negotiating a query <em>result</em>: two branches, four media types</h2>
+
+  <p>
+    The endpoint implements the read subset of the SPARQL 1.1 protocol, so stock clients work: it
+    reads <code>Accept</code>, q-values included, to choose a representation, and returns a 406 for
+    what it cannot produce rather than answering in a format nobody asked for.
+  </p>
+
+  <div class="note warn">
+    <p>
+      <strong>Two honest qualifications, because "honours <code>Accept</code>" would overclaim.</strong>
+      q-values <em>order</em> the candidates and never exclude one, so <code>text/csv;q=0</code> on a
+      SELECT still returns CSV — RFC&nbsp;9110's "q=0 means unacceptable" is not implemented. And the
+      graph branch deliberately answers Turtle with a 200 for any of six requested types, three of
+      which are concrete non-graph formats: compatibility bought at the cost of strictness, because a
+      SPARQL client sets <code>Accept</code> before it knows the query form.
+    </p>
+    <p>
+      There is also a <strong>third</strong> negotiation in this service that the figure does not
+      cover: <code>GET /</code> chooses HTML or JSON with <code>"text/html" in accept.lower()</code>
+      — a substring test, not a ranking. It answers <code>text/html;q=0</code> with HTML. That is
+      fine for a console door and would not be fine for the results endpoint.
+    </p>
+  </div>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 560" role="img" aria-labelledby="nt nd">
+    <title id="nt">Content negotiation</title>
+    <desc id="nd">
+      The Accept header is split, ranked by q-value with a stable sort, lower-cased and stripped of
+      parameters. Graph forms are answered in Turtle or refused. Tabular forms walk the ranked list
+      and take the first match among JSON, XML and CSV, with CSV restricted to SELECT.
+    </desc>
+    <defs>
+      <marker id="n1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+      </marker>
+    </defs>
+
+    <rect x="24" y="30" width="330" height="120" rx="8" fill="var(--tool)" stroke="var(--tool-line)" stroke-width="1.6"/>
+    <text x="189" y="58" class="n-sm" fill="var(--tool-ink)" text-anchor="middle">_requested(accept)</text>
+    <text x="189" y="82" class="e-label" fill="var(--tool-ink)" text-anchor="middle">split on "," · rank by q · strip parameters</text>
+    <text x="189" y="100" class="e-label" fill="var(--tool-ink)" text-anchor="middle">lower-case · STABLE sort</text>
+    <text x="189" y="128" class="e-label" fill="var(--tool-ink)" text-anchor="middle">q ORDERS but never excludes — q=0 still wins if nothing outranks it</text>
+
+    <path d="M354,90 L410,90" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#n1)"/>
+
+    <rect x="414" y="30" width="300" height="120" rx="8" fill="var(--seam)" stroke="var(--seam-line)" stroke-width="2"/>
+    <text x="564" y="58" class="n-sm" fill="var(--seam-ink)" text-anchor="middle">which query form?</text>
+    <text x="564" y="86" class="e-label" fill="var(--seam-ink)" text-anchor="middle">this, not the header, picks the branch —</text>
+    <text x="564" y="112" class="e-label" fill="var(--seam-ink)" text-anchor="middle">and the two branches disagree about text/*</text>
+
+    <path d="M564,150 L564,180 L300,180 L300,214" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#n1)"/>
+    <path d="M564,180 L860,180 L860,214" stroke="var(--ink-faint)" stroke-width="1.6" fill="none" marker-end="url(#n1)"/>
+
+    <rect x="60" y="218" width="480" height="300" rx="10" fill="var(--band-build)" stroke="var(--seam-line)" stroke-width="2"/>
+    <text x="300" y="246" class="b-label" fill="var(--seam-line)" text-anchor="middle">CONSTRUCT · DESCRIBE</text>
+    <text x="300" y="268" class="e-label" fill="var(--seam-line)" text-anchor="middle">Turtle, or 406. Nothing else, ever.</text>
+
+    <rect x="86" y="286" width="428" height="96" rx="7" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.6"/>
+    <text x="300" y="312" class="n-sm" fill="var(--external-ink)" text-anchor="middle">text/turtle</text>
+    <text x="300" y="336" class="e-label" fill="var(--external-ink)" text-anchor="middle">served on a wildcard, or on ANY of</text>
+    <text x="300" y="354" class="e-label" fill="var(--external-ink)" text-anchor="middle">turtle · text/* · results+json · results+xml · csv · rdf+xml</text>
+    <text x="300" y="374" class="e-label" fill="var(--external-ink)" text-anchor="middle">Starlette appends "; charset=utf-8" to text/* on the wire</text>
+
+    <rect x="86" y="398" width="428" height="98" rx="7" fill="var(--panel)" stroke="var(--rule)" stroke-width="1.4"/>
+    <text x="300" y="424" class="e-label" fill="var(--ink-soft)" text-anchor="middle">A results media type is read as "no informed preference"</text>
+    <text x="300" y="442" class="e-label" fill="var(--ink-soft)" text-anchor="middle">rather than as a refusal, because a SPARQL client sets</text>
+    <text x="300" y="460" class="e-label" fill="var(--ink-soft)" text-anchor="middle">Accept BEFORE it knows the query form.</text>
+    <text x="300" y="482" class="e-label" fill="var(--ink-faint)" text-anchor="middle">rdf+xml is tolerated as a request and never produced as a reply.</text>
+
+    <rect x="620" y="218" width="520" height="300" rx="10" fill="var(--band-run)" stroke="var(--authored-line)" stroke-width="2"/>
+    <text x="880" y="246" class="b-label" fill="var(--authored-line)" text-anchor="middle">SELECT · ASK</text>
+    <text x="880" y="268" class="e-label" fill="var(--authored-line)" text-anchor="middle">walk the ranked list — first match wins</text>
+
+    <rect x="646" y="286" width="468" height="42" rx="6" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.4"/>
+    <text x="880" y="313" class="n-mono" fill="var(--external-ink)" text-anchor="middle">application/sparql-results+json — and the default</text>
+
+    <rect x="646" y="338" width="468" height="42" rx="6" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.4"/>
+    <text x="880" y="365" class="n-mono" fill="var(--external-ink)" text-anchor="middle">application/sparql-results+xml</text>
+
+    <rect x="646" y="390" width="468" height="40" rx="6" fill="var(--external)" stroke="var(--external-line)" stroke-width="1.4"/>
+    <text x="880" y="415" class="n-mono" fill="var(--external-ink)" text-anchor="middle">text/csv — SELECT ONLY</text>
+
+    <rect x="646" y="440" width="468" height="64" rx="6" fill="var(--bad)" stroke="var(--bad-line)" stroke-width="1.4"/>
+    <text x="880" y="462" class="e-label" fill="var(--bad-ink)" text-anchor="middle">on an ASK this RAISES from inside the loop, so a satisfiable</text>
+    <text x="880" y="479" class="e-label" fill="var(--bad-ink)" text-anchor="middle">lower-ranked type is never reached:</text>
+    <text x="880" y="497" class="n-mono" fill="var(--bad-ink)" text-anchor="middle">"text/csv, */*" on an ASK is a 406 — "*/*, text/csv" is a 200</text>
+  </svg>
+
+  <p class="caption">
+    <strong>Order matters more than it looks.</strong> The sort is stable, so entries of equal q keep
+    their header order, and the loop <em>breaks</em> on a wildcard rather than skipping past it. So
+    <code>Accept: */*, …+xml</code> returns JSON while <code>Accept: …+xml, */*</code> returns XML,
+    on identical q-values. Together with the CSV branch raising from inside the loop, the order the
+    header was written in decides real outcomes.
+  </p>
+  </div>
+
+  <h2>4. What the diagram cannot show</h2>
+
+  <table>
+    <thead><tr><th>You might assume</th><th>The thing worth knowing</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>A running server means a loaded graph</strong></td>
+        <td><strong>It does not.</strong> If startup fails, <code>build_app</code> logs and serves an
+            <em>empty</em> graph rather than crashing, so the process is up either way.
+            <code>GET /</code> reports the same counts, but with a 200 on them; only
+            <code>/health</code> turns the difference into a status code. It has <em>two</em> 503s,
+            and they catch different things: an empty graph — which is what the startup fallback
+            trips — and a non-empty graph with nothing inferred, which is the
+            <code>--no-reason</code> artefact that parses and serves perfectly while carrying nothing
+            the reasoner derived. The second is the interesting one.</td>
+      </tr>
+      <tr>
+        <td><code>/health</code> is a cheap ping</td>
+        <td>It runs three SPARQL <code>COUNT</code> queries and two <code>len()</code> calls — one
+            directly, one inside <code>graph_stats</code>. <code>GET /</code> runs the same three
+            counts and one <code>len()</code>. Fine at ~390 triples, and not a pattern to carry to a
+            real store.</td>
+      </tr>
+      <tr>
+        <td><code>/health</code> returns plain text</td>
+        <td>Only when it passes. It is declared <code>PlainTextResponse</code>, but its 503s are
+            raised as <code>HTTPException</code> and therefore arrive as JSON.</td>
+      </tr>
+      <tr>
+        <td><code>/validation</code> fails with a failing status</td>
+        <td>It never returns a status that <em>judges the graph</em>: a violating graph is
+            <code>conforms: false</code> and missing shapes is <code>conforms: null</code>, both with
+            a 200. It reports; it does not judge. An <em>unreadable</em> shapes file is a different
+            matter — only the missing case is guarded, so a parse failure there escapes as a 500.</td>
+      </tr>
+      <tr>
+        <td>Everything runs off the event loop</td>
+        <td>Nearly. The plain <code>def</code> handlers run wholly in a threadpool, which Starlette
+            arranges for you. <code>POST</code> is <code>async def</code>, so only
+            <code>run_query</code> is handed off explicitly — its body read, content-type dispatch
+            and empty-query 400 all run <em>on</em> the loop. rdflib is synchronous and CPU-bound, so
+            that is the part that had to move.</td>
+      </tr>
+      <tr>
+        <td>Every phase turns its failures into a status</td>
+        <td>Phase 2 catches <code>Exception</code>, so anything rdflib raises becomes a 400. Phase 4
+            catches only <code>NotAcceptable</code> — so a serialiser failure that is not a
+            negotiation failure escapes as a 500. <code>_decode</code>'s
+            <code>RuntimeError</code> is the documented one, and it is documented as unreachable.
+            The asymmetry is real; whether it matters depends on trusting that word.</td>
+      </tr>
+      <tr>
+        <td>An error always looks like an error</td>
+        <td>Not to a browser. A 500 is produced by <code>ServerErrorMiddleware</code>, which sits
+            <em>outside</em> CORS, so it carries no CORS header and the browser reports an opaque
+            network failure instead. Every handled status — 400, 406, 422, 503 — is produced inside
+            CORS. (And CORS only acts at all on a request carrying an <code>Origin</code>: a
+            <code>curl</code> gets no such header on any status.)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <p>
+      <strong>Where federation went.</strong> There is no <code>SERVICE</code> in the request path by
+      design, but the federated query still exists — as <code>tacat federate</code>, run from the
+      command line against the built graph. <a href="04-identity.html">Sheet 04</a> covers what it
+      joins and why it works at all. One decision seen from two sides: the endpoint has no
+      third-party dependency at request time, and the demo still gets to show a live join.
+    </p>
+  </div>
+
+  <footer>
+    <div class="pager">
+      <a href="04-identity.html">← 04 · Identity and federation</a>
+      <span>Last sheet in the series</span>
+    </div>
+    <p>
+      Sheet 05 of the tacat architecture series.
+      Self-contained: no external scripts, fonts or stylesheets. Renders from <code>file://</code>.
+    </p>
+  </footer>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The whole thing in 3 minutes — tacat primer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer</strong>
+    <span>The computer science behind the NFDI4Cat submission, for a biochemist</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li class="extra"><a class="here" href="tldr.html">The whole thing in 3 min</a></li>
+    <li><a href="01-data.html">Facts as data</a></li>
+    <li><a href="02-meaning.html">Meaning &amp; inference</a></li>
+    <li><a href="03-questions.html">Asking questions</a></li>
+    <li><a href="04-checking.html">Checking the data</a></li>
+    <li><a href="05-serving.html">Serving it</a></li>
+    <li><a href="06-shipping.html">Shipping it</a></li>
+    <li><a href="07-biology.html">The chemistry</a></li>
+    <li><a href="08-defending.html">Defending it</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">The spine</p>
+<h1>The whole thing in 3 minutes</h1>
+<p class="standfirst">
+  Nine paragraphs. Nothing else. This is the page to re-read on the morning of the presentation —
+  and the one to open when you have five minutes and no appetite for a chapter.
+</p>
+
+<div class="chips">
+  <span class="chip hot">★ read this first</span>
+  <span class="chip">3 min</span>
+  <span class="chip">no prerequisites</span>
+</div>
+
+<h2 id="frame">The frame</h2>
+<div class="box key">
+  <p>
+    <strong>I treated the requested demo application as a miniature FAIR data product.</strong> Everything else — reusing
+    ChEBI identifiers, running a reasoner, the validation gates, the federated query — is a
+    consequence of that sentence, not a feature list. Say it in the first thirty seconds and let
+    every later answer hang off it.
+  </p>
+</div>
+
+<h2 id="data">1 · Facts as data</h2>
+<p>
+  Every fact is a <strong>triple</strong>: subject, predicate, object. Every name is an
+  <strong>IRI</strong> — a URL used as a name — so two datasets that use the same IRI are provably
+  talking about the same thing, with no mapping table. That is the whole reason for RDF.
+  The distinction that broke v0: an identifier stored as a <em>string</em> looks identical to one
+  stored as a <em>link</em>, and joins to zero rows without erroring.
+</p>
+<p class="small muted">→ <a href="01-data.html">Chapter 1</a></p>
+
+<h2 id="meaning">2 · Meaning &amp; inference</h2>
+<p>
+  <code>TransaminationReaction</code> is a <strong>defined class</strong> — necessary
+  <em>and sufficient</em> conditions — written over chemical <em>classes</em> and participant
+  <em>roles</em>, never over specific molecules. No reaction is asserted to be one; HermiT derives
+  all three at build time. The negative control is glutamate dehydrogenase: it contains both
+  headline molecules with the roles reversed, and is correctly not derived, because the definition
+  discriminates on <strong>role</strong> rather than molecular presence.
+</p>
+<p class="small muted">→ <a href="02-meaning.html">Chapter 2</a> · the one that matters most</p>
+
+<h2 id="questions">3 · Asking questions</h2>
+<p>
+  SPARQL is pattern-matching over triples. The competency questions <em>are</em> the test suite —
+  CQ01–CQ04 quoted verbatim from NFDI4Cat's own biocatalysis set. The pair that justifies the model:
+  <strong>CQ05 returns 4</strong> reactions that <em>have</em> L-glutamate, <strong>CQ06 returns
+  3</strong> that <em>produce</em> it, and they differ by one line — a filter on the participant's
+  role. The federated query joins the local graph to live UniProt on shared Rhea identifiers.
+</p>
+<p class="small muted">→ <a href="03-questions.html">Chapter 3</a></p>
+
+<h2 id="checking">4 · Checking the data</h2>
+<p>
+  OWL infers under an <strong>open</strong> world; SHACL validates under a <strong>closed</strong>
+  one. They are not alternatives. The demonstrating case: cardinality of one with two licences
+  asserted — the OWL reasoner does not complain, it infers <code>owl:sameAs</code> and silently
+  declares CC-BY and CC0 identical; SHACL reports a violation. Same data, opposite outcome.
+</p>
+<p class="small muted">→ <a href="04-checking.html">Chapter 4</a></p>
+
+<h2 id="serving">5 · Serving it</h2>
+<p>
+  It implements the read subset of the <strong>SPARQL 1.1 protocol</strong> rather than a bespoke
+  endpoint, so stock clients work unmodified. Malformed queries return <strong>400, not 500</strong>.
+  <code>SERVICE</code> clauses are refused — federation is something done at build time, not
+  something an anonymous caller does through your server.
+</p>
+<p class="small muted">→ <a href="05-serving.html">Chapter 5</a></p>
+
+<h2 id="shipping">6 · Shipping it</h2>
+<p>
+  The reasoner runs at <strong>image-build time</strong>: the builder installs a JVM and runs HermiT;
+  the runtime stage ships no Java at all. If reasoning fails, the image does not build. CI runs code
+  gates, then <strong>data gates</strong> — including an assertion that the inference actually fires
+  — and only then builds the image, tagged by commit SHA.
+</p>
+<p class="small muted">→ <a href="06-shipping.html">Chapter 6</a></p>
+
+<h2 id="chemistry">7 · The chemistry</h2>
+<p>
+  <strong>PLP hangs off the enzyme, not the reaction</strong> — a prosthetic group cycling
+  PLP→PMP→PLP on an active-site lysine, which is why Rhea's equations have four participants and
+  UniProt calls it a COFACTOR on the protein. Modelling it as a fourth substrate would validate
+  perfectly and be chemically false. And <strong>substrate/product is a role in a direction</strong>:
+  <em>E. coli</em> AlaA carries the same Rhea master as human ALT1 but runs right-to-left, consuming
+  the glutamate ALT1 produces.
+</p>
+<p class="small muted">→ <a href="07-biology.html">Chapter 7</a></p>
+
+<h2 id="thread">8 · The thread through all of it</h2>
+<p>
+  <strong>Almost every mistake available here produces no error message.</strong> Wrong ChEBI
+  microspecies → zero rows, no error. Identifier as a string → the same. A defined class that
+  classifies nothing → passes a consistency check. A typo in a shapes file → constrains nothing.
+  Every gate in the project that looks excessive is a loading control for an invisible failure.
+</p>
+<p class="small muted">→ <a href="index.html#silent">Start here §4</a></p>
+
+<h2 id="limits">9 · Where it stops</h2>
+<p>
+  The graph cannot answer kinetics (needs quantities with units), organism of production (needs the
+  federation or an organism model), or purification and engineering (needs a laboratory-process
+  model — LARA's actual domain). Those are recorded in <code>OUT_OF_SCOPE_QUESTIONS</code>, with what
+  each would require. <strong>Knowing where a model stops is the point of writing competency
+  questions at all</strong> — and the assessor published a paper on exactly those limits.
+</p>
+<p class="small muted">→ <a href="08-defending.html">Chapter 8</a></p>
+
+<h2 id="open">Open items — volunteer these</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Item</th><th>The line</th></tr></thead>
+  <tbody>
+    <tr><td>The defined class</td><td>It is a participant-role <strong>signature</strong>, not chemistry — a reaction where the products equal the reactants would satisfy it. Atom mapping is Rhea's job. <strong>Volunteer this on the inference slide.</strong></td></tr>
+    <tr><td>The control</td><td>Only two of its six species are modelled, so it fails on <strong>arity</strong> before role. The role discrimination is real; a four-participant reversal shows it, this does not.</td></tr>
+    <tr><td>ω-transaminases</td><td>Do not classify — no amino-acid donor, no 2-oxo-acid product, so two conjuncts fail. The fix is a hierarchy, not a wider definition. <em>His lab screens these.</em></td></tr>
+    <tr><td>The premises</td><td>HermiT is told which molecules are 2-oxo acids, by a curated list. No <code>owl:imports</code> of ChEBI.</td></tr>
+    <tr><td>Enzymes</td><td>EC 2.6.1.3 is a secondary activity of GOT1; my data knows that, my model still mints three enzymes.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ask">
+  <span class="box-title">The governing rule</span>
+  <p>
+    Any line you cannot explain is a liability, not an asset. <em>"I don't know — here is how I would
+    find out"</em> costs far less than a confident wrong answer given to someone who has published on
+    the topic.
+  </p>
+</div>
+
+<div class="pager">
+  <a class="prev" href="index.html"><span class="dir">Previous</span><span class="t">← Start here</span></a>
+  <a class="next" href="01-data.html"><span class="dir">Next</span><span class="t">1 · Facts as data →</span></a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

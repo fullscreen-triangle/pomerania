@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Question coverage — tacat v2 meta-graph</title>
+<style>/* Design tokens for the meta-graph renders.
+ *
+ * The vocabulary is COPIED from docs/cards/src/app.css in the parent workspace —
+ * same names, so the two read as siblings — but the file is local. v2 is a
+ * separate repository, and a build-time dependency across that boundary is the
+ * hazard CLAUDE.md documents for the deck: "this repository looks clean while
+ * the deck is a version behind, and nothing says so."
+ *
+ * One genuinely new group: the OUTCOME scale. Its derivation is in
+ * ../README.md, "The outcome scale"; the short version is that it is two hues,
+ * not five, and that was a validator result rather than a preference.
+ */
+
+:root {
+  color-scheme: light;
+
+  --bg: #fcfcfb;
+  --panel: #ffffff;
+  --panel-2: #f4f4f2;
+  --panel-3: #ebebe8;
+  --line: #d9d9d4;
+  --text: #0b0b0b;
+  --dim: #52514e;
+  --dimmer: #86857f;
+
+  --mono: "SFMono-Regular", "JetBrains Mono", Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Outcome scale — validated with dataviz/scripts/validate_palette.js.
+   * Two hues carry meaning; the glyph carries the rest. */
+  --outcome-structural: #2a78d6;  /* cannot-express — a result, not a failure */
+  --outcome-failed: #d03b3b;      /* timeout / out-of-memory / error */
+  --outcome-completed: var(--panel-3); /* deliberately quiet: the default case */
+  --outcome-none: transparent;    /* not run — absence, and it should look like it */
+
+  --ink-on-fill: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+
+    --bg: #0f1215;
+    --panel: #161a1e;
+    --panel-2: #1c2126;
+    --panel-3: #232930;
+    --line: #262c33;
+    --text: #e8ecef;
+    --dim: #8b959e;
+    --dimmer: #626c75;
+
+    --outcome-structural: #3987e5;
+    --outcome-failed: #d03b3b;
+    --outcome-completed: var(--panel-3);
+  }
+}
+
+/* The viewer's toggle must win in both directions, so it is declared last and
+ * scoped to the root attribute rather than the media query. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0f1215;
+  --panel: #161a1e;
+  --panel-2: #1c2126;
+  --panel-3: #232930;
+  --line: #262c33;
+  --text: #e8ecef;
+  --dim: #8b959e;
+  --dimmer: #626c75;
+
+  --outcome-structural: #3987e5;
+  --outcome-failed: #d03b3b;
+  --outcome-completed: var(--panel-3);
+}
+
+/* Print and forced-colors: colour is gone or overridden, so the glyph is the
+ * whole encoding. Borders keep the grid legible without fills. */
+@media print {
+  :root {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --panel-2: #ffffff;
+    --panel-3: #eeeeee;
+    --text: #000000;
+    --outcome-structural: #000000;
+    --outcome-failed: #000000;
+    --ink-on-fill: #000000;
+  }
+  .cell-fill { background: none !important; border: 1px solid #000; }
+}
+
+/* Element defaults built on the tokens. No JavaScript anywhere in the static
+ * views — they must render from file://, print, and survive a screenshot. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+.page-head { margin-bottom: 2rem; }
+.eyebrow {
+  margin: 0 0 .35rem; font-family: var(--mono); font-size: .74rem;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--dimmer);
+}
+h1 { margin: 0 0 .5rem; font-size: 1.6rem; font-weight: 600; letter-spacing: -.01em; }
+h2 {
+  margin: 2.25rem 0 .75rem; font-size: 1.05rem; font-weight: 600;
+  padding-bottom: .35rem; border-bottom: 1px solid var(--line);
+}
+.lede { margin: 0 0 .75rem; color: var(--dim); max-width: 68ch; }
+.built { margin: 0; font-family: var(--mono); font-size: .72rem; color: var(--dimmer); }
+.page-foot {
+  margin-top: 3rem; padding-top: .75rem; border-top: 1px solid var(--line);
+  font-family: var(--mono); font-size: .72rem; color: var(--dimmer);
+}
+code { font-family: var(--mono); font-size: .88em; }
+
+/* ---------------------------------------------------------------- tables --- */
+
+.wrap { overflow-x: auto; }               /* wide tables scroll, the page never does */
+table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+th, td {
+  text-align: left; padding: .45rem .6rem;
+  border-bottom: 1px solid var(--line); vertical-align: top;
+}
+thead th {
+  font-weight: 600; font-size: .74rem; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--dim); white-space: nowrap;
+}
+tbody tr:hover { background: var(--panel-2); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--dim); }
+.dimmer { color: var(--dimmer); }
+.small { font-size: .8rem; }
+
+/* ---------------------------------------------------------------- matrix --- */
+
+.matrix th.rung { text-align: center; }
+.matrix th.rung small { display: block; font-weight: 400; text-transform: none;
+  letter-spacing: 0; color: var(--dimmer); }
+.matrix td.cell { text-align: center; padding: .3rem; }
+.matrix th.engine { white-space: nowrap; }
+.matrix th.engine small { display: block; font-weight: 400; text-transform: none;
+  letter-spacing: 0; color: var(--dimmer); font-family: var(--mono); }
+
+.cell-fill {
+  display: block; min-height: 2.1rem; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; line-height: 1;
+}
+/* Two hues carry meaning. `completed` is deliberately quiet — it is the default
+ * case, and spending saturated colour on it would drown the two that matter. */
+.o-structural { background: var(--outcome-structural); color: var(--ink-on-fill); }
+.o-failed     { background: var(--outcome-failed);     color: var(--ink-on-fill); }
+.o-completed  { background: var(--outcome-completed);  color: var(--text); }
+.o-none       { background: var(--outcome-none);       color: var(--dimmer);
+                border: 1px dashed var(--line); }
+/* A predicted cell is hatched, so a prediction can never be mistaken for a
+ * measurement at a glance. */
+.predicted { position: relative; }
+.predicted::after {
+  content: ""; position: absolute; inset: 0; border-radius: 4px;
+  background: repeating-linear-gradient(45deg,
+    transparent 0 3px, rgba(255,255,255,.42) 3px 5px);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- legend --- */
+
+.legend { display: flex; flex-wrap: wrap; gap: 1rem; margin: .9rem 0 0;
+  padding: 0; list-style: none; font-size: .8rem; }
+.legend li { display: flex; align-items: center; gap: .45rem; }
+.swatch {
+  width: 1.35rem; height: 1.35rem; border-radius: 4px; flex: none;
+  display: flex; align-items: center; justify-content: center; font-size: .8rem;
+}
+
+/* ----------------------------------------------------------------- flags --- */
+
+.flag {
+  display: inline-block; font-family: var(--mono); font-size: .68rem;
+  padding: .05rem .35rem; border-radius: 3px; border: 1px solid var(--line);
+  color: var(--dim); white-space: nowrap;
+}
+.flag-warn { border-color: var(--outcome-failed); color: var(--outcome-failed); }
+.flag-ok { border-color: var(--outcome-structural); color: var(--outcome-structural); }
+
+.note { margin: .3rem 0 0; font-size: .78rem; color: var(--dim); max-width: 74ch; }
+
+@media print {
+  body { font-size: 11pt; }
+  main { max-width: none; padding: 0; }
+  tbody tr:hover { background: none; }
+  .predicted::after { background: repeating-linear-gradient(45deg,
+    transparent 0 2px, #000 2px 3px); opacity: .25; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-head">
+    <p class="eyebrow">tacat v2 · meta-graph</p>
+    <h1>Question coverage</h1>
+    <p class="lede">Every competency question, where it came from, and whether any experiment has actually evaluated it. The untested column is the point: a claim is not a measurement.</p>
+    <p class="built">Generated from <code>meta-graph/data/</code> by <code>render/build.mjs</code>.
+       Do not hand-edit. </p>
+  </header>
+
+  
+  <p class="note"><strong>14</strong> of 22 questions have been
+     evaluated by at least one experiment; <strong>7</strong> carry an answerability
+     claim that nothing has tested. Every claim about an unrun engine is reasoning from a profile,
+     which is worth recording and is not evidence.</p>
+  
+    <h2>Tier A — answered by v1</h2>
+    <p class="note">The eleven the submission ships, four of them quoted word for word from NFDI4Cat's own set.</p>
+    <div class="wrap">
+      <table>
+        <thead><tr>
+          <th scope="col">ID</th><th scope="col">Question</th><th scope="col">Origin</th>
+          <th scope="col">Answerability claims</th><th scope="col">Evaluated</th>
+        </tr></thead>
+        <tbody><tr>
+          <td class="num">CQ01</td>
+          <td>what is the classification of enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">1</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ02</td>
+          <td>what is the nomenclature of enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ03</td>
+          <td>what is the substrate specificity of enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ04</td>
+          <td>what is the mechanism of enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ05</td>
+          <td>Which reactions have L-glutamate as a participant?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ06</td>
+          <td>Which reactions PRODUCE L-glutamate, in the left-to-right orientation?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ07</td>
+          <td>Which chemical entities play BOTH reactant and product roles somewhere in the graph?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ08</td>
+          <td>Which reactions are transaminations? (never asserted — inferred)</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">3</span> measured · <span class="num">1</span> predicted</td>
+          <td><span class="flag flag-ok">3 runs</span></td>
+        </tr><tr>
+          <td class="num">CQ09</td>
+          <td>What is the full participant list, with role and stoichiometry, for alanine transaminase?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ10</td>
+          <td>Which external identifier does each chemical entity denote?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQ11</td>
+          <td>Which Rhea reaction does each modelled reaction denote?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr></tbody>
+      </table>
+    </div>
+    <h2>Tier B — v1 declared these out of scope</h2>
+    <p class="note">Recorded with what each would require. Two are unblocked by data alone; three need a different model.</p>
+    <div class="wrap">
+      <table>
+        <thead><tr>
+          <th scope="col">ID</th><th scope="col">Question</th><th scope="col">Origin</th>
+          <th scope="col">Answerability claims</th><th scope="col">Evaluated</th>
+        </tr></thead>
+        <tbody><tr>
+          <td class="num">CQB-kinetics</td>
+          <td>what is the Michaelis-Menten constant / maximum velocity / turnover number / catalytic efficiency of enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">0</span> measured · <span class="num">1</span> predicted</td>
+          <td><span class="flag flag-warn">claimed, untested</span></td>
+        </tr><tr>
+          <td class="num">CQB-organism</td>
+          <td>which organism / strain is used for the production of enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">0</span> measured · <span class="num">1</span> predicted</td>
+          <td><span class="flag flag-warn">claimed, untested</span></td>
+        </tr><tr>
+          <td class="num">CQB-conditions</td>
+          <td>what is the optimal pH / optimal temperature / thermostability of enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">0</span> measured · <span class="num">1</span> predicted</td>
+          <td><span class="flag flag-warn">claimed, untested</span></td>
+        </tr><tr>
+          <td class="num">CQB-purification</td>
+          <td>which purification technique / immobilization technique is used for enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">0</span> measured · <span class="num">1</span> predicted</td>
+          <td><span class="flag flag-warn">claimed, untested</span></td>
+        </tr><tr>
+          <td class="num">CQB-evolution</td>
+          <td>what is the directed evolution / rational design / screening strategy of enzyme X ?</td>
+          <td><span class="flag flag-ok">NFDI4Cat, verbatim</span></td>
+          <td class="small"><span class="num">0</span> measured · <span class="num">1</span> predicted</td>
+          <td><span class="flag flag-warn">claimed, untested</span></td>
+        </tr></tbody>
+      </table>
+    </div>
+    <h2>Tier C — our extensions</h2>
+    <p class="note">Not Doerr's questions. The write-up has to say so, and so does this table.</p>
+    <div class="wrap">
+      <table>
+        <thead><tr>
+          <th scope="col">ID</th><th scope="col">Question</th><th scope="col">Origin</th>
+          <th scope="col">Answerability claims</th><th scope="col">Evaluated</th>
+        </tr></thead>
+        <tbody><tr>
+          <td class="num">CQC-not-transamination</td>
+          <td>Which reactions contain both L-glutamate and 2-oxoglutarate but are NOT transaminations?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr><tr>
+          <td class="num">CQC-two-substrates</td>
+          <td>Which reactions have exactly two substrates?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="dimmer">no claim recorded</span></td>
+          <td><span class="dimmer">—</span></td>
+        </tr><tr>
+          <td class="num">CQC-reachable</td>
+          <td>Which metabolites are reachable from L-alanine in at most k reaction steps?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">2</span> measured · <span class="num">3</span> predicted</td>
+          <td><span class="flag flag-ok">2 runs</span></td>
+        </tr><tr>
+          <td class="num">CQC-reversibility-default</td>
+          <td>Assuming reversibility unless stated otherwise, which reactions can run right-to-left?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">0</span> measured · <span class="num">1</span> predicted</td>
+          <td><span class="flag flag-warn">claimed, untested</span></td>
+        </tr><tr>
+          <td class="num">CQC-reachable-unbounded</td>
+          <td>What is reachable from a given reaction by participation, at any depth?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">1</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-warn">claimed, untested</span></td>
+        </tr><tr>
+          <td class="num">CQC-four-participants</td>
+          <td>Which reactions have exactly four participants?</td>
+          <td><span class="flag ">ours</span></td>
+          <td class="small"><span class="num">2</span> measured · <span class="num">0</span> predicted</td>
+          <td><span class="flag flag-ok">1 run</span></td>
+        </tr></tbody>
+      </table>
+    </div>
+
+  <footer class="page-foot">
+    <p>9 rungs · 7 engines · 22 questions · 9 experiments · 30 answerabilities · 16 sources · 5 models · 37 findings</p>
+  </footer>
+</main>
+</body>
+</html>

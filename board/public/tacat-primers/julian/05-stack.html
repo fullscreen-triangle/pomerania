@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5 · Stores &amp; the stack — tacat primer (CS edition)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <a class="brand" href="index.html">
+    <strong>tacat primer / cs</strong>
+    <span>The semantic-web stack and the enzymology behind the NFDI4Cat submission, for a full-stack developer</span>
+  </a>
+  <div class="nav-label">Chapters</div>
+  <ol>
+    <li class="intro"><a href="index.html">Start here</a></li>
+    <li><a href="01-rdf.html">RDF as a database</a></li>
+    <li><a href="02-sparql.html">SPARQL &amp; the protocol</a></li>
+    <li><a href="03-owl.html">OWL &amp; inference</a></li>
+    <li><a href="04-shacl.html">SHACL &amp; validation</a></li>
+    <li><a class="here" href="05-stack.html">Stores &amp; the stack</a></li>
+    <li><a href="06-enzymes.html">Enzymes from zero</a></li>
+    <li><a href="07-identity.html">Chemical identity</a></li>
+    <li><a href="08-databases.html">The reference databases</a></li>
+    <li><a href="09-map.html">Repo map &amp; glossary</a></li>
+  </ol>
+  <div class="nav-label toc-label">On this page</div>
+  <div class="toc" data-toc></div>
+</nav>
+
+<main class="main">
+<article class="page">
+
+<p class="eyebrow">Chapter 5</p>
+<h1>Stores &amp; the stack</h1>
+<p class="standfirst">
+  The last computing chapter, and mostly familiar ground: where triplestores sit relative to the
+  databases you know, why rdflib is the SQLite of this world, and the metadata envelope
+  (DCAT&nbsp;+&nbsp;PROV) that describes the dataset rather than the chemistry.
+</p>
+
+<h2 id="stores">1. Triplestores against the databases you know</h2>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr><th>System</th><th>Model</th><th>Query</th><th>Scale</th><th>Shape enforced?</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>PostgreSQL</strong></td><td>relations</td><td>SQL</td><td>very large</td>
+      <td class="yes">yes — DDL, on write</td>
+    </tr>
+    <tr>
+      <td><strong>Neo4j</strong></td><td>property graph</td><td>Cypher</td><td>large</td>
+      <td>optional constraints</td>
+    </tr>
+    <tr>
+      <td><strong>MongoDB</strong></td><td>documents</td><td>MQL</td><td>very large</td>
+      <td>optional JSON Schema</td>
+    </tr>
+    <tr>
+      <td><strong>rdflib</strong></td><td>RDF, in-process</td><td>SPARQL</td><td>~10&#8310; triples</td>
+      <td class="no">no — SHACL is a separate pass</td>
+    </tr>
+    <tr>
+      <td><strong>Apache Jena&nbsp;Fuseki</strong></td><td>RDF, server</td><td>SPARQL</td><td>10&#8311;&ndash;10&#8313;</td>
+      <td class="no">no</td>
+    </tr>
+    <tr>
+      <td><strong>Oxigraph</strong></td><td>RDF, server (Rust)</td><td>SPARQL</td><td>10&#8311;&ndash;10&#8313;</td>
+      <td class="no">no</td>
+    </tr>
+    <tr>
+      <td><strong>GraphDB / Stardog / Virtuoso</strong></td><td>RDF, commercial</td><td>SPARQL</td><td>10&#185;&#8304;+</td>
+      <td class="no">no, but reasoning is built in</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Note the column that is uniformly &ldquo;no&rdquo;. RDF stores do not enforce shape, ever. It is
+  not a maturity gap — it follows from the open-world model in chapter 3. Validation is always a
+  separate, deliberate pass.
+</p>
+
+<div class="box bridge">
+  <span class="box-title">rdflib is SQLite, and that is the honest framing</span>
+  <p>
+    In-process, no server, no network, whole graph in memory, zero operational cost, perfect for
+    tests and embedded use, and not a production database. The brief asked for rdflib specifically,
+    so this is the correct choice — but the README says plainly that it is an in-process
+    demonstration store rather than claiming equivalence to Fuseki.
+  </p>
+  <p>
+    Practical limit is around 10&#8310; triples before memory and query planning become the problem.
+    This graph has roughly 390.
+  </p>
+  <p>
+    <strong>There is a <code>GraphRepository</code> seam, and the obvious argument for it is
+    wrong.</strong> It is tempting to call it a portability abstraction — swap rdflib for Oxigraph
+    behind the interface. That does not hold. <code>DECISIONS.md</code> said so under a heading cut
+    in <code>e7db6cd</code>, when the record was trimmed to the modelling decisions; the argument is
+    kept here because it is the interesting half: rdflib
+    already ships <code>SPARQLStore</code> and <code>SPARQLUpdateStore</code>, so
+    <code>Graph(store="SPARQLStore")</code> exposes the identical API. Migrating means constructing
+    the graph differently, not implementing an interface, and a Protocol on top would be a second
+    abstraction over an existing one.
+  </p>
+  <p>
+    The honest reason is <strong>legibility</strong>: the service depends on three operations, and
+    stating that makes the dependency inspectable and testable without a web client.
+    <code>as_rdflib_graph()</code> is a named escape hatch — pySHACL needs a concrete
+    <code>Graph</code> — rather than a leak pretending not to be one. Knowing why an abstraction is
+    <em>not</em> justified is worth more here than having one.
+  </p>
+</div>
+
+<h2 id="api">2. The service layer</h2>
+
+<p>
+  Ordinary web engineering, which is why chapter 2 covered the interesting part (the protocol) and
+  this section is short. The shape:
+</p>
+
+<pre><code data-lang="python">def create_app(graph: Graph | None = None) -> FastAPI:
+    ...</code></pre>
+
+<p>
+  An application factory with an injectable graph — so tests construct an app over a fixture graph
+  with no filesystem and no network. Testable by design rather than testable in principle.
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Route</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">GET /</td><td>service info, graph statistics, ready-to-run example queries</td></tr>
+    <tr><td class="mono">GET /health</td><td>liveness probe — <strong>fails if the graph is empty</strong>, which is the failure that would otherwise look healthy</td></tr>
+    <tr><td class="mono">GET /validation</td><td>the SHACL report for the served graph — conformance observable at runtime, not just gated in CI</td></tr>
+    <tr><td class="mono">GET /docs</td><td>OpenAPI UI, free from FastAPI</td></tr>
+    <tr><td class="mono">GET|POST /sparql</td><td>the SPARQL 1.1 Protocol endpoint</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Every example query advertised on <code>/</code> is executed by the test suite. That sounds
+  fussy until you know it was a real defect: the first submission served an example containing an
+  unescaped <code>/</code> in a prefixed name, so a reviewer&rsquo;s most likely first action —
+  copy the advertised example, POST it — returned <strong>HTTP 400</strong>. An advertised query
+  that does not parse is a defect a green suite will happily hide.
+</p>
+
+<h2 id="artefacts">3. The build-time / run-time seam</h2>
+
+<p>
+  <code>artefacts.py</code> exists to answer one question: where does the graph come from at
+  startup?
+</p>
+
+<div class="pipeline">
+  <div class="step">
+    <div class="n">1</div>
+    <div>
+      <h4>Normal case — the artefact exists</h4>
+      <p><code>data/reactions.ttl</code> was written by <code>tacat build</code> (or by the Docker
+         builder stage). Load it with rdflib. No JVM, no reasoner, fast start.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">2</div>
+    <div>
+      <h4>Fallback — a clean checkout</h4>
+      <p>No artefact. Build and reason in-process, which <em>does</em> require a JVM on
+         <code>PATH</code>. The log says so before it tries, rather than dying on an opaque
+         subprocess error.</p>
+    </div>
+  </div>
+</div>
+
+<p>
+  Inside the container only case 1 ever happens, by construction. That is what lets the runtime
+  image ship no Java.
+</p>
+
+<h2 id="docker">4. The image, and why it is multi-stage</h2>
+
+<pre><code data-lang="docker"># ---- builder: has uv, a JVM, and the dev toolchain
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+RUN apt-get install -y default-jre-headless
+COPY . .
+RUN uv sync --frozen --no-dev
+RUN uv run tacat build --output data/reactions.ttl     # &lt;- HermiT runs HERE
+
+# ---- runtime: no JVM, no dev dependencies, non-root
+FROM python:3.13-slim
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/data/reactions.ttl /app/data/
+USER app
+CMD ["uvicorn", "tacat.api:app", "--host", "0.0.0.0"]</code></pre>
+
+<p>
+  Reasoning happens at image-build time; the runtime stage copies the result. Consequences worth
+  stating: the container starts with the graph already loaded, needs no network, answers queries
+  about <em>inferred</em> types with no reasoner in the request path, and — the important one —
+  <strong>if reasoning fails, the image does not build</strong>.
+</p>
+
+<div class="box trap">
+  <span class="box-title">A real bug worth knowing, because it is subtle</span>
+  <p>
+    An earlier revision ran <code>uv run</code> inside the build stage <em>after</em> an earlier
+    <code>uv sync --no-dev</code>. <code>uv run</code> re-syncs by default, which reinstated the dev
+    group — so pytest, ruff, mypy and bandit all shipped into the runtime image despite the
+    <code>--no-dev</code> that was supposed to prevent exactly that. The flag was present, correct,
+    and silently undone by a later command.
+  </p>
+</div>
+
+<h2 id="ci">5. CI: four stages, and the middle one is the point</h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Stage</th><th>Jobs</th><th>Gates on</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>quality</strong></td>
+      <td><code>ruff check</code> + <code>ruff format --check</code>, <code>mypy</code>, <code>bandit</code></td>
+      <td>the code</td>
+    </tr>
+    <tr>
+      <td><strong>verify</strong></td>
+      <td><code>pytest</code>; ontology consistency <em>plus an assertion that the inference fires</em>; <strong><code>reproducible-build</code> — two builds, compared byte for byte</strong>; <code>pyshacl --metashacl</code> over graph and dataset description</td>
+      <td><strong>the data</strong></td>
+    </tr>
+    <tr>
+      <td><strong>build</strong></td>
+      <td>Kaniko image build, pushed to the GitLab Container Registry, tagged by commit SHA</td>
+      <td>everything above passing</td>
+    </tr>
+    <tr>
+      <td><strong>smoke</strong></td>
+      <td>the <strong>pushed</strong> image started as a <code>services:</code> container and asserted against over HTTP — not the source tree</td>
+      <td>the artefact that actually shipped</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Three of those verify jobs are <strong>data gates rather than code gates</strong>, and that
+  distinction is the differentiator. Your usual pipeline proves the code is well-formed and the
+  tests pass. It cannot tell you the graph inside the image is wrong — every conventional gate would
+  be green while the chemistry was nonsense.
+</p>
+
+<p>
+  Two smaller conventions that carry more weight in a research context than a product one:
+</p>
+
+<ul>
+  <li>
+    <strong>Tag by commit SHA, not only <code>:latest</code>.</strong> A moving tag is not a
+    reproducible reference, and reproducibility is the entire claim the CI layer exists to support.
+  </li>
+  <li>
+    <strong>Kaniko rather than Docker-in-Docker.</strong> The right choice on shared GitLab runners
+    — no privileged container required.
+  </li>
+</ul>
+
+<div class="box bridge">
+  <span class="box-title">The gate that was missing, and why it mattered</span>
+  <p>
+    Until 27 July nothing checked that the build reproduced. Two builds <em>were</em> byte-identical
+    — verified by hand — but Owlready2 &rarr; HermiT &rarr; rdflib serialisation is exactly where set
+    iteration order can drift, and the failure is invisible: the graph stays <em>correct</em> while
+    quietly ceasing to be <em>reproducible</em>.
+  </p>
+  <p>
+    The <code>reproducible-build</code> job now builds twice and compares bytes, and
+    <code>tests/test_reproducibility.py</code> asserts the same property plus the weaker isomorphism
+    form. Byte equality rather than isomorphism because that is what a registry tag and a source
+    checksum actually depend on. Reproducibility is the specific claim the whole container and CI
+    layer exists to support, and it was the one thing nothing verified.
+  </p>
+</div>
+
+<h2 id="dcat">6. DCAT and PROV — metadata about the dataset</h2>
+
+<p>
+  So far everything has described chemistry. There is a second, thin layer that describes
+  <em>the dataset itself</em>: what it is, who may use it, and what produced it.
+</p>
+
+<div class="vs">
+  <div class="known">
+    <span class="vs-label">You already ship this</span>
+<pre><code data-lang="json">{
+  "name": "tacat",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": "…"
+}</code></pre>
+    <p><code>package.json</code>. Machine-readable metadata about the artefact, separate from what
+       the artefact does.</p>
+  </div>
+  <div class="newthing">
+    <span class="vs-label">DCAT + PROV</span>
+<pre><code data-lang="turtle">tacat:dataset a dcat:Dataset ;
+    dcterms:title   "Transaminase reactions"@en ;
+    dcterms:license &lt;…MIT.html&gt; ;
+    dcterms:hasVersion "0.1.0" ;
+    prov:wasGeneratedBy tacat:build-activity .
+
+tacat:build-activity a prov:Activity ;
+    prov:used            tacat:reference-data ;
+    prov:wasAssociatedWith tacat:software .</code></pre>
+    <p>Same idea, expressed in RDF so it is queryable alongside the data, and with a provenance
+       chain rather than just attributes.</p>
+  </div>
+</div>
+
+<p>
+  <strong>DCAT</strong> is the W3C vocabulary for describing datasets in a catalogue.
+  <strong>DCAT-AP+</strong> is the NFDI extension that adds the processes and agents involved in
+  creating a dataset; <strong>PROV-O</strong> is the W3C provenance vocabulary —
+  <em>entity</em>, <em>activity</em>, <em>agent</em>, and the relations between them.
+</p>
+<p>
+  This matters more here than the 15 lines of Turtle suggest. NFDI4Cat&rsquo;s phase-2 work
+  (CoreMeta4Cat, ChemDCAT-AP) is built on DCAT-AP+, so a small correct envelope signals awareness
+  of the consortium&rsquo;s current infrastructure without attempting to implement the whole profile.
+</p>
+
+<div class="box trap">
+  <span class="box-title">Where this one is currently weak</span>
+  <p>
+    The PROV block is well-formed — and static. Nothing records <em>which</em> build produced
+    <em>this</em> graph: no commit SHA, no source checksum, no version stamp
+    (<code>GAPS_0.md</code> G3).
+  </p>
+  <p>
+    That is a pointed gap given the assessor&rsquo;s stated position that semantics should be
+    produced <em>by</em> the workflow rather than added afterwards as documentation. A provenance
+    envelope that cannot say what generated the artefact is the documentation-shaped version of the
+    thing he argues against.
+  </p>
+  <p>
+    <strong>Deliberately not a timestamp.</strong> A wall clock would have broken the byte-identical
+    reproducibility above on the very first commit. A commit SHA and an input checksum identify a
+    build far better than a clock does anyway — the two gates constrain each other, which is the
+    kind of interaction worth noticing.
+  </p>
+</div>
+
+<h2 id="tooling">7. Python tooling, briefly</h2>
+
+<p>
+  Mostly recognisable, with one thing that may not be:
+</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Tool</th><th>Is</th><th>Your equivalent</th></tr></thead>
+  <tbody>
+    <tr><td><strong>uv</strong></td><td>package manager, resolver, lockfile, build backend</td><td>pnpm — and notably fast</td></tr>
+    <tr><td><strong>ruff</strong></td><td>linter + formatter, one binary</td><td>ESLint + Prettier</td></tr>
+    <tr><td><strong>mypy</strong></td><td>static type checker, strict mode here</td><td><code>tsc --strict</code></td></tr>
+    <tr><td><strong>bandit</strong></td><td>security linter</td><td><code>npm audit</code>, roughly</td></tr>
+    <tr><td><strong>pytest</strong></td><td>test runner, branch coverage on</td><td>vitest</td></tr>
+    <tr><td><strong>Owlready2</strong></td><td>OWL in Python; shells out to HermiT (Java)</td><td>&mdash;</td></tr>
+    <tr><td><strong>pyshacl</strong></td><td>SHACL validator</td><td>ajv / zod</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The house style — <code>uv_build</code> backend, <code>requires-python = "==3.13.*"</code>, PEP
+  735 dependency groups, ruff at 120 columns with docstring and security rules on, strict mypy,
+  Conventional Commits, <code>CITATION.cff</code> — deliberately mirrors the assessor&rsquo;s own
+  published packages. In this field software is treated as a citable research output, which is why
+  a citation file and a changelog are not ceremony.
+</p>
+
+<div class="box key">
+  <span class="box-title">Chapter 5 in four lines</span>
+  <ul>
+    <li>rdflib is SQLite for RDF: correct here, not production, and the repo says so.</li>
+    <li>Reason at build time; the runtime image ships no JVM and starts with the graph loaded.</li>
+    <li>CI&rsquo;s middle stage gates the <em>data</em>, not the code — an image can build perfectly around a wrong graph.</li>
+    <li>DCAT/PROV describe the dataset itself; the provenance content is currently static, and that is a real gap.</li>
+  </ul>
+</div>
+
+<p class="muted">
+  That is the computing stack. The next three chapters are the chemistry — no prior knowledge
+  assumed, and the reason every modelling decision above is what it is.
+</p>
+
+<div class="pager">
+  <a href="04-shacl.html">
+    <span class="dir">Previous</span>
+    <span class="t">&larr; 4 &middot; SHACL &amp; validation</span>
+  </a>
+  <a class="next" href="06-enzymes.html">
+    <span class="dir">Next</span>
+    <span class="t">6 &middot; Enzymes from zero &rarr;</span>
+  </a>
+</div>
+
+</article>
+</main>
+</div>
+<script src="primer.js"></script>
+</body>
+</html>

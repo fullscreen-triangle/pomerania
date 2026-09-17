@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tacat architecture · 04 · Identity and federation</title>
+<style>
+  :root {
+      --bg:#141413; --panel:#1c1b1a; --ink:#ecebe9; --ink-soft:#b0aca6; --ink-faint:#7d7973; --rule:#322f2c;
+      --authored:#16305c; --authored-line:#6ba3f5; --authored-ink:#cfe0fb;
+      --generated:#4a3208; --generated-line:#e8a838; --generated-ink:#f7e2b4;
+      --seam:#33215e; --seam-line:#a78bfa; --seam-ink:#e2d8fb;
+      --external:#12401f; --external-line:#4ade80; --external-ink:#c9f2d5;
+      --tool:#2a2825; --tool-line:#9c9791; --tool-ink:#d6d2cc;
+      --bad:#4a1717; --bad-line:#f87171; --bad-ink:#fbd0d0;
+      --band-build:#1d1a2b; --band-run:#16241f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#141413; --panel:#1c1b1a; --ink:#ecebe9; --ink-soft:#b0aca6; --ink-faint:#7d7973; --rule:#322f2c;
+      --authored:#16305c; --authored-line:#6ba3f5; --authored-ink:#cfe0fb;
+      --generated:#4a3208; --generated-line:#e8a838; --generated-ink:#f7e2b4;
+      --seam:#33215e; --seam-line:#a78bfa; --seam-ink:#e2d8fb;
+      --external:#12401f; --external-line:#4ade80; --external-ink:#c9f2d5;
+      --tool:#2a2825; --tool-line:#9c9791; --tool-ink:#d6d2cc;
+      --bad:#4a1717; --bad-line:#f87171; --bad-ink:#fbd0d0;
+      --band-build:#1d1a2b; --band-run:#16241f;
+    }
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:2rem 1.5rem 6rem; background:var(--bg); color:var(--ink);
+    font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  main { max-width:1240px; margin:0 auto; }
+
+  nav.sheets {
+    display:flex; flex-wrap:wrap; gap:.35rem; margin:0 0 2.25rem;
+    padding-bottom:.9rem; border-bottom:1px solid var(--rule); font-size:.82rem;
+  }
+  nav.sheets a, nav.sheets span {
+    padding:.34rem .7rem; border-radius:6px; text-decoration:none;
+    color:var(--ink-soft); border:1px solid transparent;
+  }
+  nav.sheets a:hover { background:var(--panel); border-color:var(--rule); color:var(--ink); }
+  nav.sheets a[aria-current="page"] { background:var(--seam); border-color:var(--seam-line); color:var(--seam-ink); font-weight:620; }
+  nav.sheets span.planned { color:var(--ink-faint); opacity:.65; }
+  nav.sheets span.planned::after { content:" · planned"; font-size:.9em; }
+
+  .eyebrow { font-size:.78rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin:0 0 .5rem; }
+  h1 { font-size:clamp(1.6rem,3.4vw,2.3rem); line-height:1.15; margin:0 0 .75rem; letter-spacing:-.02em; }
+  h2 { font-size:1.18rem; margin:3rem 0 .9rem; letter-spacing:-.01em; padding-bottom:.45rem; border-bottom:1px solid var(--rule); }
+  h3 { font-size:.97rem; margin:1.8rem 0 .5rem; letter-spacing:-.005em; }
+  p { margin:0 0 1rem; max-width:74ch; color:var(--ink-soft); }
+  p.lede { font-size:1.06rem; color:var(--ink); max-width:72ch; }
+  strong { color:var(--ink); font-weight:650; }
+  a { color:var(--seam-line); }
+  code {
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace; font-size:.875em;
+    background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:.1em .38em;
+  }
+  pre {
+    background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:1rem 1.1rem;
+    overflow-x:auto; font-size:.83rem; line-height:1.6; margin:1rem 0 1.5rem;
+  }
+  pre code { background:none; border:none; padding:0; font-size:1em; }
+
+  .figure { background:var(--panel); border:1px solid var(--rule); border-radius:12px; padding:1.25rem; margin:1.75rem 0; overflow-x:auto; }
+  .figure svg { display:block; width:100%; height:auto; min-width:920px; }
+  .caption { font-size:.83rem; color:var(--ink-faint); margin:.9rem 0 0; padding-top:.85rem; border-top:1px solid var(--rule); max-width:none; }
+
+  table { border-collapse:collapse; width:100%; margin:1rem 0 1.5rem; font-size:.9rem; }
+  th,td { text-align:left; padding:.5rem .7rem; border-bottom:1px solid var(--rule); vertical-align:top; }
+  th { font-weight:620; color:var(--ink); font-size:.8rem; letter-spacing:.03em; text-transform:uppercase; }
+  td code { background:none; border:none; padding:0; }
+
+  .note { border-left:3px solid var(--seam-line); background:var(--panel); padding:.85rem 1.1rem; margin:1.25rem 0; border-radius:0 8px 8px 0; }
+  .note.warn { border-left-color:var(--generated-line); }
+  .note.bad  { border-left-color:var(--bad-line); }
+  .note p:last-child { margin-bottom:0; }
+
+  footer { margin-top:4rem; padding-top:1.25rem; border-top:1px solid var(--rule); font-size:.85rem; color:var(--ink-faint); }
+  .pager { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; font-size:.9rem; }
+  .pager a { text-decoration:none; font-weight:560; }
+  .pager a:hover { text-decoration:underline; }
+
+  .n-title { font:600 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-sm    { font:600 11.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-mono  { font:400 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .n-role  { font:400 11px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+  .g-label { font:600 11.5px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; letter-spacing:.07em; }
+  .b-label { font:700 12px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; letter-spacing:.11em; }
+  .e-label { font:400 10.5px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+  .big     { font:700 22px ui-sans-serif,-apple-system,"Segoe UI",sans-serif; }
+</style>
+</head>
+<body>
+<main>
+
+  <nav class="sheets">
+    <a href="01-system.html">01 · System</a>
+    <a href="02-ontology.html">02 · Ontology</a>
+    <a href="03-delivery.html">03 · Build &amp; delivery</a>
+    <a href="04-identity.html" aria-current="page">04 · Identity &amp; federation</a>
+    <a href="05-request.html">05 · The request path</a>
+  </nav>
+
+  <p class="eyebrow">tacat architecture · 04 of a series</p>
+  <h1>Identity and federation</h1>
+
+  <p class="lede">
+    "Reuse identifiers, never mint" is one slogan covering <strong>two different acts</strong>.
+    Pointing at a ChEBI entry, a Rhea reaction or an EC number is class membership — those terms are
+    classes, and our nodes are instances of them. Pointing at a UniProt <em>protein</em> is not: a
+    protein is not an instance of a catalytic activity, it <em>has</em> one. So the first three are
+    <code>rdf:type</code> and the fourth is UniProt's own <code>up:enzyme</code>, in UniProt's own
+    direction.
+  </p>
+
+  <p>
+    This is also where the predecessor project failed. It carried every PURL as an
+    <code>xsd:string</code>, so the graph advertised identifier reuse while being unjoinable: a
+    federated query against its own nodes returns <strong>zero rows, silently</strong>.
+  </p>
+
+  <h2>The identifier is the type</h2>
+
+  <p>
+    ChEBI entries, Rhea reactions, UniProt EC numbers and SBO roles are all <em>classes</em> in their
+    source vocabularies, and each node here is an <em>instance</em> of one. So class membership is
+    the relation that is exactly true — it needs no invented predicate and no second copy:
+  </p>
+
+<pre><code>tacat:CHEBI_57972
+    a          owl:NamedIndividual, tacat:AminoAcid,
+               &lt;http://purl.obolibrary.org/obo/CHEBI_57972&gt; ;   <span style="opacity:.65"># the identifier — a node, joinable, validated</span>
+    rdfs:label "L-alanine" .</code></pre>
+
+  <div class="callout" style="border-left:3px solid var(--external-line);padding:.9em 1.1em;margin:1.6em 0">
+    <p style="margin-top:0"><strong>It took three passes, and the middle one is the instructive
+    part.</strong></p>
+
+    <p>
+      Identifiers were first carried <em>only</em> as an <code>xsd:string</code> — well formed, and
+      completely unjoinable. That was fixed by adding <code>skos:exactMatch</code> and
+      <em>keeping</em> the literal, justified by the claim that <q>a literal is what
+      <code>sh:pattern</code> can validate</q>.
+    </p>
+
+    <p>
+      <strong>That premise is false.</strong> <code>sh:pattern</code> matches the <em>lexical form of
+      the value node</em>; for an IRI, that is the IRI string, so it constrains IRIs perfectly well.
+      Put the constraint on the object and run pyshacl: a well-formed PURL conforms, a wrong
+      namespace and a locally minted term both violate. The literal never had a job the IRI could not
+      do — it was redundant from the day it was justified.
+    </p>
+
+    <p>
+      <code>skos:exactMatch</code> was wrong independently, for the reason given further down this
+      page for the protein links: SKOS mapping properties are sub-properties of
+      <code>skos:semanticRelation</code>, whose domain and range are both <code>skos:Concept</code>.
+      And the subject was an <code>owl:NamedIndividual</code> while the object is an
+      <code>owl:Class</code> — an individual asserted as an <em>exact match</em> for a class, which is
+      a category mismatch rather than a looseness.
+    </p>
+
+    <p style="margin-bottom:0">
+      Found by reading the prose against the code, which is also how the <code>SERVICE</code>
+      blacklist was caught. Two further adversarial rounds then caught the <em>fix</em> — first too
+      loose, so a malformed anchor beside a correct one conformed silently; then too tight, rejecting
+      <code>rh:Reaction</code> and every dashed EC hierarchy node UniProt publishes. Written up in
+      <code>IDENTIFIER_LINKING_FIX.md</code>.
+    </p>
+  </div>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 700" role="img" aria-labelledby="t1 d1">
+    <title id="t1">Three kinds of external link</title>
+    <desc id="d1">
+      A chemical node is typed with its ChEBI class, and a reaction with its Rhea master class — the
+      identifier is the rdf:type, carried once, as a node. A UniProt protein links
+      inward to the EC class with up:enzyme, reversing the direction.
+    </desc>
+    <defs>
+      <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+      </marker>
+      <marker id="a4g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--external-line)"/>
+      </marker>
+    </defs>
+
+    <text x="20" y="26" class="b-label" fill="var(--ink-faint)">OUR GRAPH</text>
+    <text x="700" y="26" class="b-label" fill="var(--external-line)">SOMEONE ELSE'S NAMESPACE</text>
+    <line x1="660" y1="40" x2="660" y2="676" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="6 5"/>
+
+    <!-- ROW 1 : chemical entity -->
+    <rect x="20" y="52" width="300" height="150" rx="9" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2"/>
+    <text x="170" y="82" class="n-title" fill="var(--authored-ink)" text-anchor="middle">tacat:CHEBI_57972</text>
+    <text x="170" y="104" class="n-role" fill="var(--authored-ink)" text-anchor="middle">rdfs:label "L-alanine"</text>
+    <text x="170" y="126" class="e-label" fill="var(--authored-ink)" text-anchor="middle">a tacat:AminoAcid</text>
+    <text x="170" y="160" class="e-label" fill="var(--authored-ink)" text-anchor="middle">the local node — minted, so that</text>
+    <text x="170" y="178" class="e-label" fill="var(--authored-ink)" text-anchor="middle">our assertions stay off ChEBI's IRI</text>
+
+    <rect x="700" y="52" width="380" height="94" rx="9" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+    <text x="890" y="82" class="n-sm" fill="var(--external-ink)" text-anchor="middle">obo:CHEBI_57972</text>
+    <text x="890" y="104" class="e-label" fill="var(--external-ink)" text-anchor="middle">an OWL <tspan font-weight="700">class</tspan> — resolvable · joinable</text>
+    <text x="890" y="128" class="e-label" fill="var(--external-ink)" text-anchor="middle">sh:pattern validates it here, on the IRI</text>
+
+    <path d="M320,100 L694,100" stroke="var(--external-line)" stroke-width="2.2" fill="none" marker-end="url(#a4g)"/>
+    <text x="500" y="88" class="n-sm" fill="var(--external-line)" text-anchor="middle">rdf:type</text>
+    <text x="500" y="118" class="e-label" fill="var(--ink-faint)" text-anchor="middle">an instance of ChEBI's class</text>
+
+    <text x="1100" y="88" class="e-label" fill="var(--external-ink)">①</text>
+
+    <!-- ROW 2 : reaction -->
+    <rect x="20" y="252" width="300" height="120" rx="9" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2"/>
+    <text x="170" y="282" class="n-title" fill="var(--authored-ink)" text-anchor="middle">tacat:REACT_0000002</text>
+    <text x="170" y="304" class="n-role" fill="var(--authored-ink)" text-anchor="middle">alanine transaminase reaction</text>
+    <text x="170" y="334" class="e-label" fill="var(--authored-ink)" text-anchor="middle">an individual, with four</text>
+    <text x="170" y="352" class="e-label" fill="var(--authored-ink)" text-anchor="middle">participants and an orientation</text>
+
+    <rect x="700" y="252" width="380" height="120" rx="9" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+    <text x="890" y="282" class="n-sm" fill="var(--external-ink)" text-anchor="middle">rh:19453 — the Rhea master</text>
+    <text x="890" y="304" class="e-label" fill="var(--external-ink)" text-anchor="middle">an OWL <tspan font-weight="700">class</tspan>, not an individual</text>
+    <text x="890" y="330" class="e-label" fill="var(--external-ink)" text-anchor="middle">undirected: children 19454 / 19455 / 19456</text>
+    <text x="890" y="352" class="e-label" fill="var(--external-ink)" text-anchor="middle">carry left-to-right, right-to-left, bidirectional</text>
+
+    <path d="M320,300 L694,300" stroke="var(--external-line)" stroke-width="2.2" fill="none" marker-end="url(#a4g)"/>
+    <text x="500" y="290" class="n-sm" fill="var(--external-line)" text-anchor="middle">rdf:type</text>
+    <text x="500" y="320" class="e-label" fill="var(--ink-faint)" text-anchor="middle">an instance of Rhea’s reaction class</text>
+
+    <text x="1100" y="288" class="e-label" fill="var(--external-ink)">②</text>
+
+    <!-- ROW 3 : protein -->
+    <rect x="20" y="452" width="300" height="110" rx="9" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2"/>
+    <text x="170" y="482" class="n-title" fill="var(--authored-ink)" text-anchor="middle">tacat:EC_2_6_1_2</text>
+    <text x="170" y="504" class="n-role" fill="var(--authored-ink)" text-anchor="middle">alanine transaminase</text>
+    <text x="170" y="534" class="e-label" fill="var(--authored-ink)" text-anchor="middle">an Enzyme — a catalytic</text>
+    <text x="170" y="550" class="e-label" fill="var(--authored-ink)" text-anchor="middle">activity, not a molecule</text>
+
+    <rect x="700" y="452" width="380" height="66" rx="9" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+    <text x="890" y="479" class="n-sm" fill="var(--external-ink)" text-anchor="middle">enzyme:2.6.1.2</text>
+    <text x="890" y="501" class="e-label" fill="var(--external-ink)" text-anchor="middle">a real up:Enzyme OWL class</text>
+
+    <path d="M320,486 L694,486" stroke="var(--external-line)" stroke-width="2.2" fill="none" marker-end="url(#a4g)"/>
+    <text x="500" y="476" class="n-sm" fill="var(--external-line)" text-anchor="middle">rdf:type</text>
+
+    <rect x="700" y="574" width="380" height="94" rx="9" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+    <text x="890" y="602" class="n-sm" fill="var(--external-ink)" text-anchor="middle">uniprot:P24298</text>
+    <text x="890" y="624" class="e-label" fill="var(--external-ink)" text-anchor="middle">a protein — a polypeptide, not an activity</text>
+    <text x="890" y="650" class="e-label" fill="var(--external-ink)" text-anchor="middle">P17174 has two: EC 2.6.1.1 and 2.6.1.3</text>
+
+    <path d="M890,574 L890,524" stroke="var(--external-line)" stroke-width="2.6" fill="none" marker-end="url(#a4g)"/>
+    <text x="1000" y="552" class="n-sm" fill="var(--external-line)" text-anchor="middle">up:enzyme</text>
+
+    <text x="1100" y="488" class="e-label" fill="var(--external-ink)">③</text>
+
+    <rect x="20" y="592" width="300" height="76" rx="9" fill="var(--band-run)" stroke="var(--external-line)" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="170" y="618" class="g-label" fill="var(--external-line)" text-anchor="middle">NOTE THE DIRECTION</text>
+    <text x="40" y="640" class="e-label" fill="var(--ink-soft)">The protein points at the activity —</text>
+    <text x="40" y="658" class="e-label" fill="var(--ink-soft)">UniProt's own relation, its own way round.</text>
+  </svg>
+
+  <p class="caption">
+    ① and ② are <code>rdf:type</code>. ③ is not — and the arrow runs the other way, because a protein
+    is not a near-synonym for a catalytic activity.
+  </p>
+  </div>
+
+  <h2>Three targets, three judgments</h2>
+
+  <table>
+    <thead><tr><th>Target</th><th>Predicate</th><th>Why this one</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>ChEBI entity</strong></td>
+        <td><code>rdf:type</code></td>
+        <td>A ChEBI entry is an <code>owl:Class</code>; our node is one instance of it. Class membership is exactly true — no invented predicate, no second copy.</td>
+      </tr>
+      <tr>
+        <td><strong>Rhea master</strong></td>
+        <td><code>rdf:type</code></td>
+        <td>Same shape, and it is what resolved a <em>previously conceded compromise</em>: our reaction is an individual and Rhea's is an OWL class, which is precisely why <code>rdf:type</code> fits and <code>skos:exactMatch</code> did not.</td>
+      </tr>
+      <tr>
+        <td><strong>UniProt EC class</strong></td>
+        <td><code>rdf:type</code></td>
+        <td>A <code>up:Enzyme</code> class with the EC hierarchy as <code>rdfs:subClassOf</code>. Our enzyme node is an instance of the leaf.</td>
+      </tr>
+      <tr>
+        <td><strong>UniProt protein</strong></td>
+        <td><code>up:enzyme</code></td>
+        <td>The one that is <em>not</em> class membership. A protein is not an instance of a catalytic activity — it <em>has</em> one. The source's own relation, in the source's own direction.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note bad">
+    <p>
+      <strong>Why the third one is not a matter of taste.</strong> SKOS mapping properties are
+      sub-properties of <code>skos:semanticRelation</code>, whose domain and range are both
+      <code>skos:Concept</code> (SKOS Reference §10, S19/S20/S40). So
+      <code>X skos:closeMatch Y</code> <em>entails</em> that both ends are <code>skos:Concept</code>.
+    </p>
+    <p>
+      An earlier revision wrote <code>enzyme skos:closeMatch protein</code> — which asserted that seven
+      UniProt protein records are concepts in a thesaurus. That is an inferred type on <em>someone
+      else's resources, in someone else's namespace</em>. Nothing materialised it here, because SKOS is
+      never imported — but any harvester merging the SKOS vocabulary and running RDFS entailment would
+      derive it.
+    </p>
+  </div>
+
+  <p>
+    <code>up:enzyme</code> also carries the many-to-many honestly, which was the original objection to
+    using a SKOS mapping property: <strong>P17174</strong> catalyses both EC 2.6.1.1 and 2.6.1.3, and
+    simply gets two <code>up:enzyme</code> triples.
+  </p>
+
+  <div class="note">
+    <p>
+      <strong>Why not <code>owl:sameAs</code> anywhere.</strong> <code>sameAs</code> would license a
+      reasoner to merge everything ChEBI asserts about the species into this graph — a far stronger
+      claim than "these denote the same thing", and it would make the local A-Box hostage to an import
+      we never validated.
+    </p>
+  </div>
+
+  <h2>The join happens at Rhea, not here</h2>
+
+  <p>
+    The payoff for all of the above is one question the local graph cannot answer alone: <em>which
+    organisms express an enzyme catalysing these reactions?</em> It works only because the identifiers
+    are nodes.
+  </p>
+
+  <div class="figure">
+  <svg viewBox="0 0 1200 560" role="img" aria-labelledby="t2 d2">
+    <title id="t2">Where the federated join executes</title>
+    <desc id="d2">
+      The query is sent to the Rhea endpoint, which resolves the reaction classes locally and issues a
+      SERVICE call to the UniProt endpoint. Results come back joined. Nothing is fetched or joined in
+      our process.
+    </desc>
+    <defs>
+      <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--external-line)"/>
+      </marker>
+    </defs>
+
+    <rect x="20" y="60" width="290" height="200" rx="10" fill="var(--authored)" stroke="var(--authored-line)" stroke-width="2"/>
+    <text x="165" y="92" class="n-title" fill="var(--authored-ink)" text-anchor="middle">our graph</text>
+    <text x="165" y="118" class="e-label" fill="var(--authored-ink)" text-anchor="middle">supplies three IRIs as VALUES</text>
+    <text x="165" y="152" class="n-mono" fill="var(--authored-ink)" text-anchor="middle">rh:17441</text>
+    <text x="165" y="176" class="n-mono" fill="var(--authored-ink)" text-anchor="middle">rh:19453</text>
+    <text x="165" y="200" class="n-mono" fill="var(--authored-ink)" text-anchor="middle">rh:21824</text>
+    <text x="165" y="232" class="e-label" fill="var(--authored-ink)" text-anchor="middle">the masters, not the</text>
+    <text x="165" y="248" class="e-label" fill="var(--authored-ink)" text-anchor="middle">directional children</text>
+
+    <rect x="410" y="60" width="330" height="200" rx="10" fill="var(--external)" stroke="var(--external-line)" stroke-width="2.4"/>
+    <text x="575" y="92" class="n-title" fill="var(--external-ink)" text-anchor="middle">sparql.rhea-db.org</text>
+    <text x="575" y="120" class="e-label" fill="var(--external-ink)" text-anchor="middle">resolves the reaction classes</text>
+    <text x="575" y="152" class="n-mono" fill="var(--external-ink)" text-anchor="middle">?rhea rdfs:subClassOf rh:Reaction</text>
+    <text x="575" y="176" class="n-mono" fill="var(--external-ink)" text-anchor="middle">?rhea rh:equation ?equation</text>
+    <text x="575" y="212" class="e-label" fill="var(--external-ink)" text-anchor="middle">then federates onward itself —</text>
+    <text x="575" y="230" class="e-label" fill="var(--external-ink)" text-anchor="middle">this is where the join executes</text>
+
+    <rect x="840" y="60" width="340" height="200" rx="10" fill="var(--external)" stroke="var(--external-line)" stroke-width="2"/>
+    <text x="1010" y="92" class="n-title" fill="var(--external-ink)" text-anchor="middle">sparql.uniprot.org</text>
+    <text x="1010" y="120" class="e-label" fill="var(--external-ink)" text-anchor="middle">reached by a SERVICE clause</text>
+    <text x="1010" y="152" class="n-mono" fill="var(--external-ink)" text-anchor="middle">?protein up:annotation/</text>
+    <text x="1010" y="172" class="n-mono" fill="var(--external-ink)" text-anchor="middle">  up:catalyticActivity/</text>
+    <text x="1010" y="192" class="n-mono" fill="var(--external-ink)" text-anchor="middle">  up:catalyzedReaction ?rhea</text>
+    <text x="1010" y="224" class="n-mono" fill="var(--external-ink)" text-anchor="middle">?protein up:reviewed true</text>
+
+    <path d="M310,140 L404,140" stroke="var(--external-line)" stroke-width="2.4" fill="none" marker-end="url(#a5)"/>
+    <text x="357" y="128" class="e-label" fill="var(--external-line)" text-anchor="middle">query</text>
+
+    <path d="M740,140 L834,140" stroke="var(--external-line)" stroke-width="2.4" fill="none" marker-end="url(#a5)"/>
+    <text x="787" y="128" class="n-sm" fill="var(--external-line)" text-anchor="middle">SERVICE</text>
+
+    <!-- results -->
+    <rect x="20" y="320" width="1160" height="212" rx="10" fill="var(--band-run)" stroke="var(--external-line)" stroke-width="1.4"/>
+    <text x="44" y="352" class="b-label" fill="var(--external-line)">RESULT — REVIEWED PROTEINS, VERIFIED LIVE 27 JULY 2026</text>
+
+    <text x="120"  y="410" class="big" fill="var(--external-ink)" text-anchor="middle">15</text>
+    <text x="120"  y="436" class="n-mono" fill="var(--external-ink)" text-anchor="middle">RHEA:17441</text>
+    <text x="120"  y="456" class="e-label" fill="var(--external-ink)" text-anchor="middle">cysteine transaminase</text>
+
+    <text x="360"  y="410" class="big" fill="var(--external-ink)" text-anchor="middle">27</text>
+    <text x="360"  y="436" class="n-mono" fill="var(--external-ink)" text-anchor="middle">RHEA:19453</text>
+    <text x="360"  y="456" class="e-label" fill="var(--external-ink)" text-anchor="middle">alanine transaminase</text>
+
+    <text x="600"  y="410" class="big" fill="var(--external-ink)" text-anchor="middle">91</text>
+    <text x="600"  y="436" class="n-mono" fill="var(--external-ink)" text-anchor="middle">RHEA:21824</text>
+    <text x="600"  y="456" class="e-label" fill="var(--external-ink)" text-anchor="middle">aspartate transaminase</text>
+
+    <line x1="720" y1="380" x2="720" y2="500" stroke="var(--rule)" stroke-width="1.4"/>
+
+    <text x="756" y="392" class="g-label" fill="var(--ink-faint)">TWO THINGS THAT COST REAL TIME</text>
+    <text x="756" y="420" class="n-role" fill="var(--ink-soft)">Rhea models reactions as OWL <tspan font-weight="700">classes</tspan>. Using</text>
+    <text x="756" y="440" class="n-role" fill="var(--ink-soft)"><tspan font-family="ui-monospace, Menlo, monospace">?rhea a rh:Reaction</tspan> returns empty, not an error.</text>
+    <text x="756" y="472" class="n-role" fill="var(--ink-soft)">An earlier <tspan font-family="ui-monospace, Menlo, monospace">LIMIT 25</tspan> on an ordered join silently</text>
+    <text x="756" y="492" class="n-role" fill="var(--ink-soft)">returned two of the three reactions.</text>
+  </svg>
+
+  <p class="caption">
+    Nothing is fetched or joined in our process. We send one query to Rhea; Rhea issues the
+    <code>SERVICE</code> call to UniProt and returns rows already joined. Both endpoints are
+    SIB-hosted, which is why federation is reliable in that direction.
+  </p>
+  </div>
+
+  <h3>Why federation is refused in the request path</h3>
+  <p>
+    Federation is a CLI concern — <code>tacat federate</code> — never a request-path one. A <code>SERVICE</code> clause in
+    a <em>submitted</em> query would make the server fetch a caller-chosen URL and hand back the
+    response — server-side request forgery rather than a feature. The endpoint refuses it; see
+    <a href="01-system.html">sheet 01</a> for where <code>QueryPolicy</code> sits.
+  </p>
+  <p>
+    The module also degrades to a checked-in cached result and says so loudly. A live demo that
+    depends on someone else's endpoint being up is a demo that fails in front of an audience — so the
+    counts above are a <em>cached snapshot</em>, not a timeless fact.
+  </p>
+
+  <h2>The failure this design exists to prevent</h2>
+
+  <div class="note warn">
+    <p>
+      <strong>Two ways to be wrong, both silent.</strong> The predecessor project stored every PURL as
+      an <code>xsd:string</code> — so a join against its own nodes matched nothing, and returned
+      <em>zero rows without erroring</em>. It also cited neutral-parent ChEBI identifiers
+      (<code>CHEBI:16015</code>, L-glutamic acid) where Rhea uses the microspecies
+      (<code>CHEBI:29985</code>, L-glutamate(1−)). Both are real, well-formed, resolvable identifiers.
+      Both produce an empty result rather than an error.
+    </p>
+    <p>
+      A test that checks an accession is <em>well-formed</em> proves nothing about whether the graph is
+      joinable. So the suite asserts the identifier arrives as a <code>URIRef</code> <code>rdf:type</code>, and a
+      companion test fails if any external PURL is reintroduced as a literal
+      — and, since a URIRef can still be the wrong one, <strong>CQ10 and CQ11 assert the
+      (label, identifier) pair</strong> against hand-written expectations, so a transposed or
+      neutral-parent identifier fails the build. See <a href="02-ontology.html">sheet 02</a> for the
+      competency-question machinery.
+    </p>
+  </div>
+
+  <h3>Three identifiers that are counterintuitive</h3>
+  <table>
+    <thead><tr><th>Entity</th><th>The trap</th></tr></thead>
+    <tbody>
+      <tr><td>L-cysteine</td><td>The bare name resolves to <strong>CHEBI:17561</strong>, a <em>tautomer</em>. These reactions use <strong>CHEBI:35235</strong>. Resolving a ChEBI ID from a name string is unsafe.</td></tr>
+      <tr><td>Pyridoxal 5′-phosphate</td><td>The cofactor is the dianion <strong>CHEBI:597326</strong>, which is what UniProt's <code>COFACTOR</code> line cites — not the neutral parent CHEBI:18405.</td></tr>
+      <tr><td>L-alanine</td><td><strong>CHEBI:57972</strong> is <em>"L-alanine zwitterion"</em> in ChEBI while Rhea prints <em>"L-alanine"</em>. Charge suffixes also use U+2212 MINUS SIGN while the <code>L-</code> prefix is an ASCII hyphen — the same string contains both, and naive joins fail silently.</td></tr>
+    </tbody>
+  </table>
+
+  <footer>
+    <div class="pager">
+      <a href="03-delivery.html">← 03 · Build and delivery</a>
+      <a href="05-request.html">05 · The request path →</a>
+    </div>
+    <p>
+      Sheet 04 of the tacat architecture series.
+      Self-contained: no external scripts, fonts or stylesheets. Renders from <code>file://</code>.
+    </p>
+  </footer>
+
+</main>
+</body>
+</html>
