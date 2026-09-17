@@ -9,6 +9,8 @@ import Primers from "./application/tacat/Primers";
 import Architecture from "./application/tacat/Architecture";
 import Decks from "./application/tacat/Decks";
 import MetaGraph from "./application/tacat/MetaGraph";
+import BloodhoundDeck from "./application/bloodhound/BloodhoundDeck";
+import WindTunnelDeck from "./application/windtunnel/WindTunnelDeck";
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
       <Route path="/application/tacat/architecture" element={<Architecture />} />
       <Route path="/application/tacat/decks" element={<Decks />} />
       <Route path="/application/tacat/meta-graph" element={<MetaGraph />} />
+      <Route path="/application/bloodhound" element={<BloodhoundDeck />} />
+      <Route path="/application/wind-tunnel" element={<WindTunnelDeck />} />
     </Routes>
   );
 }

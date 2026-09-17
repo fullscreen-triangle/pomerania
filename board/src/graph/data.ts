@@ -138,6 +138,24 @@ export const nodes: GraphNode[] = [
     external: true,
     accent: "k4",
   },
+  {
+    id: "bloodhound",
+    label: "Bloodhound",
+    kind: "application",
+    summary:
+      "Repo-Federation Tracker: a conserved character invariant χ, computed as a live graph minimum cut over a repo's own symbols, for measuring how much forks and clones of the same project have drifted — plus a small query language, st-Hurbert, for asking a federation of tracked repos about itself.",
+    route: "/application/bloodhound",
+    accent: "k3",
+  },
+  {
+    id: "wind-tunnel",
+    label: "Wind Tunnel",
+    kind: "application",
+    summary:
+      "A code testing suite built on the claim that passing every unit test does not prove a system is correct: semantic entropy as a floor-positive residual, a proved witness for local-tests-blind-to-global-failure, Kirchhoff-style holonomy, and Kuramoto ensemble dynamics for judging a codebase's coordination regime.",
+    route: "/application/wind-tunnel",
+    accent: "k4",
+  },
 ];
 
 export const edges: GraphEdge[] = [
@@ -152,4 +170,7 @@ export const edges: GraphEdge[] = [
   { source: "tacat-extension", target: "tacat-cards", label: "recall" },
   { source: "tacat-extension", target: "tacat-meta-graph", label: "coverage" },
   { source: "tacat-extension", target: "tacat-adventure", label: "vision" },
+  { source: "s-entropy", target: "bloodhound", label: "applies to" },
+  { source: "s-entropy", target: "wind-tunnel", label: "applies to" },
+  { source: "bloodhound", target: "wind-tunnel", label: "hands off to" },
 ];
