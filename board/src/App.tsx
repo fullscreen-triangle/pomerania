@@ -13,6 +13,7 @@ import BloodhoundDeck from "./application/bloodhound/BloodhoundDeck";
 import WindTunnelDeck from "./application/windtunnel/WindTunnelDeck";
 import AbsichtDeck from "./application/absicht/AbsichtDeck";
 import EquilateralRagDeck from "./application/equilateral/EquilateralRagDeck";
+import DecisionResolutionDeck from "./application/decision-resolution/DecisionResolutionDeck";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
       <Route path="/application/wind-tunnel" element={<WindTunnelDeck />} />
       <Route path="/application/absicht" element={<AbsichtDeck />} />
       <Route path="/application/equilateral-frag" element={<EquilateralRagDeck />} />
+      <Route path="/application/decision-resolution" element={<DecisionResolutionDeck />} />
     </Routes>
   );
 }

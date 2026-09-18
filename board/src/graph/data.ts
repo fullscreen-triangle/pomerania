@@ -174,6 +174,15 @@ export const nodes: GraphNode[] = [
     route: "/application/equilateral-frag",
     accent: "k2",
   },
+  {
+    id: "decision-resolution",
+    label: "Decision Resolution",
+    kind: "application",
+    summary:
+      "What a finite observer entitles a controller to do: a computable resolution floor replacing an existence claim, the compromise modulus surviving two failed candidates, a tight and saturating decision-resolution bound, Nyquist recovered as a special case with its dimensional error corrected, and folklore about monitor/control coupling and redundancy each precisely re-scoped.",
+    route: "/application/decision-resolution",
+    accent: "k4",
+  },
 ];
 
 export const edges: GraphEdge[] = [
@@ -194,4 +203,5 @@ export const edges: GraphEdge[] = [
   { source: "s-entropy", target: "absicht", label: "applies to" },
   { source: "s-entropy", target: "equilateral-frag", label: "applies to" },
   { source: "absicht", target: "equilateral-frag", label: "shares verification with" },
+  { source: "s-entropy", target: "decision-resolution", label: "applies to" },
 ];
