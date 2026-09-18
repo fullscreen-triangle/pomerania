@@ -183,6 +183,15 @@ export const nodes: GraphNode[] = [
     route: "/application/decision-resolution",
     accent: "k4",
   },
+  {
+    id: "bioprocess-runtime",
+    label: "Bioprocess Runtime",
+    kind: "application",
+    summary:
+      "A multi-plate cell culture process — shared instrument contention, material transfer between plates — modelled as a causal knowledge graph runtime rather than a pre-computed schedule: nodes with no exit code, run-to-completion on anomalies, and a Gantt chart that is the emergent trajectory of an actual run, not a plan authored in advance.",
+    route: "/application/bioprocess-runtime",
+    accent: "k3",
+  },
 ];
 
 export const edges: GraphEdge[] = [
@@ -204,4 +213,5 @@ export const edges: GraphEdge[] = [
   { source: "s-entropy", target: "equilateral-frag", label: "applies to" },
   { source: "absicht", target: "equilateral-frag", label: "shares verification with" },
   { source: "s-entropy", target: "decision-resolution", label: "applies to" },
+  { source: "decision-resolution", target: "bioprocess-runtime", label: "instantiated as" },
 ];

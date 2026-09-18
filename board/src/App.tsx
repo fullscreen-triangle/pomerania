@@ -14,6 +14,7 @@ import WindTunnelDeck from "./application/windtunnel/WindTunnelDeck";
 import AbsichtDeck from "./application/absicht/AbsichtDeck";
 import EquilateralRagDeck from "./application/equilateral/EquilateralRagDeck";
 import DecisionResolutionDeck from "./application/decision-resolution/DecisionResolutionDeck";
+import BioprocessRuntimeDeck from "./application/bioprocess-runtime/BioprocessRuntimeDeck";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
       <Route path="/application/absicht" element={<AbsichtDeck />} />
       <Route path="/application/equilateral-frag" element={<EquilateralRagDeck />} />
       <Route path="/application/decision-resolution" element={<DecisionResolutionDeck />} />
+      <Route path="/application/bioprocess-runtime" element={<BioprocessRuntimeDeck />} />
     </Routes>
   );
 }
