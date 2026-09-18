@@ -11,6 +11,8 @@ import Decks from "./application/tacat/Decks";
 import MetaGraph from "./application/tacat/MetaGraph";
 import BloodhoundDeck from "./application/bloodhound/BloodhoundDeck";
 import WindTunnelDeck from "./application/windtunnel/WindTunnelDeck";
+import AbsichtDeck from "./application/absicht/AbsichtDeck";
+import EquilateralRagDeck from "./application/equilateral/EquilateralRagDeck";
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
       <Route path="/application/tacat/meta-graph" element={<MetaGraph />} />
       <Route path="/application/bloodhound" element={<BloodhoundDeck />} />
       <Route path="/application/wind-tunnel" element={<WindTunnelDeck />} />
+      <Route path="/application/absicht" element={<AbsichtDeck />} />
+      <Route path="/application/equilateral-frag" element={<EquilateralRagDeck />} />
     </Routes>
   );
 }

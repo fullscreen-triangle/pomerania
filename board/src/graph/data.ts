@@ -156,6 +156,24 @@ export const nodes: GraphNode[] = [
     route: "/application/wind-tunnel",
     accent: "k4",
   },
+  {
+    id: "absicht",
+    label: "Absicht",
+    kind: "application",
+    summary:
+      "Accountable Compilation: training a domain-specific model at its extremal regime for free downward transfer, federating receivers with a provable floor, routing a fixed budget across them by an exact 0-1 knapsack, and certifying the combination with a minimum loop of three mutually-checking receivers.",
+    route: "/application/absicht",
+    accent: "k1",
+  },
+  {
+    id: "equilateral-frag",
+    label: "Equilateral (RAG)",
+    kind: "application",
+    summary:
+      "Federated Retrieval-Augmentation: a retrieval result as a minimum cut against an inexhaustible medium, content and meaning provably diverging, receiver-relative relevance, coherence requiring a triangle of sources, closure as the correct stopping rule, and a four-column route-audit for cross-source verification.",
+    route: "/application/equilateral-frag",
+    accent: "k2",
+  },
 ];
 
 export const edges: GraphEdge[] = [
@@ -173,4 +191,7 @@ export const edges: GraphEdge[] = [
   { source: "s-entropy", target: "bloodhound", label: "applies to" },
   { source: "s-entropy", target: "wind-tunnel", label: "applies to" },
   { source: "bloodhound", target: "wind-tunnel", label: "hands off to" },
+  { source: "s-entropy", target: "absicht", label: "applies to" },
+  { source: "s-entropy", target: "equilateral-frag", label: "applies to" },
+  { source: "absicht", target: "equilateral-frag", label: "shares verification with" },
 ];
